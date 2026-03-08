@@ -12,9 +12,13 @@ const MUSCLE_GROUPS = [
   "Piernas", "Glúteos", "Core", "Cardio", "Cuerpo completo", "Otro"
 ];
 
-const ExerciseLibrary = () => {
+interface ExerciseLibraryProps {
+  defaultOpen?: boolean;
+}
+
+const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [newName, setNewName] = useState("");
   const [newGroup, setNewGroup] = useState("");
   const [loading, setLoading] = useState(false);
