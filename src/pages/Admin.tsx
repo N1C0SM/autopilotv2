@@ -104,6 +104,10 @@ const Admin = () => {
 
     if (!tpError && !npError) {
       await supabase.from("profiles").update({ plan_status: "plan_ready" }).eq("user_id", selectedUser.user_id);
+      // Notify user via edge function
+      await supabase.functions.invoke("notify-plan-ready", {
+        body: { user_id: selectedUser.user_id, email: selectedUser.email },
+      });
       toast.success("Plans saved and user notified!");
       setUsers((u) => u.map((p) => p.user_id === selectedUser.user_id ? { ...p, plan_status: "plan_ready" } : p));
       setSelectedUser((p) => p ? { ...p, plan_status: "plan_ready" } : p);

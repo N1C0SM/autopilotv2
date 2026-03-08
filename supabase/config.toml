@@ -1,1 +1,7 @@
 project_id = "enebrcdrdnfkyduzyrzm"
+
+[functions.create-payment]
+verify_jwt = false
+
+[functions.notify-plan-ready]
+verify_jwt = false
