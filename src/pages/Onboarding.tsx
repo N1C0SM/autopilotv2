@@ -81,7 +81,17 @@ const Onboarding = () => {
 
     if (!error) {
       await supabase.from("profiles").update({ plan_status: "plan_pending" }).eq("user_id", user.id);
-      toast.success("¡Cuestionario enviado! Tu plan se está preparando.");
+      
+      // Auto-generate plan
+      const { error: genError } = await supabase.functions.invoke("generate-plan", {
+        body: { user_id: user.id },
+      });
+      
+      if (genError) {
+        toast.success("¡Cuestionario enviado! Tu plan se está preparando.");
+      } else {
+        toast.success("¡Tu plan personalizado está listo! 🎉");
+      }
       navigate("/dashboard");
     } else {
       toast.error("Algo salió mal. Por favor, inténtalo de nuevo.");

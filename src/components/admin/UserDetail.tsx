@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2 } from "lucide-react";
 import type { Profile } from "@/pages/Dashboard";
 import type { Json } from "@/integrations/supabase/types";
 import type { DayPlan } from "@/types/training";
@@ -61,6 +61,7 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
   const [macros, setMacros] = useState({ protein: "", carbs: "", fats: "" });
   const [mealsText, setMealsText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [isUserAdmin, setIsUserAdmin] = useState(false);
   const [roleLoading, setRoleLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
@@ -150,6 +151,43 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
     setSaving(false);
   };
 
+  const autoGeneratePlan = async () => {
+    setGenerating(true);
+    const { data, error } = await supabase.functions.invoke("generate-plan", {
+      body: { user_id: profile.user_id },
+    });
+    if (error || !data?.success) {
+      toast.error("Error al generar plan automático: " + (error?.message || data?.error || "Error desconocido"));
+      setGenerating(false);
+      return;
+    }
+
+    // Reload the plan data
+    const [{ data: tp }, { data: np }] = await Promise.all([
+      supabase.from("training_plan").select("workouts_json").eq("user_id", profile.user_id).single(),
+      supabase.from("nutrition_plan").select("macros_json, meals_json").eq("user_id", profile.user_id).single(),
+    ]);
+
+    if (tp?.workouts_json) {
+      const plans = tp.workouts_json as unknown as DayPlan[];
+      if (Array.isArray(plans)) setDayPlans(plans);
+    }
+    if (np?.macros_json) {
+      const m = np.macros_json as any;
+      setMacros({ protein: m.protein?.toString() || "", carbs: m.carbs?.toString() || "", fats: m.fats?.toString() || "" });
+    }
+    if (np?.meals_json) {
+      const meals = np.meals_json as any[];
+      if (Array.isArray(meals)) {
+        setMealsText(meals.map((m: any) => `${m.name}: ${m.description}`).join("\n"));
+      }
+    }
+
+    onUpdate(profile.user_id, { plan_status: "plan_ready" });
+    toast.success(`¡Plan auto-generado! ${data.training_days} días de entrenamiento, macros: P${data.macros.protein}/C${data.macros.carbs}/F${data.macros.fats}`);
+    setGenerating(false);
+  };
+
   if (dataLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -184,8 +222,11 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
             </span>
           </div>
         </div>
+        <Button variant="outline" onClick={autoGeneratePlan} disabled={generating} className="shrink-0">
+          <Wand2 className="w-4 h-4 mr-1" /> {generating ? "Generando..." : "Auto-generar"}
+        </Button>
         <Button variant="hero" onClick={savePlans} disabled={saving} className="shrink-0">
-          <Save className="w-4 h-4 mr-1" /> {saving ? "Guardando..." : "Guardar Planes"}
+          <Save className="w-4 h-4 mr-1" /> {saving ? "Guardando..." : "Guardar"}
         </Button>
       </div>
 
