@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2 } from "lucide-react";
 import type { Profile } from "@/pages/Dashboard";
 import type { Json } from "@/integrations/supabase/types";
-import type { Database } from "@/integrations/supabase/types";
 import type { DayPlan } from "@/types/training";
 import ExerciseLibrary from "./ExerciseLibrary";
 import TrainingPlanForm from "./TrainingPlanForm";
@@ -40,6 +40,7 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
   const [saving, setSaving] = useState(false);
   const [isUserAdmin, setIsUserAdmin] = useState(false);
   const [roleLoading, setRoleLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,15 +53,11 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
       setOnboarding(onb as OnboardingData | null);
       setIsUserAdmin(!!roleData);
 
-      // Load existing training plan
       if (tp?.workouts_json) {
         const existing = tp.workouts_json as unknown as DayPlan[];
-        if (Array.isArray(existing) && existing.length > 0) {
-          setDayPlans(existing);
-        }
+        if (Array.isArray(existing) && existing.length > 0) setDayPlans(existing);
       }
 
-      // Load existing nutrition plan
       if (np?.macros_json) {
         const m = np.macros_json as any;
         setMacros({ protein: m.protein?.toString() || "", carbs: m.carbs?.toString() || "", fats: m.fats?.toString() || "" });
@@ -71,6 +68,7 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
           setMealsText(meals.map((m: any) => `${m.name}: ${m.description}`).join("\n"));
         }
       }
+      setDataLoading(false);
     };
     fetchData();
   }, [profile.user_id]);
@@ -82,7 +80,7 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
       if (!error) { setIsUserAdmin(false); toast.success("Rol de admin eliminado"); }
       else toast.error("Error al cambiar rol");
     } else {
-      const { error } = await supabase.from("user_roles").insert({ user_id: profile.user_id, role: "admin" as Database["public"]["Enums"]["app_role"] });
+      const { error } = await supabase.from("user_roles").insert({ user_id: profile.user_id, role: "admin" as any });
       if (!error) { setIsUserAdmin(true); toast.success("Rol de admin asignado"); }
       else toast.error("Error al cambiar rol");
     }
@@ -109,7 +107,7 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
 
     if (!tpError && !npError) {
       await supabase.from("profiles").update({ plan_status: "plan_ready" }).eq("user_id", profile.user_id);
-      toast.success("¡Planes guardados!");
+      toast.success("¡Planes guardados y usuario notificado!");
       onUpdate(profile.user_id, { plan_status: "plan_ready" });
     } else {
       toast.error("Error al guardar los planes.");
@@ -117,88 +115,166 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
     setSaving(false);
   };
 
-  return (
-    <>
-      <Button variant="ghost" size="sm" onClick={onBack} className="mb-6">
-        <ArrowLeft className="w-4 h-4 mr-1" /> Volver a usuarios
-      </Button>
+  if (dataLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+      </div>
+    );
+  }
 
-      <h1 className="text-2xl font-bold font-display mb-2">{profile.email}</h1>
-      <div className="flex gap-2 mb-6">
-        <span className={`text-xs font-bold px-3 py-1 rounded-full ${profile.payment_status === "paid" ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}`}>
-          {profile.payment_status}
-        </span>
-        <span className={`text-xs font-bold px-3 py-1 rounded-full ${profile.plan_status === "plan_ready" ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"}`}>
-          {profile.plan_status}
-        </span>
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl font-bold font-display truncate">{profile.email}</h1>
+          <div className="flex gap-2 mt-1">
+            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${profile.payment_status === "paid" ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}`}>
+              {profile.payment_status === "paid" ? "Pagado" : "Sin pagar"}
+            </span>
+            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${profile.plan_status === "plan_ready" ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"}`}>
+              {profile.plan_status === "plan_ready" ? "Plan listo" : profile.plan_status === "plan_pending" ? "Pendiente" : "Onboarding"}
+            </span>
+          </div>
+        </div>
+        <Button variant="hero" onClick={savePlans} disabled={saving} className="shrink-0">
+          <Save className="w-4 h-4 mr-1" /> {saving ? "Guardando..." : "Guardar Planes"}
+        </Button>
       </div>
 
-      {/* Rol de admin */}
-      <div className="bg-card rounded-xl p-5 border border-border flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="w-5 h-5 text-primary" />
-          <div>
-            <div className="font-medium text-sm">Rol de Administrador</div>
-            <div className="text-xs text-muted-foreground">
-              {isUserAdmin ? "Este usuario es admin" : "Este usuario es usuario normal"}
+      {/* Tabs */}
+      <Tabs defaultValue="training" className="space-y-6">
+        <TabsList className="grid grid-cols-4 w-full bg-secondary/50">
+          <TabsTrigger value="info" className="text-xs gap-1.5">
+            <User2 className="w-3.5 h-3.5" /> Info
+          </TabsTrigger>
+          <TabsTrigger value="training" className="text-xs gap-1.5">
+            <Dumbbell className="w-3.5 h-3.5" /> Entreno
+          </TabsTrigger>
+          <TabsTrigger value="nutrition" className="text-xs gap-1.5">
+            <Apple className="w-3.5 h-3.5" /> Nutrición
+          </TabsTrigger>
+          <TabsTrigger value="chat" className="text-xs gap-1.5">
+            <MessageCircle className="w-3.5 h-3.5" /> Chat
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab: Info */}
+        <TabsContent value="info" className="space-y-6">
+          {/* Admin role */}
+          <div className="bg-card rounded-xl p-5 border border-border flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="w-5 h-5 text-primary" />
+              <div>
+                <div className="font-medium text-sm">Rol de Administrador</div>
+                <div className="text-xs text-muted-foreground">
+                  {isUserAdmin ? "Este usuario es admin" : "Usuario normal"}
+                </div>
+              </div>
+            </div>
+            <Switch checked={isUserAdmin} onCheckedChange={toggleAdminRole} disabled={roleLoading} />
+          </div>
+
+          {/* Onboarding answers */}
+          {onboarding ? (
+            <div className="bg-card rounded-xl p-6 border border-border">
+              <h2 className="font-bold font-display mb-4 text-sm uppercase tracking-wider text-muted-foreground">Datos del Onboarding</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {[
+                  { label: "Edad", value: onboarding.age },
+                  { label: "Altura", value: onboarding.height ? `${onboarding.height} cm` : null },
+                  { label: "Peso", value: onboarding.weight ? `${onboarding.weight} kg` : null },
+                  { label: "Objetivo", value: onboarding.goal },
+                  { label: "Deportes", value: onboarding.sports },
+                  { label: "Disponibilidad", value: onboarding.availability ? JSON.stringify(onboarding.availability) : null },
+                ].map((item) => (
+                  <div key={item.label} className="bg-secondary/30 rounded-lg p-3">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{item.label}</div>
+                    <div className="text-sm font-medium">{item.value || "—"}</div>
+                  </div>
+                ))}
+                <div className="sm:col-span-2 bg-secondary/30 rounded-lg p-3">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Preferencias nutricionales</div>
+                  <div className="text-sm">{onboarding.nutrition_preferences || "—"}</div>
+                </div>
+                <div className="sm:col-span-2 bg-secondary/30 rounded-lg p-3">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Alergias</div>
+                  <div className="text-sm">{onboarding.allergies || "—"}</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl p-8 border border-border text-center">
+              <p className="text-sm text-muted-foreground">El usuario aún no ha completado el onboarding.</p>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Tab: Training */}
+        <TabsContent value="training" className="space-y-6">
+          <ExerciseLibrary />
+          <TrainingPlanForm
+            dayPlans={dayPlans}
+            onChange={setDayPlans}
+            userSports={onboarding?.sports}
+          />
+        </TabsContent>
+
+        {/* Tab: Nutrition */}
+        <TabsContent value="nutrition" className="space-y-6">
+          <div className="bg-card rounded-xl p-6 border border-border">
+            <h2 className="font-bold font-display mb-4 flex items-center gap-2">
+              <Apple className="w-5 h-5 text-primary" />
+              Plan de Nutrición
+            </h2>
+
+            {/* Macros */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {[
+                { key: "protein" as const, label: "Proteína (g)", emoji: "🥩" },
+                { key: "carbs" as const, label: "Carbos (g)", emoji: "🍚" },
+                { key: "fats" as const, label: "Grasas (g)", emoji: "🥑" },
+              ].map((m) => (
+                <div key={m.key} className="bg-secondary/30 rounded-lg p-4 text-center">
+                  <div className="text-2xl mb-1">{m.emoji}</div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">{m.label}</Label>
+                  <Input
+                    type="number"
+                    value={macros[m.key]}
+                    onChange={(e) => setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))}
+                    className="mt-1 text-center text-lg font-bold bg-background"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Meals */}
+            <div>
+              <Label className="text-xs text-muted-foreground">Comidas (una por línea, formato: Nombre: Descripción)</Label>
+              <Textarea
+                value={mealsText}
+                onChange={(e) => setMealsText(e.target.value)}
+                placeholder={"Desayuno: Avena con frutos rojos y batido de proteínas\nAlmuerzo: Pollo a la plancha con arroz y verduras\nCena: Salmón al horno con patata y ensalada"}
+                rows={8}
+                className="mt-2 font-mono text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground mt-2">
+                💡 Cada línea se convierte en una comida. El texto antes de ":" es el nombre.
+              </p>
             </div>
           </div>
-        </div>
-        <Switch checked={isUserAdmin} onCheckedChange={toggleAdminRole} disabled={roleLoading} />
-      </div>
+        </TabsContent>
 
-      {/* Respuestas onboarding */}
-      {onboarding && (
-        <div className="bg-card rounded-xl p-6 border border-border">
-          <h2 className="font-bold font-display mb-4">Respuestas del Onboarding</h2>
-          <div className="grid sm:grid-cols-2 gap-3 text-sm">
-            <div><span className="text-muted-foreground">Edad:</span> {onboarding.age}</div>
-            <div><span className="text-muted-foreground">Altura:</span> {onboarding.height} cm</div>
-            <div><span className="text-muted-foreground">Peso:</span> {onboarding.weight} kg</div>
-            <div><span className="text-muted-foreground">Objetivo:</span> {onboarding.goal}</div>
-            <div><span className="text-muted-foreground">Deportes:</span> {onboarding.sports}</div>
-            <div><span className="text-muted-foreground">Disponibilidad:</span> {JSON.stringify(onboarding.availability)}</div>
-            <div className="sm:col-span-2"><span className="text-muted-foreground">Nutrición:</span> {onboarding.nutrition_preferences}</div>
-            <div className="sm:col-span-2"><span className="text-muted-foreground">Alergias:</span> {onboarding.allergies}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Biblioteca de ejercicios */}
-      <div className="mt-6">
-        <ExerciseLibrary />
-      </div>
-
-      {/* Plan de entrenamiento */}
-      <TrainingPlanForm
-        dayPlans={dayPlans}
-        onChange={setDayPlans}
-        userSports={onboarding?.sports}
-      />
-
-      {/* Plan de nutrición */}
-      <div className="bg-card rounded-xl p-6 border border-border mt-6">
-        <h2 className="font-bold font-display mb-4">Crear Plan de Nutrición</h2>
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div><Label className="text-xs">Proteína (g)</Label><Input type="number" value={macros.protein} onChange={(e) => setMacros((m) => ({ ...m, protein: e.target.value }))} /></div>
-          <div><Label className="text-xs">Carbos (g)</Label><Input type="number" value={macros.carbs} onChange={(e) => setMacros((m) => ({ ...m, carbs: e.target.value }))} /></div>
-          <div><Label className="text-xs">Grasas (g)</Label><Input type="number" value={macros.fats} onChange={(e) => setMacros((m) => ({ ...m, fats: e.target.value }))} /></div>
-        </div>
-        <div>
-          <Label className="text-xs">Comidas (una por línea, formato: Nombre: Descripción)</Label>
-          <Textarea value={mealsText} onChange={(e) => setMealsText(e.target.value)} placeholder="Desayuno: Avena con frutos rojos y batido de proteínas&#10;Almuerzo: Pollo a la plancha con arroz y verduras" rows={5} className="mt-1" />
-        </div>
-      </div>
-
-      <Button variant="hero" size="lg" className="mt-6" onClick={savePlans} disabled={saving}>
-        <Save className="w-4 h-4 mr-1" /> {saving ? "Guardando..." : "Guardar Planes y Notificar"}
-      </Button>
-
-      {/* Chat with user */}
-      <div className="mt-6">
-        <Chat conversationUserId={profile.user_id} isAdmin />
-      </div>
-    </>
+        {/* Tab: Chat */}
+        <TabsContent value="chat">
+          <Chat conversationUserId={profile.user_id} isAdmin />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
