@@ -68,24 +68,27 @@ serve(async (req) => {
       stripe_customer_id: customerId,
     }).eq("user_id", user.id);
 
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 1,
-    });
+    // Also check trialing subscriptions
+    const [activeSubs, trialSubs] = await Promise.all([
+      stripe.subscriptions.list({ customer: customerId, status: "active", limit: 1 }),
+      stripe.subscriptions.list({ customer: customerId, status: "trialing", limit: 1 }),
+    ]);
 
-    const hasActiveSub = subscriptions.data.length > 0;
+    const sub = activeSubs.data[0] || trialSubs.data[0];
+    const hasActiveSub = !!sub;
     let subscriptionEnd = null;
+    let tier = "basic";
 
     if (hasActiveSub) {
-      const sub = subscriptions.data[0];
       subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
-      logStep("Active subscription found", { endDate: subscriptionEnd });
+      tier = sub.metadata?.tier || "basic";
+      logStep("Active subscription found", { endDate: subscriptionEnd, tier, status: sub.status });
 
       await supabaseClient.from("profiles").update({
-        subscription_status: "active",
+        subscription_status: sub.status,
         payment_status: "paid",
         subscription_end: subscriptionEnd,
+        subscription_tier: tier,
       }).eq("user_id", user.id);
     } else {
       logStep("No active subscription");
@@ -97,6 +100,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       subscription_end: subscriptionEnd,
+      tier,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
