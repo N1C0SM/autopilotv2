@@ -242,7 +242,7 @@ const Dashboard = () => {
       {/* Desktop nav */}
       <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <span className="font-display text-xl font-bold text-gradient">FitPlan Pro</span>
+          <span className="font-display text-xl font-bold text-gradient">Autopilot</span>
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/settings")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
