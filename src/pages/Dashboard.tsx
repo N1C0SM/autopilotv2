@@ -199,7 +199,7 @@ const Dashboard = () => {
       <div className="min-h-screen bg-background">
         <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
           <div className="container mx-auto flex items-center justify-between h-16 px-4">
-            <span className="font-display text-xl font-bold text-gradient">FitPlan Pro Admin</span>
+            <span className="font-display text-xl font-bold text-gradient">Autopilot Admin</span>
             <div className="flex items-center gap-3">
               <button onClick={() => navigate("/settings")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
@@ -242,7 +242,7 @@ const Dashboard = () => {
       {/* Desktop nav */}
       <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <span className="font-display text-xl font-bold text-gradient">FitPlan Pro</span>
+          <span className="font-display text-xl font-bold text-gradient">Autopilot</span>
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/settings")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
@@ -272,7 +272,7 @@ const Dashboard = () => {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <Crown className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-display mb-2">Suscríbete a FitPlan Pro</h2>
+            <h2 className="text-xl font-bold font-display mb-2">Suscríbete a Autopilot</h2>
             <p className="text-muted-foreground mb-6">Accede a tu plan personalizado de entrenamiento y nutrición, chat con tu entrenador, gráficos de progreso y más.</p>
             <Button variant="hero" size="lg" onClick={handleCompletePayment}>
               Suscribirme — €19/mes

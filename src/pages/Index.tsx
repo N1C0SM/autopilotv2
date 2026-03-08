@@ -69,7 +69,7 @@ const Index = () => {
       {/* Nav */}
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <span className="font-display text-xl font-bold text-gradient">FitPlan Pro</span>
+          <span className="font-display text-xl font-bold text-gradient">Autopilot</span>
           <div className="flex gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>Iniciar sesión</Button>
             <Button variant="default" size="sm" onClick={() => navigate("/signup")}>Empezar</Button>
@@ -245,7 +245,7 @@ const Index = () => {
       <section className="py-20 px-4 bg-card/50">
         <div className="container mx-auto max-w-4xl">
           <ScrollReveal>
-            <h2 className="text-3xl font-bold font-display text-center mb-14">¿Por Qué FitPlan Pro?</h2>
+            <h2 className="text-3xl font-bold font-display text-center mb-14">¿Por Qué Autopilot?</h2>
           </ScrollReveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
@@ -330,7 +330,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="py-10 px-4 border-t border-border">
         <div className="container mx-auto text-center text-muted-foreground text-sm">
-          <span className="font-display font-bold text-gradient">FitPlan Pro</span> &copy; {new Date().getFullYear()}. Todos los derechos reservados.
+          <span className="font-display font-bold text-gradient">Autopilot</span> &copy; {new Date().getFullYear()}. Todos los derechos reservados.
         </div>
       </footer>
 

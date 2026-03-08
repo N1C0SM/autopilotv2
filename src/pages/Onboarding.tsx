@@ -65,7 +65,7 @@ const Onboarding = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <span className="font-display text-2xl font-bold text-gradient">FitPlan Pro</span>
+          <span className="font-display text-2xl font-bold text-gradient">Autopilot</span>
           <h1 className="text-2xl font-bold font-display mt-6 mb-2">Cuéntanos Sobre Ti</h1>
           <p className="text-muted-foreground text-sm">Paso {step + 1} de {STEPS.length}: {STEPS[step]}</p>
         </div>

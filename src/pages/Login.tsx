@@ -29,7 +29,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link to="/" className="font-display text-2xl font-bold text-gradient">FitPlan Pro</Link>
+          <Link to="/" className="font-display text-2xl font-bold text-gradient">Autopilot</Link>
           <h1 className="text-2xl font-bold font-display mt-6 mb-2">Bienvenido de vuelta</h1>
           <p className="text-muted-foreground text-sm">Inicia sesión para acceder a tu plan</p>
         </div>
