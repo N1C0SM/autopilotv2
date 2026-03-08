@@ -362,7 +362,7 @@ const Index = () => {
       {/* Floating CTA on mobile */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border z-50 md:hidden">
         <Button variant="hero" size="lg" className="w-full" onClick={() => navigate("/signup")}>
-          Crear Mi Plan — €29
+          Empezar Ahora — €19/mes
         </Button>
       </div>
     </div>
