@@ -34,6 +34,8 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
   const [macros, setMacros] = useState({ protein: "", carbs: "", fats: "" });
   const [mealsText, setMealsText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [isUserAdmin, setIsUserAdmin] = useState(false);
+  const [roleLoading, setRoleLoading] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
