@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck } from "lucide-react";
 import type { Profile } from "@/pages/Dashboard";
 import type { Json } from "@/integrations/supabase/types";
+import type { Database } from "@/integrations/supabase/types";
 
 interface OnboardingData {
   age: number | null;
@@ -32,13 +34,19 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
   const [macros, setMacros] = useState({ protein: "", carbs: "", fats: "" });
   const [mealsText, setMealsText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [isUserAdmin, setIsUserAdmin] = useState(false);
+  const [roleLoading, setRoleLoading] = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase.from("onboarding").select("*").eq("user_id", profile.user_id).single();
-      setOnboarding(data as OnboardingData | null);
+    const fetchData = async () => {
+      const [{ data: onb }, { data: roleData }] = await Promise.all([
+        supabase.from("onboarding").select("*").eq("user_id", profile.user_id).single(),
+        supabase.from("user_roles").select("role").eq("user_id", profile.user_id).eq("role", "admin").maybeSingle(),
+      ]);
+      setOnboarding(onb as OnboardingData | null);
+      setIsUserAdmin(!!roleData);
     };
-    fetch();
+    fetchData();
   }, [profile.user_id]);
 
   const addWorkoutRow = () => setWorkouts((w) => [...w, { day: "", sport: "", intensity: "", duration: "" }]);
@@ -46,6 +54,20 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
     setWorkouts((w) => w.map((item, idx) => idx === i ? { ...item, [field]: value } : item));
   };
   const removeWorkout = (i: number) => setWorkouts((w) => w.filter((_, idx) => idx !== i));
+
+  const toggleAdminRole = async () => {
+    setRoleLoading(true);
+    if (isUserAdmin) {
+      const { error } = await supabase.from("user_roles").delete().eq("user_id", profile.user_id).eq("role", "admin");
+      if (!error) { setIsUserAdmin(false); toast.success("Rol de admin eliminado"); }
+      else toast.error("Error al cambiar rol");
+    } else {
+      const { error } = await supabase.from("user_roles").insert({ user_id: profile.user_id, role: "admin" as Database["public"]["Enums"]["app_role"] });
+      if (!error) { setIsUserAdmin(true); toast.success("Rol de admin asignado"); }
+      else toast.error("Error al cambiar rol");
+    }
+    setRoleLoading(false);
+  };
 
   const savePlans = async () => {
     setSaving(true);
@@ -89,6 +111,20 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
         <span className={`text-xs font-bold px-3 py-1 rounded-full ${profile.plan_status === "plan_ready" ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"}`}>
           {profile.plan_status}
         </span>
+      </div>
+
+      {/* Role Management */}
+      <div className="bg-card rounded-xl p-5 border border-border flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <ShieldCheck className="w-5 h-5 text-primary" />
+          <div>
+            <div className="font-medium text-sm">Rol de Administrador</div>
+            <div className="text-xs text-muted-foreground">
+              {isUserAdmin ? "Este usuario es admin" : "Este usuario es usuario normal"}
+            </div>
+          </div>
+        </div>
+        <Switch checked={isUserAdmin} onCheckedChange={toggleAdminRole} disabled={roleLoading} />
       </div>
 
       {onboarding && (
