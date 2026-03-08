@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap } from "lucide-react";
 import type { Profile } from "@/pages/Dashboard";
 import type { Json } from "@/integrations/supabase/types";
 import type { DayPlan } from "@/types/training";
@@ -19,12 +19,35 @@ interface OnboardingData {
   age: number | null;
   height: number | null;
   weight: number | null;
+  sex: string | null;
   goal: string | null;
   sports: string | null;
+  injuries: string | null;
+  intensity_level: number | null;
   availability: Json | null;
   nutrition_preferences: string | null;
   allergies: string | null;
 }
+
+// ─── Macro Templates ───
+const MACRO_TEMPLATES: Record<string, { label: string; calc: (weight: number) => { protein: number; carbs: number; fats: number } }> = {
+  gain_muscle: {
+    label: "💪 Ganar músculo",
+    calc: (w) => ({ protein: Math.round(w * 2.2), carbs: Math.round(w * 4), fats: Math.round(w * 1) }),
+  },
+  lose_weight: {
+    label: "🔥 Perder grasa",
+    calc: (w) => ({ protein: Math.round(w * 2.4), carbs: Math.round(w * 2), fats: Math.round(w * 0.8) }),
+  },
+  recomp: {
+    label: "⚡ Recomposición",
+    calc: (w) => ({ protein: Math.round(w * 2.2), carbs: Math.round(w * 3), fats: Math.round(w * 0.9) }),
+  },
+  maintenance: {
+    label: "⚖️ Mantenimiento",
+    calc: (w) => ({ protein: Math.round(w * 1.8), carbs: Math.round(w * 3.5), fats: Math.round(w * 1) }),
+  },
+};
 
 interface Props {
   profile: Profile;
@@ -87,6 +110,18 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
     setRoleLoading(false);
   };
 
+  const applyMacroTemplate = (key: string) => {
+    const tpl = MACRO_TEMPLATES[key];
+    const weight = onboarding?.weight || 70;
+    const result = tpl.calc(weight);
+    setMacros({
+      protein: result.protein.toString(),
+      carbs: result.carbs.toString(),
+      fats: result.fats.toString(),
+    });
+    toast.success(`Macros calculados para ${weight}kg (${tpl.label})`);
+  };
+
   const savePlans = async () => {
     setSaving(true);
     const meals = mealsText.split("\n").filter(Boolean).map((line) => {
@@ -122,6 +157,14 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
       </div>
     );
   }
+
+  const goalLabel: Record<string, string> = {
+    lose_weight: "🔥 Perder grasa",
+    gain_muscle: "💪 Ganar músculo",
+    recomp: "⚡ Recomposición",
+    improve_endurance: "🏃 Mejorar resistencia",
+    general_health: "❤️ Salud general",
+  };
 
   return (
     <div>
@@ -165,7 +208,6 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
 
         {/* Tab: Info */}
         <TabsContent value="info" className="space-y-6">
-          {/* Admin role */}
           <div className="bg-card rounded-xl p-5 border border-border flex items-center justify-between">
             <div className="flex items-center gap-3">
               <ShieldCheck className="w-5 h-5 text-primary" />
@@ -179,17 +221,18 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
             <Switch checked={isUserAdmin} onCheckedChange={toggleAdminRole} disabled={roleLoading} />
           </div>
 
-          {/* Onboarding answers */}
           {onboarding ? (
             <div className="bg-card rounded-xl p-6 border border-border">
               <h2 className="font-bold font-display mb-4 text-sm uppercase tracking-wider text-muted-foreground">Datos del Onboarding</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 {[
                   { label: "Edad", value: onboarding.age },
+                  { label: "Sexo", value: onboarding.sex === "male" ? "Hombre" : onboarding.sex === "female" ? "Mujer" : null },
                   { label: "Altura", value: onboarding.height ? `${onboarding.height} cm` : null },
                   { label: "Peso", value: onboarding.weight ? `${onboarding.weight} kg` : null },
-                  { label: "Objetivo", value: onboarding.goal },
+                  { label: "Objetivo", value: onboarding.goal ? (goalLabel[onboarding.goal] || onboarding.goal) : null },
                   { label: "Deportes", value: onboarding.sports },
+                  { label: "Intensidad", value: onboarding.intensity_level ? `${onboarding.intensity_level}/10` : null },
                   { label: "Disponibilidad", value: onboarding.availability ? JSON.stringify(onboarding.availability) : null },
                 ].map((item) => (
                   <div key={item.label} className="bg-secondary/30 rounded-lg p-3">
@@ -197,6 +240,12 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
                     <div className="text-sm font-medium">{item.value || "—"}</div>
                   </div>
                 ))}
+                {onboarding.injuries && (
+                  <div className="sm:col-span-2 bg-destructive/10 rounded-lg p-3 border border-destructive/20">
+                    <div className="text-[10px] uppercase tracking-wider text-destructive mb-1">⚠️ Lesiones / Condiciones</div>
+                    <div className="text-sm">{onboarding.injuries}</div>
+                  </div>
+                )}
                 <div className="sm:col-span-2 bg-secondary/30 rounded-lg p-3">
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Preferencias nutricionales</div>
                   <div className="text-sm">{onboarding.nutrition_preferences || "—"}</div>
@@ -217,11 +266,7 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
         {/* Tab: Training */}
         <TabsContent value="training" className="space-y-6">
           <ExerciseLibrary />
-          <TrainingPlanForm
-            dayPlans={dayPlans}
-            onChange={setDayPlans}
-            userSports={onboarding?.sports}
-          />
+          <TrainingPlanForm dayPlans={dayPlans} onChange={setDayPlans} userSports={onboarding?.sports} />
         </TabsContent>
 
         {/* Tab: Nutrition */}
@@ -231,6 +276,23 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
               <Apple className="w-5 h-5 text-primary" />
               Plan de Nutrición
             </h2>
+
+            {/* Macro templates */}
+            <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Calcular macros ({onboarding?.weight || 70}kg)
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(MACRO_TEMPLATES).map(([key, tpl]) => (
+                  <Button key={key} variant="outline" size="sm" className="text-xs h-7" onClick={() => applyMacroTemplate(key)}>
+                    {tpl.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
 
             {/* Macros */}
             <div className="grid grid-cols-3 gap-4 mb-6">
