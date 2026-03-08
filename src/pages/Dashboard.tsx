@@ -10,6 +10,7 @@ import UserList from "@/components/admin/UserList";
 import UserDetail from "@/components/admin/UserDetail";
 import PaymentModeToggle from "@/components/admin/PaymentModeToggle";
 import type { DayPlan } from "@/types/training";
+import WeeklyProgress from "@/components/WeeklyProgress";
 
 export interface Profile {
   user_id: string;
