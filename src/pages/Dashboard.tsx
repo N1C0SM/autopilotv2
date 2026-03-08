@@ -9,6 +9,7 @@ import type { Json } from "@/integrations/supabase/types";
 import UserList from "@/components/admin/UserList";
 import UserDetail from "@/components/admin/UserDetail";
 import PaymentModeToggle from "@/components/admin/PaymentModeToggle";
+import AdminStats from "@/components/admin/AdminStats";
 import type { DayPlan } from "@/types/training";
 import WeeklyProgress from "@/components/WeeklyProgress";
 
