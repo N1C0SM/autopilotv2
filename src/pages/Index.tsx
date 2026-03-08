@@ -271,22 +271,23 @@ const Index = () => {
         <div className="container mx-auto max-w-lg text-center">
           <ScrollReveal>
             <h2 className="text-3xl font-bold font-display mb-4">Precio Simple</h2>
-            <p className="text-muted-foreground mb-10">Un solo pago. Tu plan personalizado completo.</p>
+            <p className="text-muted-foreground mb-10">Una suscripción. Todo incluido. Cancela cuando quieras.</p>
           </ScrollReveal>
           <ScrollReveal delay={0.2}>
             <div className="bg-card rounded-3xl p-10 border-2 border-primary card-shadow relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-bl-xl">
                 MÁS POPULAR
               </div>
-              <div className="text-5xl font-bold font-display text-gradient mb-2">€29</div>
-              <p className="text-muted-foreground mb-6">Pago único</p>
+              <div className="text-5xl font-bold font-display text-gradient mb-2">€19<span className="text-2xl">/mes</span></div>
+              <p className="text-muted-foreground mb-6">Sin permanencia · Cancela cuando quieras</p>
               <ul className="text-left space-y-3 mb-8 text-sm">
                 {[
                   "Plan de entrenamiento personalizado",
                   "Plan de nutrición personalizado",
-                  "Macros a medida",
-                  "Comidas adaptadas a alergias",
-                  "Planificación semanal completa",
+                  "Actualización mensual del plan",
+                  "Chat directo con tu entrenador",
+                  "Gráficos de progreso y evolución",
+                  "Biblioteca de ejercicios",
                   "Garantía de satisfacción 7 días",
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2">
@@ -296,7 +297,7 @@ const Index = () => {
                 ))}
               </ul>
               <Button variant="hero" size="xl" className="w-full hover-scale" onClick={() => navigate("/signup")}>
-                Crear Mi Plan
+                Empezar Ahora
               </Button>
               <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1">
                 <ShieldCheck className="w-3 h-3" /> Pago seguro con Stripe
