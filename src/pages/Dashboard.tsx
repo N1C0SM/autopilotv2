@@ -77,18 +77,10 @@ const Dashboard = () => {
     fetchData();
   }, [user, navigate]);
 
-  const handleCompletePayment = async () => {
-    setPaymentLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-payment");
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      toast.error("Payment setup failed. Please try again.");
-      setPaymentLoading(false);
-    }
+  const handleCompletePayment = () => {
+    const paymentLink = "https://buy.stripe.com/test_3cIbJ2gbzcumb0e8KP9IQ00";
+    const userEmail = user?.email || "";
+    window.location.href = `${paymentLink}?prefilled_email=${encodeURIComponent(userEmail)}`;
   };
 
   if (loading) {
