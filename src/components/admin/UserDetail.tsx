@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
-import type { Profile } from "@/pages/Admin";
+import type { Profile } from "@/pages/Dashboard";
 import type { Json } from "@/integrations/supabase/types";
 
 interface OnboardingData {
