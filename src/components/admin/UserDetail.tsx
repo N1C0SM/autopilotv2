@@ -126,6 +126,8 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
         </div>
         <Switch checked={isUserAdmin} onCheckedChange={toggleAdminRole} disabled={roleLoading} />
       </div>
+
+      {onboarding && (
         <div className="bg-card rounded-xl p-6 border border-border">
           <h2 className="font-bold font-display mb-4">Onboarding Answers</h2>
           <div className="grid sm:grid-cols-2 gap-3 text-sm">
