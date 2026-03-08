@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 const tabs = [
   { path: "/dashboard", icon: Home, label: "Inicio" },
   { path: "/dashboard#training", icon: Dumbbell, label: "Plan" },
-  { path: "/dashboard#progress", icon: BarChart3, label: "Progreso" },
   { path: "/dashboard#chat", icon: MessageCircle, label: "Chat" },
   { path: "/settings", icon: Settings, label: "Ajustes" },
 ];

@@ -116,7 +116,10 @@ export type Database = {
           goal: string | null
           height: number | null
           id: string
+          injuries: string | null
+          intensity_level: number | null
           nutrition_preferences: string | null
+          sex: string | null
           sports: string | null
           user_id: string
           weight: number | null
@@ -129,7 +132,10 @@ export type Database = {
           goal?: string | null
           height?: number | null
           id?: string
+          injuries?: string | null
+          intensity_level?: number | null
           nutrition_preferences?: string | null
+          sex?: string | null
           sports?: string | null
           user_id: string
           weight?: number | null
@@ -142,7 +148,10 @@ export type Database = {
           goal?: string | null
           height?: number | null
           id?: string
+          injuries?: string | null
+          intensity_level?: number | null
           nutrition_preferences?: string | null
+          sex?: string | null
           sports?: string | null
           user_id?: string
           weight?: number | null

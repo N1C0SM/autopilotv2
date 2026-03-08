@@ -2,15 +2,34 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 
-const STEPS = ["Datos Físicos", "Objetivo", "Deportes", "Disponibilidad", "Nutrición", "Alergias"];
+const STEPS = ["Datos Físicos", "Sexo", "Objetivo", "Deportes", "Intensidad", "Lesiones", "Disponibilidad", "Nutrición"];
+
+const GOALS = [
+  { value: "lose_weight", label: "Perder grasa", emoji: "🔥" },
+  { value: "gain_muscle", label: "Ganar músculo", emoji: "💪" },
+  { value: "recomp", label: "Recomposición", emoji: "⚡" },
+  { value: "improve_endurance", label: "Mejorar resistencia", emoji: "🏃" },
+  { value: "general_health", label: "Salud general", emoji: "❤️" },
+];
+
+const SPORTS = [
+  { value: "gimnasio", label: "Gimnasio", emoji: "🏋️" },
+  { value: "running", label: "Running", emoji: "🏃" },
+  { value: "natacion", label: "Natación", emoji: "🏊" },
+  { value: "calistenia", label: "Calistenia", emoji: "🤸" },
+  { value: "boxeo", label: "Boxeo", emoji: "🥊" },
+  { value: "escalada", label: "Escalada", emoji: "🧗" },
+  { value: "ciclismo", label: "Ciclismo", emoji: "🚴" },
+  { value: "yoga", label: "Yoga", emoji: "🧘" },
+];
 
 const Onboarding = () => {
   const { user } = useAuth();
@@ -21,14 +40,26 @@ const Onboarding = () => {
     age: "",
     height: "",
     weight: "",
-    goal: "lose_weight",
-    sports: "",
+    sex: "",
+    goal: "",
+    sports: [] as string[],
+    intensity_level: 5,
+    injuries: "",
     availability: { days: "", hours: "" },
     nutrition_preferences: "",
     allergies: "",
   });
 
-  const update = (field: string, value: string) => setData((d) => ({ ...d, [field]: value }));
+  const update = (field: string, value: any) => setData((d) => ({ ...d, [field]: value }));
+
+  const toggleSport = (sport: string) => {
+    setData((d) => ({
+      ...d,
+      sports: d.sports.includes(sport)
+        ? d.sports.filter((s) => s !== sport)
+        : [...d.sports, sport],
+    }));
+  };
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -38,8 +69,11 @@ const Onboarding = () => {
       age: parseInt(data.age) || null,
       height: parseFloat(data.height) || null,
       weight: parseFloat(data.weight) || null,
+      sex: data.sex || null,
       goal: data.goal,
-      sports: data.sports,
+      sports: data.sports.join(", "),
+      intensity_level: data.intensity_level,
+      injuries: data.injuries || null,
       availability: data.availability,
       nutrition_preferences: data.nutrition_preferences,
       allergies: data.allergies,
@@ -57,7 +91,8 @@ const Onboarding = () => {
 
   const canNext = () => {
     if (step === 0) return data.age && data.height && data.weight;
-    if (step === 1) return data.goal;
+    if (step === 1) return data.sex;
+    if (step === 2) return data.goal;
     return true;
   };
 
@@ -70,7 +105,7 @@ const Onboarding = () => {
           <p className="text-muted-foreground text-sm">Paso {step + 1} de {STEPS.length}: {STEPS[step]}</p>
         </div>
 
-        {/* Barra de progreso */}
+        {/* Progress bar */}
         <div className="flex gap-1.5 mb-8">
           {STEPS.map((_, i) => (
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-secondary"}`} />
@@ -78,6 +113,7 @@ const Onboarding = () => {
         </div>
 
         <div className="bg-card rounded-2xl p-8 border border-border card-shadow">
+          {/* Step 0: Physical data */}
           {step === 0 && (
             <div className="space-y-4">
               <div>
@@ -95,52 +131,170 @@ const Onboarding = () => {
             </div>
           )}
 
+          {/* Step 1: Sex */}
           {step === 1 && (
-            <RadioGroup value={data.goal} onValueChange={(v) => update("goal", v)} className="space-y-3">
-              {[
-                { value: "lose_weight", label: "Perder Peso" },
-                { value: "gain_muscle", label: "Ganar Músculo" },
-                { value: "improve_endurance", label: "Mejorar Resistencia" },
-              ].map((opt) => (
-                <label key={opt.value} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${data.goal === opt.value ? "border-primary bg-primary/5" : "border-border"}`}>
-                  <RadioGroupItem value={opt.value} />
-                  <span className="font-medium">{opt.label}</span>
-                </label>
-              ))}
-            </RadioGroup>
-          )}
-
-          {step === 2 && (
             <div>
-              <Label>¿Qué deportes practicas?</Label>
-              <Textarea value={data.sports} onChange={(e) => update("sports", e.target.value)} placeholder="Running, musculación, natación..." className="mt-1.5" />
+              <Label className="mb-3 block">Sexo biológico</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: "male", label: "Hombre", emoji: "♂️" },
+                  { value: "female", label: "Mujer", emoji: "♀️" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => update("sex", opt.value)}
+                    className={`p-5 rounded-xl border-2 text-center transition-all ${
+                      data.sex === opt.value
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <div className="text-3xl mb-2">{opt.emoji}</div>
+                    <div className="font-medium text-sm">{opt.label}</div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
+          {/* Step 2: Goal */}
+          {step === 2 && (
+            <div>
+              <Label className="mb-3 block">¿Cuál es tu objetivo principal?</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {GOALS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => update("goal", opt.value)}
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                      data.goal === opt.value
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <span className="text-2xl">{opt.emoji}</span>
+                    <span className="font-medium">{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Sports - chips */}
           {step === 3 && (
+            <div>
+              <Label className="mb-3 block">¿Qué deportes practicas o te interesan?</Label>
+              <p className="text-xs text-muted-foreground mb-4">Selecciona todos los que quieras</p>
+              <div className="grid grid-cols-2 gap-2">
+                {SPORTS.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => toggleSport(s.value)}
+                    className={`flex items-center gap-2 p-3 rounded-xl border-2 text-left transition-all text-sm ${
+                      data.sports.includes(s.value)
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <span className="text-xl">{s.emoji}</span>
+                    <span className="font-medium">{s.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Intensity */}
+          {step === 4 && (
+            <div>
+              <Label className="mb-3 block">¿Qué nivel de intensidad buscas?</Label>
+              <p className="text-xs text-muted-foreground mb-6">1 = suave y progresivo · 10 = máxima intensidad</p>
+              <div className="px-2">
+                <Slider
+                  value={[data.intensity_level]}
+                  onValueChange={([v]) => update("intensity_level", v)}
+                  min={1}
+                  max={10}
+                  step={1}
+                />
+                <div className="flex justify-between mt-3 text-xs text-muted-foreground">
+                  <span>Suave</span>
+                  <span className="text-2xl font-bold font-display text-primary">{data.intensity_level}</span>
+                  <span>Intenso</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Injuries */}
+          {step === 5 && (
+            <div>
+              <Label className="mb-1.5 block">¿Tienes lesiones, molestias o condiciones físicas?</Label>
+              <p className="text-xs text-muted-foreground mb-3">Déjalo vacío si no tienes ninguna</p>
+              <Textarea
+                value={data.injuries}
+                onChange={(e) => update("injuries", e.target.value)}
+                placeholder="Ej: Dolor lumbar, tendinitis hombro derecho, escoliosis..."
+                rows={3}
+              />
+            </div>
+          )}
+
+          {/* Step 6: Availability */}
+          {step === 6 && (
             <div className="space-y-4">
               <div>
                 <Label>Días por semana disponibles</Label>
-                <Input type="number" min={1} max={7} value={data.availability.days} onChange={(e) => setData((d) => ({ ...d, availability: { ...d.availability, days: e.target.value } }))} placeholder="4" className="mt-1.5" />
+                <Input
+                  type="number"
+                  min={1}
+                  max={7}
+                  value={data.availability.days}
+                  onChange={(e) => setData((d) => ({ ...d, availability: { ...d.availability, days: e.target.value } }))}
+                  placeholder="4"
+                  className="mt-1.5"
+                />
               </div>
               <div>
                 <Label>Horas por sesión</Label>
-                <Input type="number" step="0.5" value={data.availability.hours} onChange={(e) => setData((d) => ({ ...d, availability: { ...d.availability, hours: e.target.value } }))} placeholder="1.5" className="mt-1.5" />
+                <Input
+                  type="number"
+                  step="0.5"
+                  value={data.availability.hours}
+                  onChange={(e) => setData((d) => ({ ...d, availability: { ...d.availability, hours: e.target.value } }))}
+                  placeholder="1.5"
+                  className="mt-1.5"
+                />
               </div>
             </div>
           )}
 
-          {step === 4 && (
-            <div>
-              <Label>Preferencias nutricionales</Label>
-              <Textarea value={data.nutrition_preferences} onChange={(e) => update("nutrition_preferences", e.target.value)} placeholder="Vegetariano, alta en proteínas, mediterránea..." className="mt-1.5" />
-            </div>
-          )}
-
-          {step === 5 && (
-            <div>
-              <Label>Alergias o intolerancias alimentarias</Label>
-              <Textarea value={data.allergies} onChange={(e) => update("allergies", e.target.value)} placeholder="Lactosa, gluten, frutos secos..." className="mt-1.5" />
+          {/* Step 7: Nutrition */}
+          {step === 7 && (
+            <div className="space-y-4">
+              <div>
+                <Label>Preferencias nutricionales</Label>
+                <Textarea
+                  value={data.nutrition_preferences}
+                  onChange={(e) => update("nutrition_preferences", e.target.value)}
+                  placeholder="Vegetariano, alta en proteínas, mediterránea..."
+                  className="mt-1.5"
+                  rows={2}
+                />
+              </div>
+              <div>
+                <Label>Alergias o intolerancias</Label>
+                <Textarea
+                  value={data.allergies}
+                  onChange={(e) => update("allergies", e.target.value)}
+                  placeholder="Lactosa, gluten, frutos secos..."
+                  className="mt-1.5"
+                  rows={2}
+                />
+              </div>
             </div>
           )}
 
@@ -154,7 +308,7 @@ const Onboarding = () => {
               </Button>
             ) : (
               <Button variant="hero" onClick={handleSubmit} disabled={loading}>
-                <Check className="w-4 h-4 mr-1" /> {loading ? "Enviando..." : "Enviar"}
+                <Sparkles className="w-4 h-4 mr-1" /> {loading ? "Enviando..." : "Crear mi plan"}
               </Button>
             )}
           </div>

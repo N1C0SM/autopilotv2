@@ -1,12 +1,10 @@
-import { Zap, ClipboardList, Dumbbell, Apple, Shield, TrendingUp, CheckCircle2, Star, ShieldCheck, ChevronDown, Users, Award } from "lucide-react";
+import { Zap, ClipboardList, Dumbbell, Apple, Shield, TrendingUp, CheckCircle2, Star, ShieldCheck, Users, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { motion } from "framer-motion";
 import ScrollReveal from "@/components/ScrollReveal";
 import CountUp from "@/components/CountUp";
 import PricingTiers from "@/components/PricingTiers";
-import type { TierKey } from "@/config/tiers";
 import {
   Accordion,
   AccordionContent,
@@ -45,7 +43,7 @@ const faqs = [
   },
   {
     q: "¿Y si no me gusta o no me funciona?",
-    a: "Ofrecemos garantía de satisfacción. Si no estás contento con tu plan, te devolvemos el dinero sin preguntas en los primeros 7 días.",
+    a: "Tienes 7 días de prueba gratis. Si no estás contento, cancelas y no se te cobra nada.",
   },
   {
     q: "¿Es para principiantes?",
@@ -53,11 +51,11 @@ const faqs = [
   },
   {
     q: "¿Puedo cambiar mis datos después?",
-    a: "Por supuesto. Desde tu panel de usuario puedes actualizar tus datos personales, objetivos y preferencias en cualquier momento.",
+    a: "Por supuesto. Desde tu panel puedes actualizar tus datos y preferencias en cualquier momento.",
   },
   {
     q: "¿Incluye seguimiento o soporte?",
-    a: "Tu plan incluye toda la planificación semanal. Si necesitas ajustes, puedes contactarnos y los revisaremos sin coste adicional.",
+    a: "Sí, incluye chat directo con tu entrenador para dudas y ajustes de tu plan sin coste adicional.",
   },
 ];
 
@@ -72,7 +70,7 @@ const Index = () => {
           <span className="font-display text-xl font-bold text-gradient">Autopilot</span>
           <div className="flex gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>Iniciar sesión</Button>
-            <Button variant="default" size="sm" onClick={() => navigate("/signup")}>Empezar</Button>
+            <Button variant="default" size="sm" onClick={() => navigate("/signup")}>Empezar gratis</Button>
           </div>
         </div>
       </nav>
@@ -87,7 +85,7 @@ const Index = () => {
             className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 mb-8"
           >
             <Zap className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Personalizado para tus objetivos</span>
+            <span className="text-sm font-medium text-primary">Tu plan listo en menos de 48h</span>
           </motion.div>
 
           <motion.h1
@@ -96,9 +94,8 @@ const Index = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-tight mb-6"
           >
-            Tu Plan Personalizado de{" "}
-            <span className="text-gradient">Entrenamiento</span> y{" "}
-            <span className="text-gradient">Nutrición</span>
+            Deja de improvisar.{" "}
+            <span className="text-gradient">Tu plan personalizado</span> te espera.
           </motion.h1>
 
           <motion.p
@@ -107,7 +104,7 @@ const Index = () => {
             transition={{ duration: 0.6, delay: 0.25 }}
             className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto"
           >
-            Obtén un plan a medida diseñado según tus objetivos, horarios y preferencias. Creado por expertos, hecho para ti.
+            Entrenamiento y nutrición 100% adaptados a ti. Creado por expertos, entregado en 48h. Por solo €19/mes.
           </motion.p>
 
           <motion.div
@@ -115,8 +112,8 @@ const Index = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <Button variant="hero" size="xl" onClick={() => navigate("/signup?tier=pro")} className="hover-scale">
-              Prueba Gratis 7 Días
+            <Button variant="hero" size="xl" onClick={() => navigate("/signup")} className="hover-scale">
+              Prueba Gratis 7 Días — €19/mes
             </Button>
             <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1">
               <ShieldCheck className="w-3 h-3" /> 7 días gratis · Cancela cuando quieras
@@ -136,11 +133,7 @@ const Index = () => {
             ].map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 0.1}>
                 <div className="text-3xl sm:text-4xl font-bold font-display text-gradient">
-                  {stat.isDecimal ? (
-                    <span>4.8/5</span>
-                  ) : (
-                    <CountUp end={stat.end} suffix={stat.suffix} />
-                  )}
+                  {stat.isDecimal ? <span>4.8/5</span> : <CountUp end={stat.end} suffix={stat.suffix} />}
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
               </ScrollReveal>
@@ -153,13 +146,13 @@ const Index = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl">
           <ScrollReveal>
-            <h2 className="text-3xl font-bold font-display text-center mb-14">Cómo Funciona</h2>
+            <h2 className="text-3xl font-bold font-display text-center mb-14">Así de fácil</h2>
           </ScrollReveal>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { step: "01", title: "Regístrate y Paga", desc: "Crea tu cuenta y desbloquea tu plan personalizado por €29." },
-              { step: "02", title: "Cuéntanos Sobre Ti", desc: "Completa un breve cuestionario sobre tus objetivos, cuerpo y preferencias." },
-              { step: "03", title: "Recibe Tu Plan", desc: "Recibe tu plan de entrenamiento y nutrición personalizado creado por nuestro equipo." },
+              { step: "01", title: "Regístrate", desc: "Crea tu cuenta en 30 segundos y empieza tu prueba gratuita de 7 días." },
+              { step: "02", title: "Cuéntanos sobre ti", desc: "Completa un cuestionario rápido: objetivos, deportes, lesiones y preferencias." },
+              { step: "03", title: "Recibe tu plan", desc: "En menos de 48h tienes tu plan de entrenamiento y nutrición 100% personalizado." },
             ].map((item, i) => (
               <ScrollReveal key={item.step} delay={i * 0.15}>
                 <div className="bg-card rounded-2xl p-6 card-shadow border border-border hover-scale transition-all duration-300 h-full">
@@ -177,7 +170,7 @@ const Index = () => {
       <section className="py-20 px-4 bg-card/50">
         <div className="container mx-auto max-w-4xl">
           <ScrollReveal>
-            <h2 className="text-3xl font-bold font-display text-center mb-14">Qué Incluye</h2>
+            <h2 className="text-3xl font-bold font-display text-center mb-14">Todo lo que necesitas</h2>
           </ScrollReveal>
           <div className="grid md:grid-cols-2 gap-8">
             <ScrollReveal direction="left">
@@ -185,10 +178,10 @@ const Index = () => {
                 <Dumbbell className="w-10 h-10 text-primary mb-4" />
                 <h3 className="text-xl font-bold font-display mb-3">Plan de Entrenamiento</h3>
                 <ul className="space-y-2 text-muted-foreground text-sm">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Planificación semanal de entrenamientos</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Sesiones específicas por deporte</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Rutinas de gimnasio con series, reps y pesos</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Intensidad y duración por día</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Rutinas semanales personalizadas</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Adaptado a tus deportes y nivel</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Series, reps, pesos e intensidad</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Tiene en cuenta lesiones y condiciones</li>
                 </ul>
               </div>
             </ScrollReveal>
@@ -198,9 +191,9 @@ const Index = () => {
                 <h3 className="text-xl font-bold font-display mb-3">Plan de Nutrición</h3>
                 <ul className="space-y-2 text-muted-foreground text-sm">
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Macros diarios personalizados</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Ideas de comidas ejemplo</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Ideas de comidas según tu objetivo</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Adaptado a alergias y preferencias</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Guía nutricional personalizada</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" /> Chat con tu entrenador incluido</li>
                 </ul>
               </div>
             </ScrollReveal>
@@ -212,8 +205,8 @@ const Index = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl">
           <ScrollReveal>
-            <h2 className="text-3xl font-bold font-display text-center mb-4">Lo Que Dicen Nuestros Usuarios</h2>
-            <p className="text-muted-foreground text-center mb-14 max-w-lg mx-auto">Resultados reales de personas como tú</p>
+            <h2 className="text-3xl font-bold font-display text-center mb-4">Resultados reales</h2>
+            <p className="text-muted-foreground text-center mb-14 max-w-lg mx-auto">Personas como tú que ya tienen su plan personalizado</p>
           </ScrollReveal>
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((t, i) => (
@@ -241,20 +234,31 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Beneficios */}
+      {/* Precio */}
       <section className="py-20 px-4 bg-card/50">
+        <div className="container mx-auto text-center">
+          <ScrollReveal>
+            <h2 className="text-3xl font-bold font-display mb-4">Un precio. Todo incluido.</h2>
+            <p className="text-muted-foreground mb-12">Sin planes confusos. Sin letra pequeña. 7 días gratis para probarlo.</p>
+          </ScrollReveal>
+          <PricingTiers onSelect={() => navigate("/signup")} />
+        </div>
+      </section>
+
+      {/* Beneficios */}
+      <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl">
           <ScrollReveal>
             <h2 className="text-3xl font-bold font-display text-center mb-14">¿Por Qué Autopilot?</h2>
           </ScrollReveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: Shield, title: "Creado por Expertos", desc: "Planes diseñados por profesionales certificados con años de experiencia." },
-              { icon: TrendingUp, title: "Orientado a Objetivos", desc: "Construido en torno a tus metas de fitness específicas." },
-              { icon: ClipboardList, title: "Fácil de Seguir", desc: "Planes claros, estructurados, día a día. Sin complicaciones." },
-              { icon: Users, title: "500+ Usuarios", desc: "Una comunidad creciente de personas que ya transformaron su cuerpo." },
-              { icon: Award, title: "Resultados Garantizados", desc: "7 días de garantía. Si no te convence, te devolvemos el dinero." },
-              { icon: Zap, title: "Rápido y Personal", desc: "Tu plan listo en menos de 48h, 100% adaptado a ti." },
+              { icon: Shield, title: "Creado por Expertos", desc: "Planes diseñados por profesionales certificados." },
+              { icon: TrendingUp, title: "100% Personalizado", desc: "Adaptado a tu cuerpo, objetivos y lesiones." },
+              { icon: ClipboardList, title: "Fácil de Seguir", desc: "Planes claros, día a día. Sin complicaciones." },
+              { icon: Users, title: "500+ Usuarios", desc: "Una comunidad creciente de personas transformando su cuerpo." },
+              { icon: Award, title: "7 Días Gratis", desc: "Prueba sin riesgo. Si no te convence, no pagas nada." },
+              { icon: Zap, title: "Listo en 48h", desc: "Tu plan personalizado entregado en menos de 2 días." },
             ].map((item, i) => (
               <ScrollReveal key={item.title} delay={i * 0.08}>
                 <div className="bg-card rounded-2xl p-6 border border-border hover-scale transition-all duration-300 h-full">
@@ -265,20 +269,6 @@ const Index = () => {
               </ScrollReveal>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Precio */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto text-center">
-          <ScrollReveal>
-            <h2 className="text-3xl font-bold font-display mb-4">Elige Tu Plan</h2>
-            <p className="text-muted-foreground mb-12">7 días gratis en todos los planes. Sin permanencia. Cancela cuando quieras.</p>
-          </ScrollReveal>
-          <PricingTiers onSelectTier={(tier: TierKey) => navigate(`/signup?tier=${tier}`)} />
-          <p className="text-xs text-muted-foreground mt-6 flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3 h-3" /> Pago seguro con Stripe · Prueba gratis 7 días
-          </p>
         </div>
       </section>
 
@@ -315,13 +305,13 @@ const Index = () => {
         <div className="container mx-auto max-w-2xl text-center">
           <ScrollReveal>
             <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4">
-              ¿Listo para transformar tu cuerpo?
+              ¿Listo para dejar de improvisar?
             </h2>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Únete a más de 500 personas que ya tienen su plan personalizado. Tu mejor versión te espera.
+              Tu plan personalizado de entrenamiento y nutrición te espera. Empieza hoy gratis.
             </p>
-            <Button variant="hero" size="xl" onClick={() => navigate("/signup?tier=pro")} className="hover-scale">
-              Prueba Gratis 7 Días
+            <Button variant="hero" size="xl" onClick={() => navigate("/signup")} className="hover-scale">
+              Prueba Gratis 7 Días — €19/mes
             </Button>
           </ScrollReveal>
         </div>
@@ -336,8 +326,8 @@ const Index = () => {
 
       {/* Floating CTA on mobile */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border z-50 md:hidden">
-        <Button variant="hero" size="lg" className="w-full" onClick={() => navigate("/signup?tier=pro")}>
-          Prueba Gratis 7 Días
+        <Button variant="hero" size="lg" className="w-full" onClick={() => navigate("/signup")}>
+          Prueba Gratis 7 Días — €19/mes
         </Button>
       </div>
     </div>
