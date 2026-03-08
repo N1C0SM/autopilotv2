@@ -285,15 +285,42 @@ const Dashboard = () => {
             {/* Greeting */}
             <Greeting name={profileName} />
 
+            {/* Tier badge */}
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                subscriptionTier === "vip" ? "bg-primary/20 text-primary" :
+                subscriptionTier === "pro" ? "bg-primary/10 text-primary" :
+                "bg-secondary text-muted-foreground"
+              }`}>
+                Plan {subscriptionTier.toUpperCase()}
+              </span>
+              {subscriptionTier !== "vip" && (
+                <button
+                  onClick={handleCompletePayment}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Mejorar plan →
+                </button>
+              )}
+            </div>
+
             {/* Weekly Progress */}
             <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
               {user && <WeeklyProgress userId={user.id} dayPlans={dayPlans} />}
             </motion.div>
 
-            {/* Achievements */}
-            <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
-              {user && <Achievements userId={user.id} />}
-            </motion.div>
+            {/* Achievements - Pro & VIP */}
+            {(subscriptionTier === "pro" || subscriptionTier === "vip") ? (
+              <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+                {user && <Achievements userId={user.id} />}
+              </motion.div>
+            ) : (
+              <LockedFeature
+                title="Logros y Gamificación"
+                description="Desbloquea badges, rachas y más con el plan Pro."
+                onUpgrade={handleCompletePayment}
+              />
+            )}
 
             {/* Training Plan */}
             <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible" ref={trainingRef}>
@@ -393,14 +420,39 @@ const Dashboard = () => {
               </div>
             </motion.div>
 
-            {/* Progress Charts */}
-            <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible" ref={progressRef}>
-              {user && <ProgressCharts userId={user.id} />}
-            </motion.div>
+            {/* Progress Charts - Pro & VIP */}
+            {(subscriptionTier === "pro" || subscriptionTier === "vip") ? (
+              <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible" ref={progressRef}>
+                {user && <ProgressCharts userId={user.id} />}
+              </motion.div>
+            ) : (
+              <div ref={progressRef}>
+                <LockedFeature
+                  title="Gráficos de Progreso"
+                  description="Visualiza tu evolución de peso y medidas con el plan Pro."
+                  onUpgrade={handleCompletePayment}
+                />
+              </div>
+            )}
 
-            {/* Chat */}
-            <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible" ref={chatRef}>
-              {user && <Chat conversationUserId={user.id} />}
+            {/* Chat - Pro & VIP */}
+            {(subscriptionTier === "pro" || subscriptionTier === "vip") ? (
+              <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible" ref={chatRef}>
+                {user && <Chat conversationUserId={user.id} />}
+              </motion.div>
+            ) : (
+              <div ref={chatRef}>
+                <LockedFeature
+                  title="Chat con Entrenador"
+                  description="Habla directamente con tu entrenador con el plan Pro."
+                  onUpgrade={handleCompletePayment}
+                />
+              </div>
+            )}
+
+            {/* Referral Share */}
+            <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
+              <ReferralShare />
             </motion.div>
 
             {/* Manage subscription */}
