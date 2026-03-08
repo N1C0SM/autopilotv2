@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard, Users } from "lucide-react";
+import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard, Users, Settings } from "lucide-react";
 import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 import UserList from "@/components/admin/UserList";
@@ -115,9 +115,14 @@ const Dashboard = () => {
         <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
           <div className="container mx-auto flex items-center justify-between h-16 px-4">
             <span className="font-display text-xl font-bold text-gradient">FitPlan Pro Admin</span>
-            <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
-              <LogOut className="w-4 h-4 mr-1" /> Cerrar sesión
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/settings")}>
+                <Settings className="w-4 h-4 mr-1" /> Ajustes
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
+                <LogOut className="w-4 h-4 mr-1" /> Cerrar sesión
+              </Button>
+            </div>
           </div>
         </nav>
 
@@ -143,10 +148,15 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <span className="font-display text-xl font-bold text-gradient">FitPlan Pro</span>
-          <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
-            <LogOut className="w-4 h-4 mr-1" /> Cerrar sesión
-          </Button>
+            <span className="font-display text-xl font-bold text-gradient">FitPlan Pro</span>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/settings")}>
+                <Settings className="w-4 h-4 mr-1" /> Ajustes
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
+                <LogOut className="w-4 h-4 mr-1" /> Cerrar sesión
+              </Button>
+            </div>
         </div>
       </nav>
 
