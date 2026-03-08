@@ -193,6 +193,11 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
       <Button variant="hero" size="lg" className="mt-6" onClick={savePlans} disabled={saving}>
         <Save className="w-4 h-4 mr-1" /> {saving ? "Guardando..." : "Guardar Planes y Notificar"}
       </Button>
+
+      {/* Chat with user */}
+      <div className="mt-6">
+        <Chat conversationUserId={profile.user_id} isAdmin />
+      </div>
     </>
   );
 };

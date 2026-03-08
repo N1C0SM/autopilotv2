@@ -8,8 +8,6 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_3cIbJ2gbzcumb0e8KP9IQ00";
-
 const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,12 +27,20 @@ const Signup = () => {
 
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
-      toast.success("¡Cuenta creada! Por favor verifica tu email y luego inicia sesión para proceder al pago.");
+      toast.success("¡Cuenta creada! Por favor verifica tu email y luego inicia sesión.");
       setLoading(false);
       return;
     }
 
-    window.location.href = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}`;
+    // Use the checkout edge function for subscription
+    const { data, error: checkoutError } = await supabase.functions.invoke("create-checkout");
+    if (checkoutError || !data?.url) {
+      toast.error("Error al iniciar el pago. Ve a tu panel para completarlo.");
+      window.location.href = "/dashboard";
+      setLoading(false);
+      return;
+    }
+    window.location.href = data.url;
   };
 
   return (
@@ -43,7 +49,7 @@ const Signup = () => {
         <div className="text-center mb-8">
           <Link to="/" className="font-display text-2xl font-bold text-gradient">FitPlan Pro</Link>
           <h1 className="text-2xl font-bold font-display mt-6 mb-2">Crea tu cuenta</h1>
-          <p className="text-muted-foreground text-sm">Regístrate y procede al pago (€29)</p>
+          <p className="text-muted-foreground text-sm">Regístrate y empieza tu suscripción (€19/mes)</p>
         </div>
         <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-8 border border-border card-shadow space-y-5">
           <div>
@@ -55,8 +61,9 @@ const Signup = () => {
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5" placeholder="Mínimo 6 caracteres" minLength={6} />
           </div>
           <Button variant="hero" size="lg" className="w-full" type="submit" disabled={loading}>
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Procesando...</> : "Registrarse y Pagar €29"}
+            {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Procesando...</> : "Registrarse — €19/mes"}
           </Button>
+          <p className="text-xs text-center text-muted-foreground">Cancela cuando quieras. Sin permanencia.</p>
           <p className="text-center text-sm text-muted-foreground">
             ¿Ya tienes cuenta? <Link to="/login" className="text-primary hover:underline">Inicia sesión</Link>
           </p>
