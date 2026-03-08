@@ -1,5 +1,5 @@
 import { Users } from "lucide-react";
-import type { Profile } from "@/pages/Admin";
+import type { Profile } from "@/pages/Dashboard";
 
 interface Props {
   users: Profile[];
