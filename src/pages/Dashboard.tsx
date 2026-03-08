@@ -7,10 +7,6 @@ import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, Crown, User } from "luc
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import type { Json } from "@/integrations/supabase/types";
-import UserList from "@/components/admin/UserList";
-import UserDetail from "@/components/admin/UserDetail";
-import PaymentModeToggle from "@/components/admin/PaymentModeToggle";
-import AdminStats from "@/components/admin/AdminStats";
 import type { DayPlan } from "@/types/training";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import Chat from "@/components/Chat";
