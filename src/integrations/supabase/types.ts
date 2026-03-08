@@ -14,16 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      nutrition_plan: {
+        Row: {
+          created_at: string
+          id: string
+          macros_json: Json
+          meals_json: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          macros_json: Json
+          meals_json: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          macros_json?: Json
+          meals_json?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      onboarding: {
+        Row: {
+          age: number | null
+          allergies: string | null
+          availability: Json | null
+          created_at: string
+          goal: string | null
+          height: number | null
+          id: string
+          nutrition_preferences: string | null
+          sports: string | null
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          age?: number | null
+          allergies?: string | null
+          availability?: Json | null
+          created_at?: string
+          goal?: string | null
+          height?: number | null
+          id?: string
+          nutrition_preferences?: string | null
+          sports?: string | null
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          age?: number | null
+          allergies?: string | null
+          availability?: Json | null
+          created_at?: string
+          goal?: string | null
+          height?: number | null
+          id?: string
+          nutrition_preferences?: string | null
+          sports?: string | null
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          plan_status: string
+          stripe_payment_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          plan_status?: string
+          stripe_payment_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          plan_status?: string
+          stripe_payment_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      training_plan: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          workouts_json: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          workouts_json: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          workouts_json?: Json
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +290,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
