@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, Crown, User } from "lucide-react";
+import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, Crown, User, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import type { Json } from "@/integrations/supabase/types";
@@ -18,6 +18,8 @@ import Chat from "@/components/Chat";
 import MobileNav from "@/components/MobileNav";
 import Achievements from "@/components/Achievements";
 import Greeting from "@/components/Greeting";
+import ReferralShare from "@/components/ReferralShare";
+import type { TierKey } from "@/config/tiers";
 
 export interface Profile {
   user_id: string;
@@ -47,6 +49,20 @@ const fadeUp = {
   }),
 };
 
+const LockedFeature = ({ title, description, onUpgrade }: { title: string; description: string; onUpgrade: () => void }) => (
+  <div className="bg-card rounded-2xl p-6 border border-border card-shadow relative overflow-hidden">
+    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-3">
+      <Lock className="w-6 h-6 text-muted-foreground" />
+      <p className="text-sm text-muted-foreground text-center max-w-xs">{description}</p>
+      <Button variant="hero" size="sm" onClick={onUpgrade}>Mejorar Plan</Button>
+    </div>
+    <div className="opacity-30">
+      <h3 className="font-bold font-display mb-2">{title}</h3>
+      <div className="h-24 bg-secondary/30 rounded-lg" />
+    </div>
+  </div>
+);
+
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -55,6 +71,7 @@ const Dashboard = () => {
   const [profileAvatar, setProfileAvatar] = useState("");
   const [planStatus, setPlanStatus] = useState<string>("onboarding");
   const [paymentStatus, setPaymentStatus] = useState<string>("unpaid");
+  const [subscriptionTier, setSubscriptionTier] = useState<TierKey>("basic");
   const [dayPlans, setDayPlans] = useState<DayPlan[]>([]);
   const [macros, setMacros] = useState<Macros | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -93,7 +110,7 @@ const Dashboard = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_status, payment_status, name, avatar_url")
+        .select("plan_status, payment_status, name, avatar_url, subscription_tier")
         .eq("user_id", user.id)
         .single();
 
@@ -102,6 +119,7 @@ const Dashboard = () => {
         setPaymentStatus(profile.payment_status);
         setProfileName((profile as any).name || "");
         setProfileAvatar((profile as any).avatar_url || "");
+        setSubscriptionTier(((profile as any).subscription_tier as TierKey) || "basic");
 
         if (profile.payment_status === "unpaid") { setLoading(false); return; }
         if (profile.plan_status === "onboarding") { navigate("/onboarding"); return; }
@@ -138,7 +156,8 @@ const Dashboard = () => {
   };
 
   const handleCompletePayment = async () => {
-    const { data, error } = await supabase.functions.invoke("create-checkout");
+    const nextTier = subscriptionTier === "basic" ? "pro" : "vip";
+    const { data, error } = await supabase.functions.invoke("create-checkout", { body: { tier: nextTier } });
     if (error || !data?.url) {
       toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
       return;
@@ -281,15 +300,42 @@ const Dashboard = () => {
             {/* Greeting */}
             <Greeting name={profileName} />
 
+            {/* Tier badge */}
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                subscriptionTier === "vip" ? "bg-primary/20 text-primary" :
+                subscriptionTier === "pro" ? "bg-primary/10 text-primary" :
+                "bg-secondary text-muted-foreground"
+              }`}>
+                Plan {subscriptionTier.toUpperCase()}
+              </span>
+              {subscriptionTier !== "vip" && (
+                <button
+                  onClick={handleCompletePayment}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Mejorar plan →
+                </button>
+              )}
+            </div>
+
             {/* Weekly Progress */}
             <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
               {user && <WeeklyProgress userId={user.id} dayPlans={dayPlans} />}
             </motion.div>
 
-            {/* Achievements */}
-            <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
-              {user && <Achievements userId={user.id} />}
-            </motion.div>
+            {/* Achievements - Pro & VIP */}
+            {(subscriptionTier === "pro" || subscriptionTier === "vip") ? (
+              <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+                {user && <Achievements userId={user.id} />}
+              </motion.div>
+            ) : (
+              <LockedFeature
+                title="Logros y Gamificación"
+                description="Desbloquea badges, rachas y más con el plan Pro."
+                onUpgrade={handleCompletePayment}
+              />
+            )}
 
             {/* Training Plan */}
             <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible" ref={trainingRef}>
@@ -389,14 +435,39 @@ const Dashboard = () => {
               </div>
             </motion.div>
 
-            {/* Progress Charts */}
-            <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible" ref={progressRef}>
-              {user && <ProgressCharts userId={user.id} />}
-            </motion.div>
+            {/* Progress Charts - Pro & VIP */}
+            {(subscriptionTier === "pro" || subscriptionTier === "vip") ? (
+              <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible" ref={progressRef}>
+                {user && <ProgressCharts userId={user.id} />}
+              </motion.div>
+            ) : (
+              <div ref={progressRef}>
+                <LockedFeature
+                  title="Gráficos de Progreso"
+                  description="Visualiza tu evolución de peso y medidas con el plan Pro."
+                  onUpgrade={handleCompletePayment}
+                />
+              </div>
+            )}
 
-            {/* Chat */}
-            <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible" ref={chatRef}>
-              {user && <Chat conversationUserId={user.id} />}
+            {/* Chat - Pro & VIP */}
+            {(subscriptionTier === "pro" || subscriptionTier === "vip") ? (
+              <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible" ref={chatRef}>
+                {user && <Chat conversationUserId={user.id} />}
+              </motion.div>
+            ) : (
+              <div ref={chatRef}>
+                <LockedFeature
+                  title="Chat con Entrenador"
+                  description="Habla directamente con tu entrenador con el plan Pro."
+                  onUpgrade={handleCompletePayment}
+                />
+              </div>
+            )}
+
+            {/* Referral Share */}
+            <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
+              <ReferralShare />
             </motion.div>
 
             {/* Manage subscription */}

@@ -7,6 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const TIER_PRICES: Record<string, string> = {
+  basic: "price_1T8o5VJttvYKlxWamWvuD1rC",
+  pro: "price_1T8o5WJttvYKlxWaKGiSG26L",
+  vip: "price_1T8o5YJttvYKlxWaahu5vy7Y",
+};
+
+const REFERRAL_COUPON_ID = "veaugRi2";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -25,6 +33,17 @@ serve(async (req) => {
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
+
+    // Parse body
+    let tier = "pro";
+    let referralCode = "";
+    try {
+      const body = await req.json();
+      tier = body.tier || "pro";
+      referralCode = body.referral_code || "";
+    } catch { /* default to pro */ }
+
+    const priceId = TIER_PRICES[tier] || TIER_PRICES.pro;
 
     // Get payment mode
     const { data: settings } = await supabaseClient.from("settings").select("payment_mode").limit(1).single();
@@ -45,15 +64,55 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://autopilotv2.lovable.app";
 
-    const session = await stripe.checkout.sessions.create({
+    // Build discounts array if referral code is valid
+    const discounts: Array<{ coupon: string }> = [];
+    if (referralCode) {
+      // Verify the referral code exists
+      const { data: referrerProfile } = await supabaseClient
+        .from("profiles")
+        .select("user_id")
+        .eq("referral_code", referralCode)
+        .single();
+
+      if (referrerProfile && referrerProfile.user_id !== user.id) {
+        discounts.push({ coupon: REFERRAL_COUPON_ID });
+
+        // Create referral record
+        await supabaseClient.from("referrals").insert({
+          referrer_user_id: referrerProfile.user_id,
+          referral_code: referralCode,
+          referred_email: user.email,
+          referred_user_id: user.id,
+          status: "completed",
+        });
+      }
+    }
+
+    const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [{ price: "price_1T8l19JttvYKlxWaO6jSsRah", quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/payment-success`,
       cancel_url: `${origin}/signup`,
-      metadata: { user_id: user.id },
-    });
+      metadata: { user_id: user.id, tier },
+      subscription_data: {
+        trial_period_days: 7,
+        metadata: { user_id: user.id, tier },
+      },
+    };
+
+    if (discounts.length > 0) {
+      sessionParams.discounts = discounts;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    // Update profile with tier
+    await supabaseClient
+      .from("profiles")
+      .update({ subscription_tier: tier })
+      .eq("user_id", user.id);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -158,10 +158,13 @@ export type Database = {
           name: string | null
           payment_status: string
           plan_status: string
+          referral_code: string | null
+          referred_by: string | null
           stripe_customer_id: string | null
           stripe_payment_id: string | null
           subscription_end: string | null
           subscription_status: string | null
+          subscription_tier: string | null
           updated_at: string
           user_id: string
         }
@@ -173,10 +176,13 @@ export type Database = {
           name?: string | null
           payment_status?: string
           plan_status?: string
+          referral_code?: string | null
+          referred_by?: string | null
           stripe_customer_id?: string | null
           stripe_payment_id?: string | null
           subscription_end?: string | null
           subscription_status?: string | null
+          subscription_tier?: string | null
           updated_at?: string
           user_id: string
         }
@@ -188,12 +194,48 @@ export type Database = {
           name?: string | null
           payment_status?: string
           plan_status?: string
+          referral_code?: string | null
+          referred_by?: string | null
           stripe_customer_id?: string | null
           stripe_payment_id?: string | null
           subscription_end?: string | null
           subscription_status?: string | null
+          subscription_tier?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referral_code: string
+          referred_email: string | null
+          referred_user_id: string | null
+          referrer_user_id: string
+          reward_applied: boolean
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_user_id: string
+          reward_applied?: boolean
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_user_id?: string
+          reward_applied?: boolean
+          status?: string
         }
         Relationships: []
       }
