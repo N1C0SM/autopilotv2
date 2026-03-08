@@ -38,11 +38,15 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
   const [roleLoading, setRoleLoading] = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase.from("onboarding").select("*").eq("user_id", profile.user_id).single();
-      setOnboarding(data as OnboardingData | null);
+    const fetchData = async () => {
+      const [{ data: onb }, { data: roleData }] = await Promise.all([
+        supabase.from("onboarding").select("*").eq("user_id", profile.user_id).single(),
+        supabase.from("user_roles").select("role").eq("user_id", profile.user_id).eq("role", "admin").maybeSingle(),
+      ]);
+      setOnboarding(onb as OnboardingData | null);
+      setIsUserAdmin(!!roleData);
     };
-    fetch();
+    fetchData();
   }, [profile.user_id]);
 
   const addWorkoutRow = () => setWorkouts((w) => [...w, { day: "", sport: "", intensity: "", duration: "" }]);
