@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard, Users } from "lucide-react";
+import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard, Users, Settings } from "lucide-react";
 import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 import UserList from "@/components/admin/UserList";
