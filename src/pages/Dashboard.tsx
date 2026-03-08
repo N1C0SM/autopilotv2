@@ -111,8 +111,8 @@ const Dashboard = () => {
             </div>
             <h2 className="text-xl font-bold font-display mb-2">Complete Your Payment</h2>
             <p className="text-muted-foreground mb-6">You need to complete your payment of €29 to access your personalized training and nutrition plan.</p>
-            <Button variant="hero" size="lg" onClick={handleCompletePayment} disabled={paymentLoading}>
-              {paymentLoading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</> : "Complete Payment — €29"}
+            <Button variant="hero" size="lg" onClick={handleCompletePayment}>
+              Complete Payment — €29
             </Button>
           </div>
         )}
