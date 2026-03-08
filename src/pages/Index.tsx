@@ -330,7 +330,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="py-10 px-4 border-t border-border">
         <div className="container mx-auto text-center text-muted-foreground text-sm">
-          <span className="font-display font-bold text-gradient">FitPlan Pro</span> &copy; {new Date().getFullYear()}. Todos los derechos reservados.
+          <span className="font-display font-bold text-gradient">Autopilot</span> &copy; {new Date().getFullYear()}. Todos los derechos reservados.
         </div>
       </footer>
 
