@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, Crown, User } from "lucide-react";
+import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, Crown, User, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import type { Json } from "@/integrations/supabase/types";
@@ -18,6 +18,8 @@ import Chat from "@/components/Chat";
 import MobileNav from "@/components/MobileNav";
 import Achievements from "@/components/Achievements";
 import Greeting from "@/components/Greeting";
+import ReferralShare from "@/components/ReferralShare";
+import type { TierKey } from "@/config/tiers";
 
 export interface Profile {
   user_id: string;
