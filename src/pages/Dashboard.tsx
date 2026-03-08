@@ -322,6 +322,19 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
+
+            {/* Progress Charts */}
+            {user && <ProgressCharts userId={user.id} />}
+
+            {/* Chat */}
+            {user && <Chat conversationUserId={user.id} />}
+
+            {/* Manage subscription */}
+            <div className="text-center pt-4">
+              <Button variant="ghost" size="sm" onClick={handleManageSubscription} className="text-muted-foreground">
+                Gestionar suscripción
+              </Button>
+            </div>
           </div>
         )}
       </div>
