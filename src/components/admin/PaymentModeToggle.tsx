@@ -21,7 +21,9 @@ const PaymentModeToggle = () => {
   const toggle = async () => {
     const newMode = paymentMode === "test" ? "live" : "test";
     setSaving(true);
-    const { error } = await supabase.from("settings").update({ payment_mode: newMode } as any).neq("id", "00000000-0000-0000-0000-000000000000");
+    const { data: current } = await supabase.from("settings").select("id").limit(1).single();
+    if (!current) { toast.error("Settings not found"); setSaving(false); return; }
+    const { error } = await supabase.from("settings").update({ payment_mode: newMode } as any).eq("id", current.id);
     if (error) {
       toast.error("Failed to update payment mode");
     } else {
