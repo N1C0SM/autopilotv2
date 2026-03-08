@@ -49,14 +49,10 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    // Parse request body for price_id (optional override)
-    let priceId = "price_1T8jVsJttvYKlxWa9R13xZKP";
-    try {
-      const body = await req.json();
-      if (body?.price_id) priceId = body.price_id;
-    } catch {
-      // No body, use default
-    }
+    // Use correct price ID based on payment mode
+    const priceId = paymentMode === "live"
+      ? "price_1T8jVsJttvYKlxWa9R13xZKP"
+      : "price_1T8jvcJttvYKlxWawZYB45pS";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
