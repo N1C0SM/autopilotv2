@@ -126,12 +126,19 @@ const Dashboard = () => {
         <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
           <div className="container mx-auto flex items-center justify-between h-16 px-4">
             <span className="font-display text-xl font-bold text-gradient">FitPlan Pro Admin</span>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/settings")}>
-                <Settings className="w-4 h-4 mr-1" /> Ajustes
-              </Button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate("/settings")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
+                  {profileAvatar ? (
+                    <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </div>
+                {profileName && <span className="text-sm font-medium hidden sm:inline">{profileName}</span>}
+              </button>
               <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
-                <LogOut className="w-4 h-4 mr-1" /> Cerrar sesión
+                <LogOut className="w-4 h-4" />
               </Button>
             </div>
           </div>
