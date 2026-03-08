@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard } from "lucide-react";
-import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 import type { Json } from "@/integrations/supabase/types";
 
 interface Workout {
