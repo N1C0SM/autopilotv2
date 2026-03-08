@@ -70,7 +70,7 @@ const Dashboard = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_status, payment_status")
+        .select("plan_status, payment_status, name, avatar_url")
         .eq("user_id", user.id)
         .single();
 
