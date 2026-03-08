@@ -96,7 +96,7 @@ const Dashboard = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_status, payment_status, name, avatar_url")
+        .select("plan_status, payment_status, name, avatar_url, subscription_tier")
         .eq("user_id", user.id)
         .single();
 
@@ -105,6 +105,7 @@ const Dashboard = () => {
         setPaymentStatus(profile.payment_status);
         setProfileName((profile as any).name || "");
         setProfileAvatar((profile as any).avatar_url || "");
+        setSubscriptionTier(((profile as any).subscription_tier as TierKey) || "basic");
 
         if (profile.payment_status === "unpaid") { setLoading(false); return; }
         if (profile.plan_status === "onboarding") { navigate("/onboarding"); return; }
