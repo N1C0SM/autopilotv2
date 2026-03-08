@@ -49,6 +49,20 @@ const fadeUp = {
   }),
 };
 
+const LockedFeature = ({ title, description, onUpgrade }: { title: string; description: string; onUpgrade: () => void }) => (
+  <div className="bg-card rounded-2xl p-6 border border-border card-shadow relative overflow-hidden">
+    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-3">
+      <Lock className="w-6 h-6 text-muted-foreground" />
+      <p className="text-sm text-muted-foreground text-center max-w-xs">{description}</p>
+      <Button variant="hero" size="sm" onClick={onUpgrade}>Mejorar Plan</Button>
+    </div>
+    <div className="opacity-30">
+      <h3 className="font-bold font-display mb-2">{title}</h3>
+      <div className="h-24 bg-secondary/30 rounded-lg" />
+    </div>
+  </div>
+);
+
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
