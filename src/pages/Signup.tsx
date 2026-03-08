@@ -1,27 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { TIERS, type TierKey } from "@/config/tiers";
-import PricingTiers from "@/components/PricingTiers";
+import { Loader2, ShieldCheck } from "lucide-react";
+import { TIER } from "@/config/tiers";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<TierKey>(
-    (searchParams.get("tier") as TierKey) || "pro"
-  );
   const referralCode = searchParams.get("ref") || "";
   const { signUp } = useAuth();
-
-  const tier = TIERS[selectedTier];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +35,6 @@ const Signup = () => {
       return;
     }
 
-    // If referred, save referred_by
     if (referralCode) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -50,7 +43,7 @@ const Signup = () => {
     }
 
     const { data, error: checkoutError } = await supabase.functions.invoke("create-checkout", {
-      body: { tier: selectedTier, referral_code: referralCode },
+      body: { tier: "personal", referral_code: referralCode },
     });
     if (checkoutError || !data?.url) {
       toast.error("Error al iniciar el pago. Ve a tu panel para completarlo.");
@@ -68,7 +61,7 @@ const Signup = () => {
           <Link to="/" className="font-display text-2xl font-bold text-gradient">Autopilot</Link>
           <h1 className="text-2xl font-bold font-display mt-6 mb-2">Crea tu cuenta</h1>
           <p className="text-muted-foreground text-sm">
-            Plan <span className="text-primary font-semibold">{tier.name}</span> — €{tier.price}/mes
+            Plan <span className="text-primary font-semibold">{TIER.name}</span> — €{TIER.price}/mes
             <span className="block text-xs mt-1">7 días gratis · Cancela cuando quieras</span>
           </p>
         </div>
@@ -89,29 +82,12 @@ const Signup = () => {
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5" placeholder="Mínimo 6 caracteres" minLength={6} />
           </div>
 
-          {/* Tier selector */}
-          <div className="flex gap-2">
-            {(Object.entries(TIERS) as [TierKey, (typeof TIERS)[TierKey]][]).map(([key, t]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setSelectedTier(key)}
-                className={`flex-1 rounded-lg py-2 text-xs font-semibold border transition-colors ${
-                  selectedTier === key
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-secondary text-muted-foreground border-border hover:border-primary/40"
-                }`}
-              >
-                {t.name}
-                <span className="block text-[10px] font-normal mt-0.5">€{t.price}/mes</span>
-              </button>
-            ))}
-          </div>
-
           <Button variant="hero" size="lg" className="w-full" type="submit" disabled={loading}>
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Procesando...</> : `Empezar 7 días gratis — ${tier.name}`}
+            {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Procesando...</> : `Empezar 7 días gratis — €${TIER.price}/mes`}
           </Button>
-          <p className="text-xs text-center text-muted-foreground">No se cobra hasta que termine la prueba gratuita.</p>
+          <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
+            <ShieldCheck className="w-3 h-3" /> No se cobra hasta que termine la prueba gratuita
+          </p>
           <p className="text-center text-sm text-muted-foreground">
             ¿Ya tienes cuenta? <Link to="/login" className="text-primary hover:underline">Inicia sesión</Link>
           </p>

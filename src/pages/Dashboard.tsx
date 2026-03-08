@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, Crown, User, Lock } from "lucide-react";
+import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, Crown, User } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import type { Json } from "@/integrations/supabase/types";
@@ -13,13 +13,9 @@ import PaymentModeToggle from "@/components/admin/PaymentModeToggle";
 import AdminStats from "@/components/admin/AdminStats";
 import type { DayPlan } from "@/types/training";
 import WeeklyProgress from "@/components/WeeklyProgress";
-import ProgressCharts from "@/components/ProgressCharts";
 import Chat from "@/components/Chat";
 import MobileNav from "@/components/MobileNav";
-import Achievements from "@/components/Achievements";
 import Greeting from "@/components/Greeting";
-import ReferralShare from "@/components/ReferralShare";
-import type { TierKey } from "@/config/tiers";
 
 export interface Profile {
   user_id: string;
@@ -49,20 +45,6 @@ const fadeUp = {
   }),
 };
 
-const LockedFeature = ({ title, description, onUpgrade }: { title: string; description: string; onUpgrade: () => void }) => (
-  <div className="bg-card rounded-2xl p-6 border border-border card-shadow relative overflow-hidden">
-    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-3">
-      <Lock className="w-6 h-6 text-muted-foreground" />
-      <p className="text-sm text-muted-foreground text-center max-w-xs">{description}</p>
-      <Button variant="hero" size="sm" onClick={onUpgrade}>Mejorar Plan</Button>
-    </div>
-    <div className="opacity-30">
-      <h3 className="font-bold font-display mb-2">{title}</h3>
-      <div className="h-24 bg-secondary/30 rounded-lg" />
-    </div>
-  </div>
-);
-
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -71,16 +53,13 @@ const Dashboard = () => {
   const [profileAvatar, setProfileAvatar] = useState("");
   const [planStatus, setPlanStatus] = useState<string>("onboarding");
   const [paymentStatus, setPaymentStatus] = useState<string>("unpaid");
-  const [subscriptionTier, setSubscriptionTier] = useState<TierKey>("basic");
   const [dayPlans, setDayPlans] = useState<DayPlan[]>([]);
   const [macros, setMacros] = useState<Macros | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("home");
 
-  // Refs for scroll-to-section
   const trainingRef = useRef<HTMLDivElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
   // Admin state
@@ -110,7 +89,7 @@ const Dashboard = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_status, payment_status, name, avatar_url, subscription_tier")
+        .select("plan_status, payment_status, name, avatar_url")
         .eq("user_id", user.id)
         .single();
 
@@ -119,7 +98,6 @@ const Dashboard = () => {
         setPaymentStatus(profile.payment_status);
         setProfileName((profile as any).name || "");
         setProfileAvatar((profile as any).avatar_url || "");
-        setSubscriptionTier(((profile as any).subscription_tier as TierKey) || "basic");
 
         if (profile.payment_status === "unpaid") { setLoading(false); return; }
         if (profile.plan_status === "onboarding") { navigate("/onboarding"); return; }
@@ -145,7 +123,6 @@ const Dashboard = () => {
     setActiveSection(section);
     const refMap: Record<string, React.RefObject<HTMLDivElement>> = {
       training: trainingRef,
-      progress: progressRef,
       chat: chatRef,
     };
     if (section === "home") {
@@ -156,8 +133,7 @@ const Dashboard = () => {
   };
 
   const handleCompletePayment = async () => {
-    const nextTier = subscriptionTier === "basic" ? "pro" : "vip";
-    const { data, error } = await supabase.functions.invoke("create-checkout", { body: { tier: nextTier } });
+    const { data, error } = await supabase.functions.invoke("create-checkout", { body: { tier: "personal" } });
     if (error || !data?.url) {
       toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
       return;
@@ -182,11 +158,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </motion.div>
       </div>
@@ -203,11 +175,7 @@ const Dashboard = () => {
             <div className="flex items-center gap-3">
               <button onClick={() => navigate("/settings")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
-                  {profileAvatar ? (
-                    <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-4 h-4 text-muted-foreground" />
-                  )}
+                  {profileAvatar ? <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-muted-foreground" />}
                 </div>
                 {profileName && <span className="text-sm font-medium hidden sm:inline">{profileName}</span>}
               </button>
@@ -221,15 +189,10 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-10 max-w-5xl">
           <AdminStats users={adminUsers} />
           <PaymentModeToggle />
-
           {!selectedUser ? (
             <UserList users={adminUsers} onSelectUser={setSelectedUser} />
           ) : (
-            <UserDetail
-              profile={selectedUser}
-              onBack={() => setSelectedUser(null)}
-              onUpdate={updateUserInList}
-            />
+            <UserDetail profile={selectedUser} onBack={() => setSelectedUser(null)} onUpdate={updateUserInList} />
           )}
         </div>
       </div>
@@ -239,18 +202,13 @@ const Dashboard = () => {
   // ─── User View ───
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      {/* Desktop nav */}
       <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <span className="font-display text-xl font-bold text-gradient">Autopilot</span>
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/settings")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
-                {profileAvatar ? (
-                  <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-4 h-4 text-muted-foreground" />
-                )}
+                {profileAvatar ? <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-muted-foreground" />}
               </div>
               {profileName && <span className="text-sm font-medium hidden sm:inline">{profileName}</span>}
             </button>
@@ -272,10 +230,10 @@ const Dashboard = () => {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <Crown className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-display mb-2">Suscríbete a Autopilot</h2>
-            <p className="text-muted-foreground mb-6">Accede a tu plan personalizado de entrenamiento y nutrición, chat con tu entrenador, gráficos de progreso y más.</p>
+            <h2 className="text-xl font-bold font-display mb-2">Obtén tu plan personalizado</h2>
+            <p className="text-muted-foreground mb-6">Entrenamiento y nutrición 100% adaptados a ti. Chat con tu entrenador incluido.</p>
             <Button variant="hero" size="lg" onClick={handleCompletePayment}>
-              Suscribirme — €19/mes
+              Empezar 7 días gratis — €19/mes
             </Button>
             <p className="text-xs text-muted-foreground mt-3">Cancela cuando quieras. Sin permanencia.</p>
           </motion.div>
@@ -290,55 +248,23 @@ const Dashboard = () => {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <Clock className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-display mb-2">Tu plan personalizado se está creando.</h2>
-            <p className="text-muted-foreground">Nuestro equipo está trabajando en tu plan. ¡Te notificaremos cuando esté listo!</p>
+            <h2 className="text-xl font-bold font-display mb-2">Tu plan se está creando 🔥</h2>
+            <p className="text-muted-foreground mb-2">Nuestro equipo está trabajando en tu plan personalizado.</p>
+            <p className="text-sm text-primary font-medium">Recibirás una notificación en menos de 48h.</p>
           </motion.div>
         )}
 
         {paymentStatus === "paid" && planStatus === "plan_ready" && (
           <div className="space-y-8">
-            {/* Greeting */}
             <Greeting name={profileName} />
-
-            {/* Tier badge */}
-            <div className="flex items-center gap-2">
-              <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                subscriptionTier === "vip" ? "bg-primary/20 text-primary" :
-                subscriptionTier === "pro" ? "bg-primary/10 text-primary" :
-                "bg-secondary text-muted-foreground"
-              }`}>
-                Plan {subscriptionTier.toUpperCase()}
-              </span>
-              {subscriptionTier !== "vip" && (
-                <button
-                  onClick={handleCompletePayment}
-                  className="text-xs text-primary hover:underline"
-                >
-                  Mejorar plan →
-                </button>
-              )}
-            </div>
 
             {/* Weekly Progress */}
             <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
               {user && <WeeklyProgress userId={user.id} dayPlans={dayPlans} />}
             </motion.div>
 
-            {/* Achievements - Pro & VIP */}
-            {(subscriptionTier === "pro" || subscriptionTier === "vip") ? (
-              <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
-                {user && <Achievements userId={user.id} />}
-              </motion.div>
-            ) : (
-              <LockedFeature
-                title="Logros y Gamificación"
-                description="Desbloquea badges, rachas y más con el plan Pro."
-                onUpgrade={handleCompletePayment}
-              />
-            )}
-
             {/* Training Plan */}
-            <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible" ref={trainingRef}>
+            <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible" ref={trainingRef}>
               <div className="flex items-center gap-2 mb-4">
                 <Dumbbell className="w-5 h-5 text-primary" />
                 <h2 className="text-xl font-bold font-display">Plan de Entrenamiento</h2>
@@ -352,7 +278,6 @@ const Dashboard = () => {
                     transition={{ delay: i * 0.04, duration: 0.3 }}
                     className="bg-card rounded-xl border border-border hover:border-primary/30 transition-all duration-200 overflow-hidden group"
                   >
-                    {/* Day header */}
                     <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${plan.type === "gimnasio" ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"}`}>
                         {plan.day.slice(0, 2)}
@@ -364,7 +289,6 @@ const Dashboard = () => {
                         </div>
                       </div>
                     </div>
-
                     <div className="p-4">
                       {(plan.type === "actividad" || !plan.type) && (
                         <div>
@@ -379,12 +303,9 @@ const Dashboard = () => {
                           </div>
                         </div>
                       )}
-
                       {plan.type === "gimnasio" && (
                         <div>
-                          {plan.routine_name && (
-                            <div className="font-semibold text-sm mb-3">{plan.routine_name}</div>
-                          )}
+                          {plan.routine_name && <div className="font-semibold text-sm mb-3">{plan.routine_name}</div>}
                           <div className="space-y-1.5">
                             {(plan.exercises || []).map((ex, j) => (
                               <div key={j} className="flex items-center gap-3 text-xs bg-secondary/30 rounded-lg px-3 py-2">
@@ -403,7 +324,7 @@ const Dashboard = () => {
             </motion.div>
 
             {/* Nutrition Plan */}
-            <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible">
+            <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
               <div className="flex items-center gap-2 mb-4">
                 <Apple className="w-5 h-5 text-primary" />
                 <h2 className="text-xl font-bold font-display">Plan de Nutrición</h2>
@@ -415,7 +336,7 @@ const Dashboard = () => {
                     { label: "Proteína", value: `${macros.protein}g` },
                     { label: "Carbos", value: `${macros.carbs}g` },
                     { label: "Grasas", value: `${macros.fats}g` },
-                  ].map((m, i) => (
+                  ].map((m) => (
                     <motion.div
                       key={m.label}
                       whileHover={{ scale: 1.03 }}
@@ -441,39 +362,9 @@ const Dashboard = () => {
               </div>
             </motion.div>
 
-            {/* Progress Charts - Pro & VIP */}
-            {(subscriptionTier === "pro" || subscriptionTier === "vip") ? (
-              <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible" ref={progressRef}>
-                {user && <ProgressCharts userId={user.id} />}
-              </motion.div>
-            ) : (
-              <div ref={progressRef}>
-                <LockedFeature
-                  title="Gráficos de Progreso"
-                  description="Visualiza tu evolución de peso y medidas con el plan Pro."
-                  onUpgrade={handleCompletePayment}
-                />
-              </div>
-            )}
-
-            {/* Chat - Pro & VIP */}
-            {(subscriptionTier === "pro" || subscriptionTier === "vip") ? (
-              <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible" ref={chatRef}>
-                {user && <Chat conversationUserId={user.id} />}
-              </motion.div>
-            ) : (
-              <div ref={chatRef}>
-                <LockedFeature
-                  title="Chat con Entrenador"
-                  description="Habla directamente con tu entrenador con el plan Pro."
-                  onUpgrade={handleCompletePayment}
-                />
-              </div>
-            )}
-
-            {/* Referral Share */}
-            <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
-              <ReferralShare />
+            {/* Chat */}
+            <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible" ref={chatRef}>
+              {user && <Chat conversationUserId={user.id} />}
             </motion.div>
 
             {/* Manage subscription */}
@@ -486,7 +377,6 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Mobile bottom nav */}
       {paymentStatus === "paid" && planStatus === "plan_ready" && (
         <MobileNav activeSection={activeSection} onNavigateSection={handleNavigateSection} />
       )}
