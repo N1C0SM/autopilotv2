@@ -104,10 +104,22 @@ const Dashboard = () => {
     fetchData();
   }, [user, navigate]);
 
-  const handleCompletePayment = () => {
-    const paymentLink = "https://buy.stripe.com/test_3cIbJ2gbzcumb0e8KP9IQ00";
-    const userEmail = user?.email || "";
-    window.location.href = `${paymentLink}?prefilled_email=${encodeURIComponent(userEmail)}`;
+  const handleCompletePayment = async () => {
+    const { data, error } = await supabase.functions.invoke("create-checkout");
+    if (error || !data?.url) {
+      toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
+      return;
+    }
+    window.location.href = data.url;
+  };
+
+  const handleManageSubscription = async () => {
+    const { data, error } = await supabase.functions.invoke("customer-portal");
+    if (error || !data?.url) {
+      toast.error("Error al abrir el portal de suscripción.");
+      return;
+    }
+    window.open(data.url, "_blank");
   };
 
   const updateUserInList = (userId: string, updates: Partial<Profile>) => {
