@@ -214,6 +214,9 @@ const Dashboard = () => {
 
         {paymentStatus === "paid" && planStatus === "plan_ready" && (
           <div className="space-y-8">
+            {/* Weekly Progress */}
+            {user && <WeeklyProgress userId={user.id} dayPlans={dayPlans} />}
+
             {/* Training Plan */}
             <div>
               <div className="flex items-center gap-2 mb-4">
