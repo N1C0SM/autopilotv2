@@ -52,10 +52,10 @@ serve(async (req) => {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.user_id;
+      const customerEmail = session.customer_details?.email || session.customer_email;
 
-      if (userId) {
-        // Update payment_status and plan_status
+      if (customerEmail) {
+        // Match user by email in profiles
         const { error } = await supabaseAdmin
           .from("profiles")
           .update({
@@ -63,16 +63,16 @@ serve(async (req) => {
             plan_status: "onboarding",
             stripe_payment_id: session.payment_intent as string,
           })
-          .eq("user_id", userId);
+          .eq("email", customerEmail);
 
         if (error) {
           console.error("Error updating profile:", error);
           throw new Error(`Failed to update profile: ${error.message}`);
         }
 
-        console.log(`User ${userId} payment completed successfully`);
+        console.log(`Payment completed for ${customerEmail}`);
       } else {
-        console.warn("No user_id in session metadata");
+        console.warn("No customer email in session");
       }
     }
 

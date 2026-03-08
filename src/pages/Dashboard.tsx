@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard } from "lucide-react";
-import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 
 interface Workout {
@@ -34,7 +33,7 @@ const Dashboard = () => {
   const [macros, setMacros] = useState<Macros | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [paymentLoading, setPaymentLoading] = useState(false);
+  
 
   useEffect(() => {
     if (!user) return;
@@ -77,18 +76,10 @@ const Dashboard = () => {
     fetchData();
   }, [user, navigate]);
 
-  const handleCompletePayment = async () => {
-    setPaymentLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-payment");
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      toast.error("Payment setup failed. Please try again.");
-      setPaymentLoading(false);
-    }
+  const handleCompletePayment = () => {
+    const paymentLink = "https://buy.stripe.com/test_3cIbJ2gbzcumb0e8KP9IQ00";
+    const userEmail = user?.email || "";
+    window.location.href = `${paymentLink}?prefilled_email=${encodeURIComponent(userEmail)}`;
   };
 
   if (loading) {
@@ -120,8 +111,8 @@ const Dashboard = () => {
             </div>
             <h2 className="text-xl font-bold font-display mb-2">Complete Your Payment</h2>
             <p className="text-muted-foreground mb-6">You need to complete your payment of €29 to access your personalized training and nutrition plan.</p>
-            <Button variant="hero" size="lg" onClick={handleCompletePayment} disabled={paymentLoading}>
-              {paymentLoading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</> : "Complete Payment — €29"}
+            <Button variant="hero" size="lg" onClick={handleCompletePayment}>
+              Complete Payment — €29
             </Button>
           </div>
         )}

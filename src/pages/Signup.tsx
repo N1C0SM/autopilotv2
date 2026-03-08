@@ -8,6 +8,8 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_3cIbJ2gbzcumb0e8KP9IQ00";
+
 const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,25 +27,16 @@ const Signup = () => {
       return;
     }
 
-    // Sign in immediately to get session for Stripe
+    // Sign in immediately
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
-      toast.success("Account created! Please log in to proceed to payment.");
+      toast.success("Account created! Please verify your email, then log in to proceed to payment.");
       setLoading(false);
       return;
     }
 
-    // Redirect to Stripe checkout
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke("create-payment");
-      if (fnError) throw fnError;
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      toast.error("Payment setup failed. Please try again from your dashboard.");
-      setLoading(false);
-    }
+    // Redirect to Stripe payment link with prefilled email
+    window.location.href = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}`;
   };
 
   return (
