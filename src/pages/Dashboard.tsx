@@ -57,9 +57,6 @@ const Dashboard = () => {
   const trainingRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
-  // Admin state
-  const [adminUsers, setAdminUsers] = useState<Profile[]>([]);
-  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
 
   useEffect(() => {
     if (!user) return;
