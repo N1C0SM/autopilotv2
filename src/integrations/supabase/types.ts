@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      exercises: {
+        Row: {
+          created_at: string
+          id: string
+          muscle_group: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          muscle_group?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          muscle_group?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       nutrition_plan: {
         Row: {
           created_at: string
