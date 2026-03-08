@@ -18,19 +18,15 @@ serve(async (req) => {
   );
 
   try {
-    // Read payment_mode from settings
     const { data: settings } = await supabaseAdmin.from("settings").select("payment_mode").limit(1).single();
     const paymentMode = settings?.payment_mode || "test";
 
     const stripeKey = paymentMode === "live"
       ? Deno.env.get("STRIPE_LIVE_SECRET_KEY")
       : Deno.env.get("STRIPE_TEST_SECRET_KEY");
-
     if (!stripeKey) throw new Error(`Stripe ${paymentMode} secret key not configured`);
 
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2025-08-27.basil",
-    });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
@@ -42,12 +38,8 @@ serve(async (req) => {
     let event: Stripe.Event;
 
     if (webhookSecret && signature) {
-      // Use SubtleCryptoProvider for Deno compatibility
       event = await stripe.webhooks.constructEventAsync(
-        body,
-        signature,
-        webhookSecret,
-        undefined,
+        body, signature, webhookSecret, undefined,
         Stripe.createSubtleCryptoProvider()
       );
     } else {
@@ -56,34 +48,59 @@ serve(async (req) => {
 
     console.log(`Received Stripe event: ${event.type}`);
 
+    // Handle checkout completed (both payment and subscription)
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const customerEmail = session.customer_details?.email || session.customer_email;
 
       if (customerEmail) {
-        const { error } = await supabaseAdmin
-          .from("profiles")
-          .update({
-            payment_status: "paid",
-            plan_status: "onboarding",
-            stripe_payment_id: session.payment_intent as string,
-          })
-          .eq("email", customerEmail);
+        const updates: any = {
+          payment_status: "paid",
+          plan_status: "onboarding",
+        };
 
-        if (error) {
-          console.error("Error updating profile:", error);
-          throw new Error(`Failed to update profile: ${error.message}`);
+        if (session.mode === "subscription") {
+          updates.subscription_status = "active";
+          updates.stripe_customer_id = session.customer as string;
+        } else {
+          updates.stripe_payment_id = session.payment_intent as string;
         }
 
-        console.log(`Payment completed for ${customerEmail}`);
-      } else {
-        console.warn("No customer email in session");
+        await supabaseAdmin.from("profiles").update(updates).eq("email", customerEmail);
+        console.log(`Checkout completed for ${customerEmail}, mode: ${session.mode}`);
+      }
+    }
+
+    // Handle subscription updates
+    if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId = subscription.customer as string;
+
+      const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+      if (customer.email) {
+        const isActive = subscription.status === "active" || subscription.status === "trialing";
+
+        await supabaseAdmin.from("profiles").update({
+          subscription_status: isActive ? "active" : "inactive",
+          subscription_end: isActive ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+          payment_status: isActive ? "paid" : "unpaid",
+        }).eq("email", customer.email);
+
+        console.log(`Subscription ${subscription.status} for ${customer.email}`);
+      }
+    }
+
+    // Handle invoice payment failed
+    if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object as Stripe.Invoice;
+      const customerEmail = invoice.customer_email;
+      if (customerEmail) {
+        console.log(`Payment failed for ${customerEmail}`);
       }
     }
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
     });
   } catch (error) {
     console.error("Webhook error:", error.message);
