@@ -245,7 +245,7 @@ const Index = () => {
       <section className="py-20 px-4 bg-card/50">
         <div className="container mx-auto max-w-4xl">
           <ScrollReveal>
-            <h2 className="text-3xl font-bold font-display text-center mb-14">¿Por Qué FitPlan Pro?</h2>
+            <h2 className="text-3xl font-bold font-display text-center mb-14">¿Por Qué Autopilot?</h2>
           </ScrollReveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
