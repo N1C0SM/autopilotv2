@@ -55,8 +55,15 @@ const Dashboard = () => {
 
       if (roleData) {
         setIsAdmin(true);
-        const { data: profiles } = await supabase.from("profiles").select("*");
+        const [{ data: profiles }, { data: myProfile }] = await Promise.all([
+          supabase.from("profiles").select("*"),
+          supabase.from("profiles").select("name, avatar_url").eq("user_id", user.id).single(),
+        ]);
         if (profiles) setAdminUsers(profiles as unknown as Profile[]);
+        if (myProfile) {
+          setProfileName(myProfile.name || "");
+          setProfileAvatar(myProfile.avatar_url || "");
+        }
         setLoading(false);
         return;
       }
