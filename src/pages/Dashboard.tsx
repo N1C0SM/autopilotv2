@@ -156,7 +156,8 @@ const Dashboard = () => {
   };
 
   const handleCompletePayment = async () => {
-    const { data, error } = await supabase.functions.invoke("create-checkout");
+    const nextTier = subscriptionTier === "basic" ? "pro" : "vip";
+    const { data, error } = await supabase.functions.invoke("create-checkout", { body: { tier: nextTier } });
     if (error || !data?.url) {
       toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
       return;
