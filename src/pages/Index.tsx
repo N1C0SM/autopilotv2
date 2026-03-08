@@ -5,6 +5,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import ScrollReveal from "@/components/ScrollReveal";
 import CountUp from "@/components/CountUp";
+import PricingTiers from "@/components/PricingTiers";
+import type { TierKey } from "@/config/tiers";
 import {
   Accordion,
   AccordionContent,
