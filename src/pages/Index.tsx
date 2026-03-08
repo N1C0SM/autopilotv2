@@ -69,7 +69,7 @@ const Index = () => {
       {/* Nav */}
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <span className="font-display text-xl font-bold text-gradient">FitPlan Pro</span>
+          <span className="font-display text-xl font-bold text-gradient">Autopilot</span>
           <div className="flex gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>Iniciar sesión</Button>
             <Button variant="default" size="sm" onClick={() => navigate("/signup")}>Empezar</Button>
