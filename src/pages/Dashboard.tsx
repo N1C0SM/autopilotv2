@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
-import type { Json } from "@/integrations/supabase/types";
 
 interface Workout {
   day: string;
