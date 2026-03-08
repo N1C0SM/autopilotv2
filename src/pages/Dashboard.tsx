@@ -57,6 +57,7 @@ const Dashboard = () => {
   const [profileAvatar, setProfileAvatar] = useState("");
   const [planStatus, setPlanStatus] = useState<string>("onboarding");
   const [paymentStatus, setPaymentStatus] = useState<string>("unpaid");
+  const [subscriptionTier, setSubscriptionTier] = useState<TierKey>("basic");
   const [dayPlans, setDayPlans] = useState<DayPlan[]>([]);
   const [macros, setMacros] = useState<Macros | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
