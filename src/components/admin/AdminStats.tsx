@@ -1,6 +1,6 @@
 import { Users, CreditCard, ClipboardList, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
-import type { Profile } from "@/pages/Dashboard";
+import type { Profile } from "@/pages/Admin";
 
 interface Props {
   users: Profile[];
