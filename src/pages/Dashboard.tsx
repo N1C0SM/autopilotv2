@@ -62,20 +62,10 @@ const Dashboard = () => {
     if (!user) return;
 
     const fetchData = async () => {
+      // Check if admin → redirect to /admin
       const { data: roleData } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
-
       if (roleData) {
-        setIsAdmin(true);
-        const [{ data: profiles }, { data: myProfile }] = await Promise.all([
-          supabase.from("profiles").select("*"),
-          supabase.from("profiles").select("name, avatar_url").eq("user_id", user.id).single(),
-        ]);
-        if (profiles) setAdminUsers(profiles as unknown as Profile[]);
-        if (myProfile) {
-          setProfileName(myProfile.name || "");
-          setProfileAvatar(myProfile.avatar_url || "");
-        }
-        setLoading(false);
+        navigate("/admin");
         return;
       }
 
@@ -142,51 +132,12 @@ const Dashboard = () => {
     window.open(data.url, "_blank");
   };
 
-  const updateUserInList = (userId: string, updates: Partial<Profile>) => {
-    setAdminUsers((u) => u.map((p) => p.user_id === userId ? { ...p, ...updates } : p));
-    setSelectedUser((p) => p?.user_id === userId ? { ...p, ...updates } : p);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </motion.div>
-      </div>
-    );
-  }
-
-  // ─── Admin View ───
-  if (isAdmin) {
-    return (
-      <div className="min-h-screen bg-background">
-        <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
-          <div className="container mx-auto flex items-center justify-between h-16 px-4">
-            <span className="font-display text-xl font-bold text-gradient">Autopilot Admin</span>
-            <div className="flex items-center gap-3">
-              <button onClick={() => navigate("/settings")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
-                  {profileAvatar ? <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-muted-foreground" />}
-                </div>
-                {profileName && <span className="text-sm font-medium hidden sm:inline">{profileName}</span>}
-              </button>
-              <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </nav>
-
-        <div className="container mx-auto px-4 py-10 max-w-5xl">
-          <AdminStats users={adminUsers} />
-          <PaymentModeToggle />
-          {!selectedUser ? (
-            <UserList users={adminUsers} onSelectUser={setSelectedUser} />
-          ) : (
-            <UserDetail profile={selectedUser} onBack={() => setSelectedUser(null)} onUpdate={updateUserInList} />
-          )}
-        </div>
       </div>
     );
   }
