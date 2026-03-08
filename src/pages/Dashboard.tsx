@@ -77,6 +77,8 @@ const Dashboard = () => {
       if (profile) {
         setPlanStatus(profile.plan_status);
         setPaymentStatus(profile.payment_status);
+        setProfileName((profile as any).name || "");
+        setProfileAvatar((profile as any).avatar_url || "");
 
         if (profile.payment_status === "unpaid") { setLoading(false); return; }
         if (profile.plan_status === "onboarding") { navigate("/onboarding"); return; }
