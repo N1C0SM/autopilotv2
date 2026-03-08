@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      day_completions: {
+        Row: {
+          completed_at: string
+          created_at: string
+          day_label: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          day_label: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          day_label?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           created_at: string
