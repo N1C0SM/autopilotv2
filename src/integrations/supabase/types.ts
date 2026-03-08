@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          content: string
+          conversation_user_id: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_user_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_user_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       day_completions: {
         Row: {
           completed_at: string
@@ -134,7 +158,10 @@ export type Database = {
           name: string | null
           payment_status: string
           plan_status: string
+          stripe_customer_id: string | null
           stripe_payment_id: string | null
+          subscription_end: string | null
+          subscription_status: string | null
           updated_at: string
           user_id: string
         }
@@ -146,7 +173,10 @@ export type Database = {
           name?: string | null
           payment_status?: string
           plan_status?: string
+          stripe_customer_id?: string | null
           stripe_payment_id?: string | null
+          subscription_end?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -158,7 +188,10 @@ export type Database = {
           name?: string | null
           payment_status?: string
           plan_status?: string
+          stripe_customer_id?: string | null
           stripe_payment_id?: string | null
+          subscription_end?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -221,6 +254,30 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      weight_logs: {
+        Row: {
+          created_at: string
+          id: string
+          logged_at: string
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logged_at?: string
+          user_id: string
+          weight: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logged_at?: string
+          user_id?: string
+          weight?: number
         }
         Relationships: []
       }

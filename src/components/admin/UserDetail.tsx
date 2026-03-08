@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import Chat from "@/components/Chat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -192,6 +193,11 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
       <Button variant="hero" size="lg" className="mt-6" onClick={savePlans} disabled={saving}>
         <Save className="w-4 h-4 mr-1" /> {saving ? "Guardando..." : "Guardar Planes y Notificar"}
       </Button>
+
+      {/* Chat with user */}
+      <div className="mt-6">
+        <Chat conversationUserId={profile.user_id} isAdmin />
+      </div>
     </>
   );
 };

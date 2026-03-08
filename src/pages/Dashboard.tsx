@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard, Users, Settings, User } from "lucide-react";
+import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard, Users, Settings, User, Crown } from "lucide-react";
 import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 import UserList from "@/components/admin/UserList";
@@ -12,6 +12,8 @@ import PaymentModeToggle from "@/components/admin/PaymentModeToggle";
 import AdminStats from "@/components/admin/AdminStats";
 import type { DayPlan } from "@/types/training";
 import WeeklyProgress from "@/components/WeeklyProgress";
+import ProgressCharts from "@/components/ProgressCharts";
+import Chat from "@/components/Chat";
 
 export interface Profile {
   user_id: string;
@@ -102,10 +104,22 @@ const Dashboard = () => {
     fetchData();
   }, [user, navigate]);
 
-  const handleCompletePayment = () => {
-    const paymentLink = "https://buy.stripe.com/test_3cIbJ2gbzcumb0e8KP9IQ00";
-    const userEmail = user?.email || "";
-    window.location.href = `${paymentLink}?prefilled_email=${encodeURIComponent(userEmail)}`;
+  const handleCompletePayment = async () => {
+    const { data, error } = await supabase.functions.invoke("create-checkout");
+    if (error || !data?.url) {
+      toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
+      return;
+    }
+    window.location.href = data.url;
+  };
+
+  const handleManageSubscription = async () => {
+    const { data, error } = await supabase.functions.invoke("customer-portal");
+    if (error || !data?.url) {
+      toast.error("Error al abrir el portal de suscripción.");
+      return;
+    }
+    window.open(data.url, "_blank");
   };
 
   const updateUserInList = (userId: string, updates: Partial<Profile>) => {
@@ -194,13 +208,14 @@ const Dashboard = () => {
         {paymentStatus === "unpaid" && (
           <div className="bg-card rounded-2xl p-10 border border-border card-shadow text-center">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CreditCard className="w-8 h-8 text-primary" />
+              <Crown className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-display mb-2">Completa tu pago</h2>
-            <p className="text-muted-foreground mb-6">Necesitas completar el pago de €29 para acceder a tu plan personalizado de entrenamiento y nutrición.</p>
+            <h2 className="text-xl font-bold font-display mb-2">Suscríbete a FitPlan Pro</h2>
+            <p className="text-muted-foreground mb-6">Accede a tu plan personalizado de entrenamiento y nutrición, chat con tu entrenador, gráficos de progreso y más.</p>
             <Button variant="hero" size="lg" onClick={handleCompletePayment}>
-              Completar Pago — €29
+              Suscribirme — €19/mes
             </Button>
+            <p className="text-xs text-muted-foreground mt-3">Cancela cuando quieras. Sin permanencia.</p>
           </div>
         )}
 
@@ -306,6 +321,19 @@ const Dashboard = () => {
                   ))}
                 </div>
               </div>
+            </div>
+
+            {/* Progress Charts */}
+            {user && <ProgressCharts userId={user.id} />}
+
+            {/* Chat */}
+            {user && <Chat conversationUserId={user.id} />}
+
+            {/* Manage subscription */}
+            <div className="text-center pt-4">
+              <Button variant="ghost" size="sm" onClick={handleManageSubscription} className="text-muted-foreground">
+                Gestionar suscripción
+              </Button>
             </div>
           </div>
         )}
