@@ -320,8 +320,8 @@ const Index = () => {
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
               Únete a más de 500 personas que ya tienen su plan personalizado. Tu mejor versión te espera.
             </p>
-            <Button variant="hero" size="xl" onClick={() => navigate("/signup")} className="hover-scale">
-              Empezar Ahora — €19/mes
+            <Button variant="hero" size="xl" onClick={() => navigate("/signup?tier=pro")} className="hover-scale">
+              Prueba Gratis 7 Días
             </Button>
           </ScrollReveal>
         </div>
