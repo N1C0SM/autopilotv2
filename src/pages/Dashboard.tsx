@@ -12,6 +12,8 @@ import PaymentModeToggle from "@/components/admin/PaymentModeToggle";
 import AdminStats from "@/components/admin/AdminStats";
 import type { DayPlan } from "@/types/training";
 import WeeklyProgress from "@/components/WeeklyProgress";
+import ProgressCharts from "@/components/ProgressCharts";
+import Chat from "@/components/Chat";
 
 export interface Profile {
   user_id: string;
