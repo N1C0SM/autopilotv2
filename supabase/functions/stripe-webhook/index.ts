@@ -4,7 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -35,7 +35,6 @@ serve(async (req) => {
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
 
-    // If webhook secret is configured, verify signature
     const webhookSecret = paymentMode === "live"
       ? Deno.env.get("STRIPE_LIVE_WEBHOOK_SECRET")
       : Deno.env.get("STRIPE_TEST_WEBHOOK_SECRET");
@@ -43,7 +42,14 @@ serve(async (req) => {
     let event: Stripe.Event;
 
     if (webhookSecret && signature) {
-      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+      // Use SubtleCryptoProvider for Deno compatibility
+      event = await stripe.webhooks.constructEventAsync(
+        body,
+        signature,
+        webhookSecret,
+        undefined,
+        Stripe.createSubtleCryptoProvider()
+      );
     } else {
       event = JSON.parse(body) as Stripe.Event;
     }
@@ -55,7 +61,6 @@ serve(async (req) => {
       const customerEmail = session.customer_details?.email || session.customer_email;
 
       if (customerEmail) {
-        // Match user by email in profiles
         const { error } = await supabaseAdmin
           .from("profiles")
           .update({
