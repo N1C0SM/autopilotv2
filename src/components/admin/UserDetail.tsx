@@ -113,7 +113,19 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
         </span>
       </div>
 
-      {onboarding && (
+      {/* Role Management */}
+      <div className="bg-card rounded-xl p-5 border border-border flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <ShieldCheck className="w-5 h-5 text-primary" />
+          <div>
+            <div className="font-medium text-sm">Rol de Administrador</div>
+            <div className="text-xs text-muted-foreground">
+              {isUserAdmin ? "Este usuario es admin" : "Este usuario es usuario normal"}
+            </div>
+          </div>
+        </div>
+        <Switch checked={isUserAdmin} onCheckedChange={toggleAdminRole} disabled={roleLoading} />
+      </div>
         <div className="bg-card rounded-xl p-6 border border-border">
           <h2 className="font-bold font-display mb-4">Onboarding Answers</h2>
           <div className="grid sm:grid-cols-2 gap-3 text-sm">
