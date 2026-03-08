@@ -30,23 +30,23 @@ const Login = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="font-display text-2xl font-bold text-gradient">FitPlan Pro</Link>
-          <h1 className="text-2xl font-bold font-display mt-6 mb-2">Welcome back</h1>
-          <p className="text-muted-foreground text-sm">Log in to access your plan</p>
+          <h1 className="text-2xl font-bold font-display mt-6 mb-2">Bienvenido de vuelta</h1>
+          <p className="text-muted-foreground text-sm">Inicia sesión para acceder a tu plan</p>
         </div>
         <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-8 border border-border card-shadow space-y-5">
           <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5" placeholder="you@example.com" />
+            <Label htmlFor="email">Correo electrónico</Label>
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5" placeholder="tu@ejemplo.com" />
           </div>
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5" />
           </div>
           <Button variant="hero" size="lg" className="w-full" type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Log In"}
+            {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            Don't have an account? <Link to="/signup" className="text-primary hover:underline">Sign up</Link>
+            ¿No tienes cuenta? <Link to="/signup" className="text-primary hover:underline">Regístrate</Link>
           </p>
         </form>
       </div>
