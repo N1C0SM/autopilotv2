@@ -61,6 +61,7 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
   const [macros, setMacros] = useState({ protein: "", carbs: "", fats: "" });
   const [mealsText, setMealsText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [isUserAdmin, setIsUserAdmin] = useState(false);
   const [roleLoading, setRoleLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
