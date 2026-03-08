@@ -103,9 +103,11 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           email: string
           id: string
+          name: string | null
           payment_status: string
           plan_status: string
           stripe_payment_id: string | null
@@ -113,9 +115,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           email: string
           id?: string
+          name?: string | null
           payment_status?: string
           plan_status?: string
           stripe_payment_id?: string | null
@@ -123,9 +127,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           email?: string
           id?: string
+          name?: string | null
           payment_status?: string
           plan_status?: string
           stripe_payment_id?: string | null
