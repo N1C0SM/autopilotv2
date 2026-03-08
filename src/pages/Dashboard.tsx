@@ -34,6 +34,8 @@ const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState("");
   const [planStatus, setPlanStatus] = useState<string>("onboarding");
   const [paymentStatus, setPaymentStatus] = useState<string>("unpaid");
   const [dayPlans, setDayPlans] = useState<DayPlan[]>([]);
