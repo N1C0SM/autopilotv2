@@ -3,7 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2 } from "lucide-react";
+import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard } from "lucide-react";
+import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 
 interface Workout {
@@ -28,10 +29,12 @@ const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [planStatus, setPlanStatus] = useState<string>("onboarding");
+  const [paymentStatus, setPaymentStatus] = useState<string>("unpaid");
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [macros, setMacros] = useState<Macros | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -39,12 +42,18 @@ const Dashboard = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_status")
+        .select("plan_status, payment_status")
         .eq("user_id", user.id)
         .single();
 
       if (profile) {
         setPlanStatus(profile.plan_status);
+        setPaymentStatus(profile.payment_status);
+
+        if (profile.payment_status === "unpaid") {
+          setLoading(false);
+          return;
+        }
 
         if (profile.plan_status === "onboarding") {
           navigate("/onboarding");
@@ -68,6 +77,20 @@ const Dashboard = () => {
     fetchData();
   }, [user, navigate]);
 
+  const handleCompletePayment = async () => {
+    setPaymentLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-payment");
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      toast.error("Payment setup failed. Please try again.");
+      setPaymentLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -90,7 +113,20 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-10 max-w-4xl">
         <h1 className="text-3xl font-bold font-display mb-8">Your Dashboard</h1>
 
-        {planStatus === "plan_pending" && (
+        {paymentStatus === "unpaid" && (
+          <div className="bg-card rounded-2xl p-10 border border-border card-shadow text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CreditCard className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold font-display mb-2">Complete Your Payment</h2>
+            <p className="text-muted-foreground mb-6">You need to complete your payment of €29 to access your personalized training and nutrition plan.</p>
+            <Button variant="hero" size="lg" onClick={handleCompletePayment} disabled={paymentLoading}>
+              {paymentLoading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</> : "Complete Payment — €29"}
+            </Button>
+          </div>
+        )}
+
+        {paymentStatus === "paid" && planStatus === "plan_pending" && (
           <div className="bg-card rounded-2xl p-10 border border-border card-shadow text-center">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <Clock className="w-8 h-8 text-primary" />
@@ -100,7 +136,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        {planStatus === "plan_ready" && (
+        {paymentStatus === "paid" && planStatus === "plan_ready" && (
           <div className="space-y-8">
             {/* Training Plan */}
             <div>
