@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard, Users, Settings } from "lucide-react";
+import { LogOut, Dumbbell, Apple, Clock, Flame, Loader2, CreditCard, Users, Settings, User } from "lucide-react";
 import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 import UserList from "@/components/admin/UserList";
@@ -34,6 +34,8 @@ const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState("");
   const [planStatus, setPlanStatus] = useState<string>("onboarding");
   const [paymentStatus, setPaymentStatus] = useState<string>("unpaid");
   const [dayPlans, setDayPlans] = useState<DayPlan[]>([]);
@@ -53,21 +55,30 @@ const Dashboard = () => {
 
       if (roleData) {
         setIsAdmin(true);
-        const { data: profiles } = await supabase.from("profiles").select("*");
+        const [{ data: profiles }, { data: myProfile }] = await Promise.all([
+          supabase.from("profiles").select("*"),
+          supabase.from("profiles").select("name, avatar_url").eq("user_id", user.id).single(),
+        ]);
         if (profiles) setAdminUsers(profiles as unknown as Profile[]);
+        if (myProfile) {
+          setProfileName(myProfile.name || "");
+          setProfileAvatar(myProfile.avatar_url || "");
+        }
         setLoading(false);
         return;
       }
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_status, payment_status")
+        .select("plan_status, payment_status, name, avatar_url")
         .eq("user_id", user.id)
         .single();
 
       if (profile) {
         setPlanStatus(profile.plan_status);
         setPaymentStatus(profile.payment_status);
+        setProfileName((profile as any).name || "");
+        setProfileAvatar((profile as any).avatar_url || "");
 
         if (profile.payment_status === "unpaid") { setLoading(false); return; }
         if (profile.plan_status === "onboarding") { navigate("/onboarding"); return; }
@@ -115,12 +126,19 @@ const Dashboard = () => {
         <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
           <div className="container mx-auto flex items-center justify-between h-16 px-4">
             <span className="font-display text-xl font-bold text-gradient">FitPlan Pro Admin</span>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/settings")}>
-                <Settings className="w-4 h-4 mr-1" /> Ajustes
-              </Button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate("/settings")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
+                  {profileAvatar ? (
+                    <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </div>
+                {profileName && <span className="text-sm font-medium hidden sm:inline">{profileName}</span>}
+              </button>
               <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
-                <LogOut className="w-4 h-4 mr-1" /> Cerrar sesión
+                <LogOut className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -149,12 +167,19 @@ const Dashboard = () => {
       <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
             <span className="font-display text-xl font-bold text-gradient">FitPlan Pro</span>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/settings")}>
-                <Settings className="w-4 h-4 mr-1" /> Ajustes
-              </Button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate("/settings")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
+                  {profileAvatar ? (
+                    <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </div>
+                {profileName && <span className="text-sm font-medium hidden sm:inline">{profileName}</span>}
+              </button>
               <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
-                <LogOut className="w-4 h-4 mr-1" /> Cerrar sesión
+                <LogOut className="w-4 h-4" />
               </Button>
             </div>
         </div>
