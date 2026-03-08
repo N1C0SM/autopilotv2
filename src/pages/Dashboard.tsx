@@ -208,13 +208,14 @@ const Dashboard = () => {
         {paymentStatus === "unpaid" && (
           <div className="bg-card rounded-2xl p-10 border border-border card-shadow text-center">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CreditCard className="w-8 h-8 text-primary" />
+              <Crown className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-display mb-2">Completa tu pago</h2>
-            <p className="text-muted-foreground mb-6">Necesitas completar el pago de €29 para acceder a tu plan personalizado de entrenamiento y nutrición.</p>
+            <h2 className="text-xl font-bold font-display mb-2">Suscríbete a FitPlan Pro</h2>
+            <p className="text-muted-foreground mb-6">Accede a tu plan personalizado de entrenamiento y nutrición, chat con tu entrenador, gráficos de progreso y más.</p>
             <Button variant="hero" size="lg" onClick={handleCompletePayment}>
-              Completar Pago — €29
+              Suscribirme — €19/mes
             </Button>
+            <p className="text-xs text-muted-foreground mt-3">Cancela cuando quieras. Sin permanencia.</p>
           </div>
         )}
 
