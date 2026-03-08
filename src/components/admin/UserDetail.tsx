@@ -55,6 +55,20 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
   };
   const removeWorkout = (i: number) => setWorkouts((w) => w.filter((_, idx) => idx !== i));
 
+  const toggleAdminRole = async () => {
+    setRoleLoading(true);
+    if (isUserAdmin) {
+      const { error } = await supabase.from("user_roles").delete().eq("user_id", profile.user_id).eq("role", "admin");
+      if (!error) { setIsUserAdmin(false); toast.success("Rol de admin eliminado"); }
+      else toast.error("Error al cambiar rol");
+    } else {
+      const { error } = await supabase.from("user_roles").insert({ user_id: profile.user_id, role: "admin" as Database["public"]["Enums"]["app_role"] });
+      if (!error) { setIsUserAdmin(true); toast.success("Rol de admin asignado"); }
+      else toast.error("Error al cambiar rol");
+    }
+    setRoleLoading(false);
+  };
+
   const savePlans = async () => {
     setSaving(true);
     const meals = mealsText.split("\n").filter(Boolean).map((line) => {
