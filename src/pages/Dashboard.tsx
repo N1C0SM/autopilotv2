@@ -147,6 +147,7 @@ const Dashboard = () => {
         </nav>
 
         <div className="container mx-auto px-4 py-10 max-w-5xl">
+          <AdminStats users={adminUsers} />
           <PaymentModeToggle />
 
           {!selectedUser ? (
