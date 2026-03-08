@@ -222,8 +222,11 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
             </span>
           </div>
         </div>
+        <Button variant="outline" onClick={autoGeneratePlan} disabled={generating} className="shrink-0">
+          <Wand2 className="w-4 h-4 mr-1" /> {generating ? "Generando..." : "Auto-generar"}
+        </Button>
         <Button variant="hero" onClick={savePlans} disabled={saving} className="shrink-0">
-          <Save className="w-4 h-4 mr-1" /> {saving ? "Guardando..." : "Guardar Planes"}
+          <Save className="w-4 h-4 mr-1" /> {saving ? "Guardando..." : "Guardar"}
         </Button>
       </div>
 
