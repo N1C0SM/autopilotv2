@@ -65,7 +65,7 @@ const Signup = () => {
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link to="/" className="font-display text-2xl font-bold text-gradient">FitPlan Pro</Link>
+          <Link to="/" className="font-display text-2xl font-bold text-gradient">Autopilot</Link>
           <h1 className="text-2xl font-bold font-display mt-6 mb-2">Crea tu cuenta</h1>
           <p className="text-muted-foreground text-sm">
             Plan <span className="text-primary font-semibold">{tier.name}</span> — €{tier.price}/mes

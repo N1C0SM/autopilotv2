@@ -272,7 +272,7 @@ const Dashboard = () => {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <Crown className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-display mb-2">Suscríbete a FitPlan Pro</h2>
+            <h2 className="text-xl font-bold font-display mb-2">Suscríbete a Autopilot</h2>
             <p className="text-muted-foreground mb-6">Accede a tu plan personalizado de entrenamiento y nutrición, chat con tu entrenador, gráficos de progreso y más.</p>
             <Button variant="hero" size="lg" onClick={handleCompletePayment}>
               Suscribirme — €19/mes
