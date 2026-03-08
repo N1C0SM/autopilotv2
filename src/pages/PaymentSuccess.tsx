@@ -15,12 +15,10 @@ const PaymentSuccess = () => {
     if (loading) return;
 
     if (!user) {
-      // User lost session after Stripe redirect — send to login
       setChecking(false);
       return;
     }
 
-    // Poll for payment status update (webhook may take a few seconds)
     let attempts = 0;
     const maxAttempts = 10;
 
@@ -41,7 +39,6 @@ const PaymentSuccess = () => {
       if (attempts < maxAttempts) {
         setTimeout(checkPayment, 2000);
       } else {
-        // After 20 seconds, show success anyway (webhook might be slow)
         setPaid(true);
         setChecking(false);
       }
@@ -54,7 +51,7 @@ const PaymentSuccess = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-muted-foreground text-sm">Verifying your payment...</p>
+        <p className="text-muted-foreground text-sm">Verificando tu pago...</p>
       </div>
     );
   }
@@ -66,12 +63,12 @@ const PaymentSuccess = () => {
           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold font-display mb-3">Payment Received!</h1>
+          <h1 className="text-3xl font-bold font-display mb-3">¡Pago Recibido!</h1>
           <p className="text-muted-foreground mb-8">
-            Please log in to continue with your personalized plan setup.
+            Por favor inicia sesión para continuar con la configuración de tu plan personalizado.
           </p>
           <Button variant="hero" size="lg" onClick={() => navigate("/login")}>
-            Log In to Continue
+            Iniciar Sesión para Continuar
           </Button>
         </div>
       </div>
@@ -84,12 +81,12 @@ const PaymentSuccess = () => {
         <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle2 className="w-10 h-10 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold font-display mb-3">Payment Successful!</h1>
+        <h1 className="text-3xl font-bold font-display mb-3">¡Pago Exitoso!</h1>
         <p className="text-muted-foreground mb-8">
-          Thank you for your purchase! Now let's create your personalized plan.
+          ¡Gracias por tu compra! Ahora vamos a crear tu plan personalizado.
         </p>
         <Button variant="hero" size="lg" onClick={() => navigate("/onboarding")}>
-          Start Questionnaire
+          Comenzar Cuestionario
         </Button>
       </div>
     </div>

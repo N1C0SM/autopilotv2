@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 
-const STEPS = ["Physical Data", "Main Goal", "Sports", "Availability", "Nutrition", "Allergies"];
+const STEPS = ["Datos Físicos", "Objetivo", "Deportes", "Disponibilidad", "Nutrición", "Alergias"];
 
 const Onboarding = () => {
   const { user } = useAuth();
@@ -47,10 +47,10 @@ const Onboarding = () => {
 
     if (!error) {
       await supabase.from("profiles").update({ plan_status: "plan_pending" }).eq("user_id", user.id);
-      toast.success("Questionnaire submitted! Your plan is being prepared.");
+      toast.success("¡Cuestionario enviado! Tu plan se está preparando.");
       navigate("/dashboard");
     } else {
-      toast.error("Something went wrong. Please try again.");
+      toast.error("Algo salió mal. Por favor, inténtalo de nuevo.");
     }
     setLoading(false);
   };
@@ -66,11 +66,11 @@ const Onboarding = () => {
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <span className="font-display text-2xl font-bold text-gradient">FitPlan Pro</span>
-          <h1 className="text-2xl font-bold font-display mt-6 mb-2">Tell Us About You</h1>
-          <p className="text-muted-foreground text-sm">Step {step + 1} of {STEPS.length}: {STEPS[step]}</p>
+          <h1 className="text-2xl font-bold font-display mt-6 mb-2">Cuéntanos Sobre Ti</h1>
+          <p className="text-muted-foreground text-sm">Paso {step + 1} de {STEPS.length}: {STEPS[step]}</p>
         </div>
 
-        {/* Progress bar */}
+        {/* Barra de progreso */}
         <div className="flex gap-1.5 mb-8">
           {STEPS.map((_, i) => (
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-secondary"}`} />
@@ -81,15 +81,15 @@ const Onboarding = () => {
           {step === 0 && (
             <div className="space-y-4">
               <div>
-                <Label>Age</Label>
+                <Label>Edad</Label>
                 <Input type="number" value={data.age} onChange={(e) => update("age", e.target.value)} placeholder="25" className="mt-1.5" />
               </div>
               <div>
-                <Label>Height (cm)</Label>
+                <Label>Altura (cm)</Label>
                 <Input type="number" value={data.height} onChange={(e) => update("height", e.target.value)} placeholder="175" className="mt-1.5" />
               </div>
               <div>
-                <Label>Weight (kg)</Label>
+                <Label>Peso (kg)</Label>
                 <Input type="number" value={data.weight} onChange={(e) => update("weight", e.target.value)} placeholder="70" className="mt-1.5" />
               </div>
             </div>
@@ -98,9 +98,9 @@ const Onboarding = () => {
           {step === 1 && (
             <RadioGroup value={data.goal} onValueChange={(v) => update("goal", v)} className="space-y-3">
               {[
-                { value: "lose_weight", label: "Lose Weight" },
-                { value: "gain_muscle", label: "Gain Muscle" },
-                { value: "improve_endurance", label: "Improve Endurance" },
+                { value: "lose_weight", label: "Perder Peso" },
+                { value: "gain_muscle", label: "Ganar Músculo" },
+                { value: "improve_endurance", label: "Mejorar Resistencia" },
               ].map((opt) => (
                 <label key={opt.value} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${data.goal === opt.value ? "border-primary bg-primary/5" : "border-border"}`}>
                   <RadioGroupItem value={opt.value} />
@@ -112,19 +112,19 @@ const Onboarding = () => {
 
           {step === 2 && (
             <div>
-              <Label>What sports do you practice?</Label>
-              <Textarea value={data.sports} onChange={(e) => update("sports", e.target.value)} placeholder="Running, weightlifting, swimming..." className="mt-1.5" />
+              <Label>¿Qué deportes practicas?</Label>
+              <Textarea value={data.sports} onChange={(e) => update("sports", e.target.value)} placeholder="Running, musculación, natación..." className="mt-1.5" />
             </div>
           )}
 
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <Label>Days per week available</Label>
+                <Label>Días por semana disponibles</Label>
                 <Input type="number" min={1} max={7} value={data.availability.days} onChange={(e) => setData((d) => ({ ...d, availability: { ...d.availability, days: e.target.value } }))} placeholder="4" className="mt-1.5" />
               </div>
               <div>
-                <Label>Hours per session</Label>
+                <Label>Horas por sesión</Label>
                 <Input type="number" step="0.5" value={data.availability.hours} onChange={(e) => setData((d) => ({ ...d, availability: { ...d.availability, hours: e.target.value } }))} placeholder="1.5" className="mt-1.5" />
               </div>
             </div>
@@ -132,29 +132,29 @@ const Onboarding = () => {
 
           {step === 4 && (
             <div>
-              <Label>Nutrition preferences</Label>
-              <Textarea value={data.nutrition_preferences} onChange={(e) => update("nutrition_preferences", e.target.value)} placeholder="Vegetarian, high protein, Mediterranean..." className="mt-1.5" />
+              <Label>Preferencias nutricionales</Label>
+              <Textarea value={data.nutrition_preferences} onChange={(e) => update("nutrition_preferences", e.target.value)} placeholder="Vegetariano, alta en proteínas, mediterránea..." className="mt-1.5" />
             </div>
           )}
 
           {step === 5 && (
             <div>
-              <Label>Allergies or food intolerances</Label>
-              <Textarea value={data.allergies} onChange={(e) => update("allergies", e.target.value)} placeholder="Lactose, gluten, nuts..." className="mt-1.5" />
+              <Label>Alergias o intolerancias alimentarias</Label>
+              <Textarea value={data.allergies} onChange={(e) => update("allergies", e.target.value)} placeholder="Lactosa, gluten, frutos secos..." className="mt-1.5" />
             </div>
           )}
 
           <div className="flex justify-between mt-8">
             <Button variant="ghost" onClick={() => setStep((s) => s - 1)} disabled={step === 0}>
-              <ArrowLeft className="w-4 h-4 mr-1" /> Back
+              <ArrowLeft className="w-4 h-4 mr-1" /> Atrás
             </Button>
             {step < STEPS.length - 1 ? (
               <Button variant="default" onClick={() => setStep((s) => s + 1)} disabled={!canNext()}>
-                Next <ArrowRight className="w-4 h-4 ml-1" />
+                Siguiente <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (
               <Button variant="hero" onClick={handleSubmit} disabled={loading}>
-                <Check className="w-4 h-4 mr-1" /> {loading ? "Submitting..." : "Submit"}
+                <Check className="w-4 h-4 mr-1" /> {loading ? "Enviando..." : "Enviar"}
               </Button>
             )}
           </div>

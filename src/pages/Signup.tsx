@@ -27,15 +27,13 @@ const Signup = () => {
       return;
     }
 
-    // Sign in immediately
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
-      toast.success("Account created! Please verify your email, then log in to proceed to payment.");
+      toast.success("¡Cuenta creada! Por favor verifica tu email y luego inicia sesión para proceder al pago.");
       setLoading(false);
       return;
     }
 
-    // Redirect to Stripe payment link with prefilled email
     window.location.href = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}`;
   };
 
@@ -44,23 +42,23 @@ const Signup = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="font-display text-2xl font-bold text-gradient">FitPlan Pro</Link>
-          <h1 className="text-2xl font-bold font-display mt-6 mb-2">Create your account</h1>
-          <p className="text-muted-foreground text-sm">Sign up and proceed to payment (€29)</p>
+          <h1 className="text-2xl font-bold font-display mt-6 mb-2">Crea tu cuenta</h1>
+          <p className="text-muted-foreground text-sm">Regístrate y procede al pago (€29)</p>
         </div>
         <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-8 border border-border card-shadow space-y-5">
           <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5" placeholder="you@example.com" />
+            <Label htmlFor="email">Correo electrónico</Label>
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5" placeholder="tu@ejemplo.com" />
           </div>
           <div>
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5" placeholder="Min 6 characters" minLength={6} />
+            <Label htmlFor="password">Contraseña</Label>
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5" placeholder="Mínimo 6 caracteres" minLength={6} />
           </div>
           <Button variant="hero" size="lg" className="w-full" type="submit" disabled={loading}>
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</> : "Sign Up & Pay €29"}
+            {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Procesando...</> : "Registrarse y Pagar €29"}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            Already have an account? <Link to="/login" className="text-primary hover:underline">Log in</Link>
+            ¿Ya tienes cuenta? <Link to="/login" className="text-primary hover:underline">Inicia sesión</Link>
           </p>
         </form>
       </div>
