@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { LogOut, Users, Loader2, Settings } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminStats from "@/components/admin/AdminStats";
 import UserList from "@/components/admin/UserList";
 import UserDetail from "@/components/admin/UserDetail";
 import PaymentModeToggle from "@/components/admin/PaymentModeToggle";
+import ExerciseLibrary from "@/components/admin/ExerciseLibrary";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export interface Profile {
   user_id: string;
@@ -17,6 +19,8 @@ export interface Profile {
   created_at: string;
 }
 
+export type AdminSection = "dashboard" | "users" | "exercises" | "settings";
+
 const Admin = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -24,6 +28,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<Profile[]>([]);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [section, setSection] = useState<AdminSection>("dashboard");
 
   useEffect(() => {
     if (!user) return;
@@ -46,6 +51,16 @@ const Admin = () => {
     setSelectedUser((p) => p?.user_id === userId ? { ...p, ...updates } : p);
   };
 
+  const handleSelectUser = (u: Profile) => {
+    setSelectedUser(u);
+    setSection("users");
+  };
+
+  const handleNavigate = (s: AdminSection) => {
+    setSection(s);
+    if (s !== "users") setSelectedUser(null);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -57,32 +72,148 @@ const Admin = () => {
   if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <span className="font-display text-xl font-bold text-gradient">Autopilot Admin</span>
-          <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
-            <LogOut className="w-4 h-4 mr-1" /> Log out
-          </Button>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AdminSidebar
+          section={section}
+          onNavigate={handleNavigate}
+          userCount={users.length}
+          onSignOut={() => { signOut(); navigate("/"); }}
+        />
+
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Top bar */}
+          <header className="h-14 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50 flex items-center px-4 gap-3">
+            <SidebarTrigger />
+            <h1 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+              {section === "dashboard" && "Panel general"}
+              {section === "users" && (selectedUser ? selectedUser.email : "Usuarios")}
+              {section === "exercises" && "Biblioteca de ejercicios"}
+              {section === "settings" && "Configuración"}
+            </h1>
+          </header>
+
+          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+            {section === "dashboard" && (
+              <div className="max-w-5xl space-y-6">
+                <AdminStats users={users} />
+
+                {/* Quick actions */}
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <QuickAction
+                    label="Planes pendientes"
+                    value={users.filter(u => u.plan_status === "plan_pending").length}
+                    color="text-amber-400"
+                    onClick={() => { setSection("users"); }}
+                  />
+                  <QuickAction
+                    label="Sin pagar"
+                    value={users.filter(u => u.payment_status === "unpaid").length}
+                    color="text-destructive"
+                    onClick={() => { setSection("users"); }}
+                  />
+                  <QuickAction
+                    label="Nuevos (hoy)"
+                    value={users.filter(u => {
+                      const d = new Date(u.created_at);
+                      const today = new Date();
+                      return d.toDateString() === today.toDateString();
+                    }).length}
+                    color="text-primary"
+                    onClick={() => { setSection("users"); }}
+                  />
+                </div>
+
+                {/* Recent users */}
+                <div>
+                  <h2 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground mb-3">Usuarios recientes</h2>
+                  <div className="space-y-2">
+                    {users
+                      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                      .slice(0, 5)
+                      .map((u) => (
+                        <div
+                          key={u.user_id}
+                          className="bg-card rounded-xl p-4 border border-border flex items-center gap-3 cursor-pointer hover:border-primary/50 transition-all"
+                          onClick={() => handleSelectUser(u)}
+                        >
+                          <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                            <span className="text-xs font-bold text-muted-foreground">{u.email.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{u.email}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(u.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                            </div>
+                          </div>
+                          <StatusDot status={u.plan_status} payment={u.payment_status} />
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {section === "users" && (
+              <div className="max-w-5xl">
+                {!selectedUser ? (
+                  <UserList users={users} onSelectUser={handleSelectUser} />
+                ) : (
+                  <UserDetail
+                    profile={selectedUser}
+                    onBack={() => setSelectedUser(null)}
+                    onUpdate={updateUserInList}
+                  />
+                )}
+              </div>
+            )}
+
+            {section === "exercises" && (
+              <div className="max-w-3xl">
+                <ExerciseLibraryFull />
+              </div>
+            )}
+
+            {section === "settings" && (
+              <div className="max-w-2xl space-y-6">
+                <PaymentModeToggle />
+              </div>
+            )}
+          </main>
         </div>
-      </nav>
-
-      <div className="container mx-auto px-4 py-10 max-w-5xl">
-        {/* Payment Mode Toggle */}
-        <PaymentModeToggle />
-
-        {!selectedUser ? (
-          <UserList users={users} onSelectUser={setSelectedUser} />
-        ) : (
-          <UserDetail
-            profile={selectedUser}
-            onBack={() => setSelectedUser(null)}
-            onUpdate={updateUserInList}
-          />
-        )}
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
+
+// ─── Small helper components ───
+
+function QuickAction({ label, value, color, onClick }: { label: string; value: number; color: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-card rounded-xl p-5 border border-border hover:border-primary/30 transition-all text-left group"
+    >
+      <div className={`text-3xl font-bold font-display ${color}`}>{value}</div>
+      <div className="text-xs text-muted-foreground mt-1 group-hover:text-foreground transition-colors">{label}</div>
+    </button>
+  );
+}
+
+function StatusDot({ status, payment }: { status: string; payment: string }) {
+  if (payment === "unpaid") return <span className="w-2.5 h-2.5 rounded-full bg-destructive shrink-0" title="Sin pagar" />;
+  if (status === "plan_ready") return <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" title="Plan listo" />;
+  if (status === "plan_pending") return <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" title="Pendiente" />;
+  return <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground shrink-0" title="Onboarding" />;
+}
+
+// Full-page exercise library (always open)
+function ExerciseLibraryFull() {
+  return (
+    <div>
+      <ExerciseLibrary defaultOpen />
+    </div>
+  );
+}
 
 export default Admin;
