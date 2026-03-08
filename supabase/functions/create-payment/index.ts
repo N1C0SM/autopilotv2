@@ -24,7 +24,22 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    // Read payment_mode from settings using service role to bypass RLS
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+    const { data: settings } = await supabaseAdmin.from("settings").select("payment_mode").limit(1).single();
+    const paymentMode = settings?.payment_mode || "test";
+
+    // Select the correct Stripe key based on mode
+    const stripeKey = paymentMode === "live"
+      ? Deno.env.get("STRIPE_LIVE_SECRET_KEY")
+      : Deno.env.get("STRIPE_TEST_SECRET_KEY");
+
+    if (!stripeKey) throw new Error(`Stripe ${paymentMode} secret key not configured`);
+
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2025-08-27.basil",
     });
 
@@ -34,18 +49,23 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
+    // Parse request body for price_id (optional override)
+    let priceId = "price_1T8jVsJttvYKlxWa9R13xZKP";
+    try {
+      const body = await req.json();
+      if (body?.price_id) priceId = body.price_id;
+    } catch {
+      // No body, use default
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [
-        {
-          price: "price_1T8jVsJttvYKlxWa9R13xZKP",
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: "payment",
       success_url: `${req.headers.get("origin")}/payment-success`,
       cancel_url: `${req.headers.get("origin")}/signup`,
+      metadata: { user_id: user.id },
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
