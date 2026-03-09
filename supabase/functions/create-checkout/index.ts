@@ -74,8 +74,6 @@ serve(async (req) => {
       }
     }
 
-    const priceId = paymentMode === "live" ? LIVE_PRICE_ID : TEST_PRICE_ID;
-
     const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
