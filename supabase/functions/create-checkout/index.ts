@@ -7,7 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRICE_ID = "price_1T8o5WJttvYKlxWaKGiSG26L";
+const LIVE_PRICE_ID = "price_1T8o5WJttvYKlxWaKGiSG26L";
+const TEST_PRICE_ID = "price_1T8jvcJttvYKlxWawZYB45pS";
 const REFERRAL_COUPON_ID = "veaugRi2";
 
 serve(async (req) => {
@@ -74,10 +75,12 @@ serve(async (req) => {
       }
     }
 
+    const priceId = paymentMode === "live" ? LIVE_PRICE_ID : TEST_PRICE_ID;
+
     const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [{ price: PRICE_ID, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/payment-success`,
       cancel_url: `${origin}/signup`,
