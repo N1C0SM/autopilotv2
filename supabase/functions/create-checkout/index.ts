@@ -7,7 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRICE_ID = "price_1T8o5WJttvYKlxWaKGiSG26L";
+const LIVE_PRICE_ID = "price_1T8o5WJttvYKlxWaKGiSG26L";
+const TEST_PRICE_ID = "price_1T8jvcJttvYKlxWawZYB45pS";
 const REFERRAL_COUPON_ID = "veaugRi2";
 
 serve(async (req) => {
