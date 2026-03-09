@@ -77,7 +77,7 @@ serve(async (req) => {
     const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: PRICE_ID, quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/payment-success`,
       cancel_url: `${origin}/signup`,
