@@ -83,12 +83,43 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       nutrition_plan: {
         Row: {
           created_at: string
           id: string
           macros_json: Json
           meals_json: Json
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -96,6 +127,7 @@ export type Database = {
           id?: string
           macros_json: Json
           meals_json: Json
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -103,6 +135,7 @@ export type Database = {
           id?: string
           macros_json?: Json
           meals_json?: Json
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -273,18 +306,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          updated_at: string | null
           user_id: string
           workouts_json: Json
         }
         Insert: {
           created_at?: string
           id?: string
+          updated_at?: string | null
           user_id: string
           workouts_json: Json
         }
         Update: {
           created_at?: string
           id?: string
+          updated_at?: string | null
           user_id?: string
           workouts_json?: Json
         }

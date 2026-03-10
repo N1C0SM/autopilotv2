@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.auto-tasks]
+verify_jwt = false
+
+[functions.generate-plan]
+verify_jwt = false
