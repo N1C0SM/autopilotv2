@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Dumbbell, Apple, Clock, Flame, Loader2, Crown } from "lucide-react";
+import NotificationsBell from "@/components/NotificationsBell";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import type { DayPlan } from "@/types/training";
