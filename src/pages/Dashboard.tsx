@@ -159,9 +159,10 @@ const Dashboard = () => {
           {/* Top bar */}
           <header className="h-14 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50 flex items-center px-4 gap-3">
             <SidebarTrigger />
-            <h1 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+            <h1 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground flex-1">
               {SECTION_LABELS[section]}
             </h1>
+            {user && <NotificationsBell userId={user.id} />}
           </header>
 
           <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
