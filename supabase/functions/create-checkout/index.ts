@@ -43,17 +43,18 @@ serve(async (req) => {
     } catch { /* no body */ }
     log("Referral code", { referralCode });
 
-    // Get payment mode
-    const { data: settings, error: settingsError } = await supabaseClient.from("settings").select("payment_mode").limit(1).single();
-    if (settingsError) log("Settings error", settingsError);
-    const paymentMode = settings?.payment_mode || "test";
-    log("Payment mode", { paymentMode });
-
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("Stripe secret key not configured");
     log("Stripe key found");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    let customerId;
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id;
+    }
+    log("Customer lookup", { customerId: customerId || "new" });
 
     const origin = req.headers.get("origin") || "https://autopilotv2.lovable.app";
     log("Origin", { origin });
@@ -78,13 +79,12 @@ serve(async (req) => {
       }
     }
 
-    const priceId = paymentMode === "live" ? LIVE_PRICE_ID : TEST_PRICE_ID;
-    log("Creating session", { priceId });
+    log("Creating session", { priceId: PRICE_ID });
 
     const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: PRICE_ID, quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/payment-success`,
       cancel_url: `${origin}/signup`,
