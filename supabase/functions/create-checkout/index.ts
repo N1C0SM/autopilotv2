@@ -11,6 +11,10 @@ const LIVE_PRICE_ID = "price_1T8o5WJttvYKlxWaKGiSG26L";
 const TEST_PRICE_ID = "price_1T8xazJttvYKlxWaK8EfKELu";
 const REFERRAL_COUPON_ID = "veaugRi2";
 
+const log = (step: string, details?: any) => {
+  console.log(`[CREATE-CHECKOUT] ${step}`, details ? JSON.stringify(details) : "");
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -23,27 +27,34 @@ serve(async (req) => {
   );
 
   try {
+    log("Started");
+
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
+    log("User authenticated", { email: user.email });
 
     let referralCode = "";
     try {
       const body = await req.json();
       referralCode = body.referral_code || "";
     } catch { /* no body */ }
+    log("Referral code", { referralCode });
 
     // Get payment mode
-    const { data: settings } = await supabaseClient.from("settings").select("payment_mode").limit(1).single();
+    const { data: settings, error: settingsError } = await supabaseClient.from("settings").select("payment_mode").limit(1).single();
+    if (settingsError) log("Settings error", settingsError);
     const paymentMode = settings?.payment_mode || "test";
+    log("Payment mode", { paymentMode });
 
     const stripeKey = paymentMode === "live"
       ? Deno.env.get("STRIPE_LIVE_SECRET_KEY")
       : Deno.env.get("STRIPE_TEST_SECRET_KEY");
     if (!stripeKey) throw new Error(`Stripe ${paymentMode} secret key not configured`);
+    log("Stripe key found");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
@@ -52,8 +63,10 @@ serve(async (req) => {
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
     }
+    log("Customer lookup", { customerId: customerId || "new" });
 
     const origin = req.headers.get("origin") || "https://autopilotv2.lovable.app";
+    log("Origin", { origin });
 
     const discounts: Array<{ coupon: string }> = [];
     if (referralCode) {
@@ -76,6 +89,7 @@ serve(async (req) => {
     }
 
     const priceId = paymentMode === "live" ? LIVE_PRICE_ID : TEST_PRICE_ID;
+    log("Creating session", { priceId });
 
     const sessionParams: any = {
       customer: customerId,
@@ -96,6 +110,7 @@ serve(async (req) => {
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
+    log("Session created", { url: session.url });
 
     await supabaseClient
       .from("profiles")
@@ -106,6 +121,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
+    log("ERROR", { message: error.message, stack: error.stack });
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
