@@ -49,20 +49,11 @@ serve(async (req) => {
     const paymentMode = settings?.payment_mode || "test";
     log("Payment mode", { paymentMode });
 
-    const stripeKey = paymentMode === "live"
-      ? Deno.env.get("STRIPE_LIVE_SECRET_KEY")
-      : Deno.env.get("STRIPE_TEST_SECRET_KEY");
-    if (!stripeKey) throw new Error(`Stripe ${paymentMode} secret key not configured`);
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("Stripe secret key not configured");
     log("Stripe key found");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    }
-    log("Customer lookup", { customerId: customerId || "new" });
 
     const origin = req.headers.get("origin") || "https://autopilotv2.lovable.app";
     log("Origin", { origin });
