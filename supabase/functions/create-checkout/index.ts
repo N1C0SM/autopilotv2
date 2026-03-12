@@ -7,7 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRICE_ID = "price_1T8xazJttvYKlxWaK8EfKELu";
 const REFERRAL_COUPON_ID = "veaugRi2";
 
 const log = (step: string, details?: any) => {
@@ -43,9 +42,23 @@ serve(async (req) => {
     } catch { /* no body */ }
     log("Referral code", { referralCode });
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("Stripe secret key not configured");
+    // Read payment_mode from settings
+    const { data: settings } = await supabaseClient.from("settings").select("payment_mode").limit(1).single();
+    const paymentMode = settings?.payment_mode || "test";
+    log("Payment mode", { paymentMode });
+
+    // Select correct Stripe key based on mode
+    const stripeKey = paymentMode === "live"
+      ? Deno.env.get("STRIPE_LIVE_SECRET_KEY")
+      : Deno.env.get("STRIPE_TEST_SECRET_KEY");
+    if (!stripeKey) throw new Error(`Stripe ${paymentMode} secret key not configured`);
     log("Stripe key found");
+
+    // Select correct price ID based on mode
+    const PRICE_ID = paymentMode === "live"
+      ? "price_1T8o5WJttvYKlxWaKGiSG26L"
+      : "price_1T8xazJttvYKlxWaK8EfKELu";
+    log("Price ID", { PRICE_ID });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
