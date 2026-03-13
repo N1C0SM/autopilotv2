@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Apple, Clock, Flame, Loader2, Crown } from "lucide-react";
+import { Apple, Clock, Loader2, Crown } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -11,6 +11,8 @@ import type { DayPlan } from "@/types/training";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import Chat from "@/components/Chat";
 import Greeting from "@/components/Greeting";
+import HomeOverview from "@/components/dashboard/HomeOverview";
+import WorkoutTracker from "@/components/dashboard/WorkoutTracker";
 import UserSidebar from "@/components/UserSidebar";
 import type { UserSection } from "@/components/UserSidebar";
 import SettingsPanel from "@/components/SettingsPanel";
@@ -35,14 +37,6 @@ interface Meal {
   description: string;
 }
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.1, duration: 0.5, ease: [0, 0, 0.2, 1] as const },
-  }),
-};
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -206,72 +200,21 @@ const Dashboard = () => {
             {hasPlan && section === "home" && (
               <div className="space-y-8 max-w-4xl">
                 <Greeting name={profileName} />
-                <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   {user && <WeeklyProgress userId={user.id} dayPlans={dayPlans} />}
                 </motion.div>
+                <HomeOverview
+                  dayPlans={dayPlans}
+                  macros={macros}
+                  meals={meals}
+                  onNavigate={setSection}
+                />
               </div>
             )}
 
             {/* Training section */}
-            {hasPlan && section === "training" && (
-              <div className="max-w-4xl">
-                <div className="flex items-center gap-2 mb-6">
-                  <Dumbbell className="w-5 h-5 text-primary" />
-                  <h2 className="text-xl font-bold font-display">Plan de Entrenamiento</h2>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {dayPlans.map((plan, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.04, duration: 0.3 }}
-                      className="bg-card rounded-xl border border-border hover:border-primary/30 transition-all duration-200 overflow-hidden group"
-                    >
-                      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${plan.type === "gimnasio" ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"}`}>
-                          {plan.day.slice(0, 2)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{plan.day}</div>
-                          <div className="text-[10px] text-muted-foreground">
-                            {plan.type === "gimnasio" ? "🏋️ Gimnasio" : "🏃 Actividad"}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        {(plan.type === "actividad" || !plan.type) && (
-                          <div>
-                            <div className="font-semibold text-sm mb-2">{plan.sport}</div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs bg-secondary/50 px-2.5 py-1 rounded-full flex items-center gap-1">
-                                <Flame className="w-3 h-3 text-primary" />{plan.intensity}
-                              </span>
-                              <span className="text-xs bg-secondary/50 px-2.5 py-1 rounded-full flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-primary" />{plan.duration}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                        {plan.type === "gimnasio" && (
-                          <div>
-                            {plan.routine_name && <div className="font-semibold text-sm mb-3">{plan.routine_name}</div>}
-                            <div className="space-y-1.5">
-                              {(plan.exercises || []).map((ex, j) => (
-                                <div key={j} className="flex items-center gap-3 text-xs bg-secondary/30 rounded-lg px-3 py-2">
-                                  <span className="font-medium flex-1 truncate">{ex.name}</span>
-                                  <span className="text-muted-foreground font-mono">{ex.series}×{ex.reps}</span>
-                                  {ex.weight && <span className="text-muted-foreground font-mono">{ex.weight}</span>}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
+            {hasPlan && section === "training" && user && (
+              <WorkoutTracker userId={user.id} dayPlans={dayPlans} />
             )}
 
             {/* Nutrition section */}
