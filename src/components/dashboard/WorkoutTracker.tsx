@@ -95,7 +95,7 @@ const WorkoutTracker = ({ userId, dayPlans }: Props) => {
         user_id: userId,
         day_label: selectedDay,
         exercise_name: name,
-        sets_completed: sets,
+        sets_completed: JSON.parse(JSON.stringify(sets)),
         logged_at: todayStr,
       }));
 
