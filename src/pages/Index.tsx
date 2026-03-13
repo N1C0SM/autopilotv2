@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import ScrollReveal from "@/components/ScrollReveal";
 import CountUp from "@/components/CountUp";
 import PricingTiers from "@/components/PricingTiers";
+import dashboardPreview from "@/assets/dashboard-preview.png";
 import {
   Accordion,
   AccordionContent,
