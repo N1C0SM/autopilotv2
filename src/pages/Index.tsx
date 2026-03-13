@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import ScrollReveal from "@/components/ScrollReveal";
 import CountUp from "@/components/CountUp";
 import PricingTiers from "@/components/PricingTiers";
+import dashboardPreview from "@/assets/dashboard-preview.png";
 import {
   Accordion,
   AccordionContent,
@@ -122,7 +123,30 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Dashboard Preview */}
+      <section className="pb-16 px-4 -mt-4">
+        <div className="container mx-auto max-w-4xl">
+          <ScrollReveal>
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5 }}
+              className="relative rounded-2xl overflow-hidden border border-border card-shadow"
+            >
+              <img
+                src={dashboardPreview}
+                alt="Vista previa del dashboard de Autopilot con plan de entrenamiento y nutrición"
+                className="w-full h-auto"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+              <div className="absolute bottom-6 left-0 right-0 text-center">
+                <p className="text-sm font-medium text-muted-foreground">Tu panel personalizado con todo lo que necesitas</p>
+              </div>
+            </motion.div>
+          </ScrollReveal>
+        </div>
+      </section>
       <section className="py-12 px-4 border-y border-border bg-card/30">
         <div className="container mx-auto max-w-4xl">
           <div className="grid grid-cols-3 gap-8 text-center">
