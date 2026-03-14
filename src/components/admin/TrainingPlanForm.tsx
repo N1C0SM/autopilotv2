@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Trash2, Dumbbell, Copy, ChevronDown, ChevronUp, FileDown } from "lucide-react";
+import { Plus, Trash2, Dumbbell, Copy, ChevronDown, ChevronUp, FileDown, GripVertical } from "lucide-react";
 import type { Exercise, DayPlan, GymExerciseEntry } from "@/types/training";
-import { DAYS, INTENSITIES } from "@/types/training";
+import { DAYS, INTENSITIES, MUSCLE_GROUPS } from "@/types/training";
 
 interface Props {
   dayPlans: DayPlan[];
@@ -23,38 +23,38 @@ const TEMPLATES: Record<string, { label: string; days: DayPlan[] }> = {
   ppl: {
     label: "PPL (Push/Pull/Legs)",
     days: [
-      { day: "Lunes", type: "gimnasio", routine_name: "Push", exercises: [] },
-      { day: "Martes", type: "gimnasio", routine_name: "Pull", exercises: [] },
-      { day: "Miércoles", type: "gimnasio", routine_name: "Legs", exercises: [] },
-      { day: "Jueves", type: "gimnasio", routine_name: "Push", exercises: [] },
-      { day: "Viernes", type: "gimnasio", routine_name: "Pull", exercises: [] },
-      { day: "Sábado", type: "gimnasio", routine_name: "Legs", exercises: [] },
+      { day: "Lunes", type: "gimnasio", routine_name: "Push A", muscle_focus: "Pecho · Hombros · Tríceps", exercises: [] },
+      { day: "Martes", type: "gimnasio", routine_name: "Pull A", muscle_focus: "Espalda · Bíceps", exercises: [] },
+      { day: "Miércoles", type: "gimnasio", routine_name: "Legs A", muscle_focus: "Piernas · Glúteos", exercises: [] },
+      { day: "Jueves", type: "gimnasio", routine_name: "Push B", muscle_focus: "Pecho · Hombros · Tríceps", exercises: [] },
+      { day: "Viernes", type: "gimnasio", routine_name: "Pull B", muscle_focus: "Espalda · Bíceps", exercises: [] },
+      { day: "Sábado", type: "gimnasio", routine_name: "Legs B", muscle_focus: "Piernas · Glúteos · Core", exercises: [] },
     ],
   },
   upper_lower: {
     label: "Upper/Lower (4 días)",
     days: [
-      { day: "Lunes", type: "gimnasio", routine_name: "Upper A", exercises: [] },
-      { day: "Martes", type: "gimnasio", routine_name: "Lower A", exercises: [] },
-      { day: "Jueves", type: "gimnasio", routine_name: "Upper B", exercises: [] },
-      { day: "Viernes", type: "gimnasio", routine_name: "Lower B", exercises: [] },
+      { day: "Lunes", type: "gimnasio", routine_name: "Upper A", muscle_focus: "Pecho · Espalda · Hombros", exercises: [] },
+      { day: "Martes", type: "gimnasio", routine_name: "Lower A", muscle_focus: "Piernas · Glúteos · Core", exercises: [] },
+      { day: "Jueves", type: "gimnasio", routine_name: "Upper B", muscle_focus: "Pecho · Espalda · Bíceps · Tríceps", exercises: [] },
+      { day: "Viernes", type: "gimnasio", routine_name: "Lower B", muscle_focus: "Piernas · Glúteos · Core", exercises: [] },
     ],
   },
   fullbody: {
     label: "Full Body (3 días)",
     days: [
-      { day: "Lunes", type: "gimnasio", routine_name: "Full Body A", exercises: [] },
-      { day: "Miércoles", type: "gimnasio", routine_name: "Full Body B", exercises: [] },
-      { day: "Viernes", type: "gimnasio", routine_name: "Full Body C", exercises: [] },
+      { day: "Lunes", type: "gimnasio", routine_name: "Full Body A", muscle_focus: "Cuerpo completo", exercises: [] },
+      { day: "Miércoles", type: "gimnasio", routine_name: "Full Body B", muscle_focus: "Cuerpo completo", exercises: [] },
+      { day: "Viernes", type: "gimnasio", routine_name: "Full Body C", muscle_focus: "Cuerpo completo", exercises: [] },
     ],
   },
   torso_pierna: {
     label: "Torso/Pierna (4 días)",
     days: [
-      { day: "Lunes", type: "gimnasio", routine_name: "Torso A", exercises: [] },
-      { day: "Martes", type: "gimnasio", routine_name: "Pierna A", exercises: [] },
-      { day: "Jueves", type: "gimnasio", routine_name: "Torso B", exercises: [] },
-      { day: "Viernes", type: "gimnasio", routine_name: "Pierna B", exercises: [] },
+      { day: "Lunes", type: "gimnasio", routine_name: "Torso A", muscle_focus: "Pecho · Espalda · Hombros", exercises: [] },
+      { day: "Martes", type: "gimnasio", routine_name: "Pierna A", muscle_focus: "Piernas · Glúteos", exercises: [] },
+      { day: "Jueves", type: "gimnasio", routine_name: "Torso B", muscle_focus: "Pecho · Espalda · Bíceps · Tríceps", exercises: [] },
+      { day: "Viernes", type: "gimnasio", routine_name: "Pierna B", muscle_focus: "Piernas · Glúteos · Core", exercises: [] },
     ],
   },
 };
@@ -64,7 +64,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0]));
 
   useEffect(() => {
-    supabase.from("exercises").select("*").order("muscle_group").order("name")
+    supabase.from("exercises").select("id, name, muscle_group, image_url").order("muscle_group").order("name")
       .then(({ data }) => { if (data) setExercises(data as Exercise[]); });
   }, []);
 
@@ -92,7 +92,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
     const usedDays = dayPlans.map((d) => d.day);
     const nextDay = DAYS.find((d) => !usedDays.includes(d)) || DAYS[0];
     const newIdx = dayPlans.length;
-    onChange([...dayPlans, { day: nextDay, type: "actividad", sport: "", intensity: "Media", duration: "" }]);
+    onChange([...dayPlans, { day: nextDay, type: "gimnasio", routine_name: "", muscle_focus: "", exercises: [emptyGymExercise()] }]);
     setExpandedDays((prev) => new Set(prev).add(newIdx));
   };
 
@@ -132,7 +132,13 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
 
   const selectExerciseFromLibrary = (dayIdx: number, exIdx: number, exerciseId: string) => {
     const ex = exercises.find((e) => e.id === exerciseId);
-    if (ex) updateGymExercise(dayIdx, exIdx, { exercise_id: ex.id, name: ex.name });
+    if (ex) {
+      updateGymExercise(dayIdx, exIdx, {
+        exercise_id: ex.id,
+        name: ex.name,
+        image_url: ex.image_url || undefined,
+      });
+    }
   };
 
   const groupedExercises = exercises.reduce<Record<string, Exercise[]>>((acc, ex) => {
@@ -165,13 +171,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
         </div>
         <div className="flex flex-wrap gap-2">
           {Object.entries(TEMPLATES).map(([key, tpl]) => (
-            <Button
-              key={key}
-              variant="outline"
-              size="sm"
-              className="text-xs h-7"
-              onClick={() => loadTemplate(key)}
-            >
+            <Button key={key} variant="outline" size="sm" className="text-xs h-7" onClick={() => loadTemplate(key)}>
               {tpl.label}
             </Button>
           ))}
@@ -189,7 +189,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
         {dayPlans.map((plan, dayIdx) => {
           const isExpanded = expandedDays.has(dayIdx);
           const summary = plan.type === "gimnasio"
-            ? `${plan.routine_name || "Sin nombre"} · ${(plan.exercises || []).length} ejercicios`
+            ? `${plan.routine_name || "Sin nombre"} · ${plan.muscle_focus || ""} · ${(plan.exercises || []).length} ejercicios`
             : `${plan.sport || "Sin actividad"} · ${plan.intensity} · ${plan.duration || "—"}`;
 
           return (
@@ -214,20 +214,20 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
               {isExpanded && (
                 <div className="px-4 pb-4 space-y-3 border-t border-border/50 pt-3">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <div className="w-32">
+                    <div className="w-28">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Día</Label>
                       <select className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1 text-sm" value={plan.day} onChange={(e) => updateDay(dayIdx, { day: e.target.value })}>
                         {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
                       </select>
                     </div>
-                    <div className="w-32">
+                    <div className="w-28">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Tipo</Label>
                       <select className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1 text-sm" value={plan.type} onChange={(e) => updateDay(dayIdx, {
                         type: e.target.value as "actividad" | "gimnasio",
-                        ...(e.target.value === "gimnasio" ? { routine_name: "", exercises: [emptyGymExercise()] } : { sport: "", intensity: "Media", duration: "" }),
+                        ...(e.target.value === "gimnasio" ? { routine_name: "", muscle_focus: "", exercises: [emptyGymExercise()] } : { sport: "", intensity: "Media", duration: "" }),
                       })}>
-                        <option value="actividad">Actividad</option>
                         <option value="gimnasio">Gimnasio</option>
+                        <option value="actividad">Actividad</option>
                       </select>
                     </div>
                     <div className="flex-1" />
@@ -252,9 +252,6 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
                         ) : (
                           <Input className="h-9" value={plan.sport || ""} onChange={(e) => updateDay(dayIdx, { sport: e.target.value })} placeholder="Escalada, Running..." />
                         )}
-                        {plan.sport === "__custom" && (
-                          <Input className="mt-1 h-9" placeholder="Escribe la actividad..." onChange={(e) => updateDay(dayIdx, { sport: e.target.value })} />
-                        )}
                       </div>
                       <div>
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Intensidad</Label>
@@ -271,15 +268,33 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
 
                   {plan.type === "gimnasio" && (
                     <div className="space-y-3">
-                      <div className="w-64">
-                        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Nombre de la rutina</Label>
-                        <Input className="h-9" value={plan.routine_name || ""} onChange={(e) => updateDay(dayIdx, { routine_name: e.target.value })} placeholder="Tren superior A" />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Nombre de la rutina</Label>
+                          <Input className="h-9" value={plan.routine_name || ""} onChange={(e) => updateDay(dayIdx, { routine_name: e.target.value })} placeholder="Push A, Piernas..." />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Músculos principales</Label>
+                          <Input className="h-9" value={plan.muscle_focus || ""} onChange={(e) => updateDay(dayIdx, { muscle_focus: e.target.value })} placeholder="Pecho · Tríceps" />
+                        </div>
                       </div>
+
                       <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-semibold uppercase tracking-wider px-1">
+                          <span className="w-[35%]">Ejercicio</span>
+                          <span className="w-[12%]">Series</span>
+                          <span className="w-[12%]">Reps</span>
+                          <span className="w-[15%]">Peso</span>
+                          <span className="w-[12%]">Desc.</span>
+                        </div>
+
                         {(plan.exercises || []).map((ex, exIdx) => (
-                          <div key={exIdx} className="grid grid-cols-12 gap-2 items-end bg-background/50 rounded-lg p-2.5 border border-border/50">
-                            <div className="col-span-4">
-                              <Label className="text-[10px] text-muted-foreground">Ejercicio</Label>
+                          <div key={exIdx} className="flex items-center gap-2 bg-background/50 rounded-lg p-2.5 border border-border/50 group">
+                            {/* Exercise image thumbnail */}
+                            {ex.image_url && (
+                              <img src={ex.image_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
+                            )}
+                            <div className="w-[35%] shrink-0">
                               <select className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs" value={ex.exercise_id} onChange={(e) => selectExerciseFromLibrary(dayIdx, exIdx, e.target.value)}>
                                 <option value="">Seleccionar...</option>
                                 {Object.entries(groupedExercises).map(([group, exs]) => (
@@ -289,27 +304,21 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
                                 ))}
                               </select>
                             </div>
-                            <div className="col-span-2">
-                              <Label className="text-[10px] text-muted-foreground">Series</Label>
-                              <Input type="number" className="h-8 text-xs" value={ex.series} onChange={(e) => updateGymExercise(dayIdx, exIdx, { series: parseInt(e.target.value) || 0 })} />
+                            <div className="w-[12%]">
+                              <Input type="number" className="h-8 text-xs text-center" value={ex.series} onChange={(e) => updateGymExercise(dayIdx, exIdx, { series: parseInt(e.target.value) || 0 })} />
                             </div>
-                            <div className="col-span-2">
-                              <Label className="text-[10px] text-muted-foreground">Reps</Label>
-                              <Input type="number" className="h-8 text-xs" value={ex.reps} onChange={(e) => updateGymExercise(dayIdx, exIdx, { reps: parseInt(e.target.value) || 0 })} />
+                            <div className="w-[12%]">
+                              <Input type="number" className="h-8 text-xs text-center" value={ex.reps} onChange={(e) => updateGymExercise(dayIdx, exIdx, { reps: parseInt(e.target.value) || 0 })} />
                             </div>
-                            <div className="col-span-2">
-                              <Label className="text-[10px] text-muted-foreground">Peso</Label>
-                              <Input className="h-8 text-xs" value={ex.weight} onChange={(e) => updateGymExercise(dayIdx, exIdx, { weight: e.target.value })} placeholder="60kg" />
+                            <div className="w-[15%]">
+                              <Input className="h-8 text-xs text-center" value={ex.weight} onChange={(e) => updateGymExercise(dayIdx, exIdx, { weight: e.target.value })} placeholder="kg" />
                             </div>
-                            <div className="col-span-1">
-                              <Label className="text-[10px] text-muted-foreground">Desc.</Label>
-                              <Input className="h-8 text-xs" value={ex.rest} onChange={(e) => updateGymExercise(dayIdx, exIdx, { rest: e.target.value })} placeholder="60s" />
+                            <div className="w-[12%]">
+                              <Input className="h-8 text-xs text-center" value={ex.rest} onChange={(e) => updateGymExercise(dayIdx, exIdx, { rest: e.target.value })} placeholder="60s" />
                             </div>
-                            <div className="col-span-1 flex justify-center">
-                              <button onClick={() => removeGymExercise(dayIdx, exIdx)} className="text-muted-foreground hover:text-destructive h-8 flex items-center">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
+                            <button onClick={() => removeGymExercise(dayIdx, exIdx)} className="text-muted-foreground hover:text-destructive shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         ))}
                       </div>
