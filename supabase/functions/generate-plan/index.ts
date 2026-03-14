@@ -148,10 +148,11 @@ function buildWeeklyPlan(
 
       if (canTrain) {
         const exercises = pickExercises(routine.muscles, exerciseLib, intensityLevel);
-        plan.push({
+      plan.push({
           day: DAYS[dayIdx],
           type: "gimnasio",
           routine_name: routine.name,
+          muscle_focus: routine.muscles.join(" · "),
           exercises,
         });
         for (const m of routine.muscles) {
@@ -185,6 +186,7 @@ function buildWeeklyPlan(
         day: DAYS[dayIdx],
         type: "gimnasio",
         routine_name: routine.name,
+        muscle_focus: routine.muscles.join(" · "),
         exercises,
       });
       for (const m of routine.muscles) {
