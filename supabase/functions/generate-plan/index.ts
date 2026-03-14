@@ -186,6 +186,7 @@ function buildWeeklyPlan(
         day: DAYS[dayIdx],
         type: "gimnasio",
         routine_name: routine.name,
+        muscle_focus: routine.muscles.join(" · "),
         exercises,
       });
       for (const m of routine.muscles) {
