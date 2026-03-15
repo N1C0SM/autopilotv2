@@ -60,8 +60,10 @@ serve(async (req) => {
         };
 
         if (session.mode === "subscription") {
+          // For trials, the subscription status is "trialing"
           updates.subscription_status = "active";
           updates.stripe_customer_id = session.customer as string;
+          updates.subscription_tier = session.metadata?.tier || "personal";
         } else {
           updates.stripe_payment_id = session.payment_intent as string;
         }
