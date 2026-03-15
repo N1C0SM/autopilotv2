@@ -202,6 +202,11 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
         </h2>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">{dayPlans.length}/7 días</span>
+          {dayPlans.length > 0 && (
+            <Button variant="outline" size="sm" onClick={exportRoutine}>
+              <Download className="w-3.5 h-3.5 mr-1" /> Exportar
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={addDay} disabled={dayPlans.length >= 7}>
             <Plus className="w-3.5 h-3.5 mr-1" /> Día
           </Button>
