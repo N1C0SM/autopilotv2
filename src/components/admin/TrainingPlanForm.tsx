@@ -80,12 +80,57 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
     });
   };
 
+  // Helper: pick exercises from library for given muscles
+  const pickExercisesForMuscles = (muscleFocus: string, count = 4): GymExerciseEntry[] => {
+    const muscles = muscleFocus.split("·").map(m => m.trim()).filter(Boolean);
+    const result: GymExerciseEntry[] = [];
+    for (const muscle of muscles) {
+      const available = exercises.filter(e => e.muscle_group === muscle);
+      const shuffled = [...available].sort(() => Math.random() - 0.5);
+      const perMuscle = Math.max(1, Math.floor(count / muscles.length));
+      for (const ex of shuffled.slice(0, perMuscle)) {
+        result.push({
+          exercise_id: ex.id, name: ex.name, series: 3, reps: 10,
+          weight: "", rest: "60s", image_url: ex.image_url || undefined,
+        });
+      }
+    }
+    return result;
+  };
+
   const loadTemplate = (key: string) => {
     const tpl = TEMPLATES[key];
     if (!tpl) return;
-    onChange(tpl.days.map((d) => ({ ...d, exercises: d.exercises ? [...d.exercises] : [] })));
+    const days = tpl.days.map((d) => ({
+      ...d,
+      exercises: d.muscle_focus ? pickExercisesForMuscles(d.muscle_focus) : [],
+    }));
+    onChange(days);
     setExpandedDays(new Set([0]));
-    toast.success(`Plantilla "${tpl.label}" cargada`);
+    toast.success(`Plantilla "${tpl.label}" cargada con ejercicios`);
+  };
+
+  const exportRoutine = () => {
+    let text = "RUTINA DE ENTRENAMIENTO\n" + "=".repeat(40) + "\n\n";
+    for (const plan of dayPlans) {
+      text += `📅 ${plan.day} — ${plan.type === "gimnasio" ? plan.routine_name || "Gimnasio" : plan.sport || "Actividad"}\n`;
+      if (plan.muscle_focus) text += `   Músculos: ${plan.muscle_focus}\n`;
+      if (plan.type === "gimnasio" && plan.exercises?.length) {
+        for (const ex of plan.exercises) {
+          text += `   • ${ex.name} — ${ex.series}x${ex.reps} ${ex.weight ? `@ ${ex.weight}` : ""} (descanso: ${ex.rest})\n`;
+        }
+      }
+      if (plan.type === "actividad") {
+        text += `   Intensidad: ${plan.intensity || "Media"} · Duración: ${plan.duration || "—"}\n`;
+      }
+      text += "\n";
+    }
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "rutina.txt"; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Rutina exportada");
   };
 
   const addDay = () => {
