@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Trash2, Dumbbell, Copy, ChevronDown, ChevronUp, FileDown, GripVertical } from "lucide-react";
+import { Plus, Trash2, Dumbbell, Copy, ChevronDown, ChevronUp, FileDown, GripVertical, Download } from "lucide-react";
 import type { Exercise, DayPlan, GymExerciseEntry } from "@/types/training";
 import { DAYS, INTENSITIES, MUSCLE_GROUPS } from "@/types/training";
 
