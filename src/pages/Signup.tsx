@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,16 +37,19 @@ const Signup = () => {
       return;
     }
 
-    if (referralCode) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("profiles").update({ referred_by: referralCode }).eq("user_id", user.id);
+    // Save name and referral
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const updates: any = {};
+      if (name.trim()) updates.name = name.trim();
+      if (referralCode) updates.referred_by = referralCode;
+      if (Object.keys(updates).length > 0) {
+        await supabase.from("profiles").update(updates).eq("user_id", user.id);
       }
     }
 
     // Free plan: skip Stripe, mark as paid directly
     if (isFree) {
-      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from("profiles").update({
           payment_status: "paid",
@@ -99,6 +103,10 @@ const Signup = () => {
         )}
 
         <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-8 border border-border card-shadow space-y-5">
+          <div>
+            <Label htmlFor="name">Nombre</Label>
+            <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5" placeholder="Tu nombre" />
+          </div>
           <div>
             <Label htmlFor="email">Correo electrónico</Label>
             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5" placeholder="tu@ejemplo.com" />

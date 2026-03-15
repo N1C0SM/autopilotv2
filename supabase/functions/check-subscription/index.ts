@@ -25,7 +25,6 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Get payment mode
     const { data: settings } = await supabaseClient.from("settings").select("payment_mode").limit(1).single();
     const paymentMode = settings?.payment_mode || "test";
 
@@ -45,17 +44,30 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Check current profile to avoid overwriting free plan users
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("payment_status, subscription_status")
+      .eq("user_id", user.id)
+      .single();
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
     if (customers.data.length === 0) {
-      logStep("No customer found");
-      await supabaseClient.from("profiles").update({
-        subscription_status: "inactive",
-        payment_status: "unpaid",
-      }).eq("user_id", user.id);
+      logStep("No Stripe customer found");
+      // DON'T overwrite payment_status if user has a free plan (payment_status already "paid")
+      if (profile?.payment_status !== "paid") {
+        await supabaseClient.from("profiles").update({
+          subscription_status: "inactive",
+        }).eq("user_id", user.id);
+      }
 
-      return new Response(JSON.stringify({ subscribed: false }), {
+      return new Response(JSON.stringify({
+        subscribed: profile?.payment_status === "paid",
+        subscription_end: null,
+        tier: "personal",
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -63,12 +75,10 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found customer", { customerId });
 
-    // Save customer ID
     await supabaseClient.from("profiles").update({
       stripe_customer_id: customerId,
     }).eq("user_id", user.id);
 
-    // Also check trialing subscriptions
     const [activeSubs, trialSubs] = await Promise.all([
       stripe.subscriptions.list({ customer: customerId, status: "active", limit: 1 }),
       stripe.subscriptions.list({ customer: customerId, status: "trialing", limit: 1 }),
@@ -77,11 +87,11 @@ serve(async (req) => {
     const sub = activeSubs.data[0] || trialSubs.data[0];
     const hasActiveSub = !!sub;
     let subscriptionEnd = null;
-    let tier = "basic";
+    let tier = "personal";
 
     if (hasActiveSub) {
       subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
-      tier = sub.metadata?.tier || "basic";
+      tier = sub.metadata?.tier || "personal";
       logStep("Active subscription found", { endDate: subscriptionEnd, tier, status: sub.status });
 
       await supabaseClient.from("profiles").update({
@@ -92,13 +102,21 @@ serve(async (req) => {
       }).eq("user_id", user.id);
     } else {
       logStep("No active subscription");
-      await supabaseClient.from("profiles").update({
-        subscription_status: "inactive",
-      }).eq("user_id", user.id);
+      // Only update subscription_status, preserve payment_status for free plan users
+      if (profile?.payment_status !== "paid") {
+        await supabaseClient.from("profiles").update({
+          subscription_status: "inactive",
+          payment_status: "unpaid",
+        }).eq("user_id", user.id);
+      } else {
+        await supabaseClient.from("profiles").update({
+          subscription_status: "inactive",
+        }).eq("user_id", user.id);
+      }
     }
 
     return new Response(JSON.stringify({
-      subscribed: hasActiveSub,
+      subscribed: hasActiveSub || profile?.payment_status === "paid",
       subscription_end: subscriptionEnd,
       tier,
     }), {

@@ -55,6 +55,9 @@ const Dashboard = () => {
     if (!user) return;
 
     const fetchData = async () => {
+      // Sync subscription status with Stripe
+      supabase.functions.invoke("check-subscription").catch(() => {});
+
       const { data: roleData } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
       if (roleData) {
         navigate("/admin");

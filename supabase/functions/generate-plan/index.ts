@@ -6,29 +6,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ─── Muscle Recovery Map (hours needed) ───
 const RECOVERY_HOURS: Record<string, number> = {
   Pecho: 48, Espalda: 48, Hombros: 48, Bíceps: 36, Tríceps: 36,
   Piernas: 72, Glúteos: 48, Core: 24, "Cuerpo completo": 48, Cardio: 24,
 };
 
-// ─── Goal-based macro calculation ───
 function calcMacros(weight: number, goal: string) {
   switch (goal) {
-    case "gain_muscle":
-      return { protein: Math.round(weight * 2.2), carbs: Math.round(weight * 4), fats: Math.round(weight * 1) };
-    case "lose_weight":
-      return { protein: Math.round(weight * 2.4), carbs: Math.round(weight * 2), fats: Math.round(weight * 0.8) };
-    case "recomp":
-      return { protein: Math.round(weight * 2.2), carbs: Math.round(weight * 3), fats: Math.round(weight * 0.9) };
-    case "improve_endurance":
-      return { protein: Math.round(weight * 1.8), carbs: Math.round(weight * 4.5), fats: Math.round(weight * 0.9) };
-    default: // general_health / maintenance
-      return { protein: Math.round(weight * 1.8), carbs: Math.round(weight * 3.5), fats: Math.round(weight * 1) };
+    case "gain_muscle": return { protein: Math.round(weight * 2.2), carbs: Math.round(weight * 4), fats: Math.round(weight * 1) };
+    case "lose_weight": return { protein: Math.round(weight * 2.4), carbs: Math.round(weight * 2), fats: Math.round(weight * 0.8) };
+    case "recomp": return { protein: Math.round(weight * 2.2), carbs: Math.round(weight * 3), fats: Math.round(weight * 0.9) };
+    case "improve_endurance": return { protein: Math.round(weight * 1.8), carbs: Math.round(weight * 4.5), fats: Math.round(weight * 0.9) };
+    default: return { protein: Math.round(weight * 1.8), carbs: Math.round(weight * 3.5), fats: Math.round(weight * 1) };
   }
 }
 
-// ─── Meal suggestions by goal ───
 function getMeals(goal: string) {
   const base = [
     { name: "Desayuno", description: "Avena con plátano, frutos rojos y batido de proteínas" },
@@ -47,11 +39,7 @@ function getMeals(goal: string) {
   return base;
 }
 
-// ─── Gym split templates ───
-interface RoutineDay {
-  name: string;
-  muscles: string[];
-}
+interface RoutineDay { name: string; muscles: string[]; }
 
 function getGymSplit(daysAvailable: number): RoutineDay[] {
   if (daysAvailable >= 6) return [
@@ -79,32 +67,34 @@ function getGymSplit(daysAvailable: number): RoutineDay[] {
   ];
 }
 
-// ─── Pick exercises for muscles from library ───
 function pickExercises(
   muscles: string[],
-  exerciseLib: Record<string, { id: string; name: string }[]>,
+  exerciseLib: Record<string, { id: string; name: string; image_url: string | null }[]>,
   intensityLevel: number
 ) {
   const exercises: any[] = [];
-  const exercisesPerMuscle = intensityLevel >= 7 ? 3 : intensityLevel >= 4 ? 2 : 2;
+  const exercisesPerMuscle = intensityLevel >= 7 ? 3 : 2;
 
   for (const muscle of muscles) {
     const available = exerciseLib[muscle] || [];
+    if (available.length === 0) {
+      console.log(`[GENERATE-PLAN] No exercises found for muscle: ${muscle}`);
+      continue;
+    }
     const shuffled = [...available].sort(() => Math.random() - 0.5);
     const picked = shuffled.slice(0, exercisesPerMuscle);
 
     for (const ex of picked) {
       const series = intensityLevel >= 7 ? 4 : 3;
-      const reps = muscle === "Piernas" || muscle === "Glúteos" ? 10 : 
-                   muscle === "Core" ? 15 : 
-                   intensityLevel >= 7 ? 8 : 10;
+      const reps = muscle === "Piernas" || muscle === "Glúteos" ? 10 :
+                   muscle === "Core" ? 15 : intensityLevel >= 7 ? 8 : 10;
       exercises.push({
         exercise_id: ex.id,
         name: ex.name,
-        series,
-        reps,
+        series, reps,
         weight: "",
         rest: intensityLevel >= 7 ? "90s" : "60s",
+        image_url: ex.image_url || undefined,
       });
     }
   }
@@ -113,22 +103,15 @@ function pickExercises(
 
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
-// ─── Build weekly plan respecting recovery ───
 function buildWeeklyPlan(
-  gymSplit: RoutineDay[],
-  sports: string[],
-  daysAvailable: number,
+  gymSplit: RoutineDay[], sports: string[], daysAvailable: number,
   intensityLevel: number,
-  exerciseLib: Record<string, { id: string; name: string }[]>
+  exerciseLib: Record<string, { id: string; name: string; image_url: string | null }[]>
 ) {
   const plan: any[] = [];
-  const trainedMuscles: Record<string, number> = {}; // muscle -> last day index
-
-  // Distribute gym days first
+  const trainedMuscles: Record<string, number> = {};
   let gymDayIdx = 0;
   const sportDays: number[] = [];
-
-  // Calculate how many days for gym vs sports
   const hasSports = sports.length > 0;
   const gymDays = hasSports ? Math.max(Math.ceil(daysAvailable * 0.6), gymSplit.length) : daysAvailable;
   const sportDayCount = hasSports ? Math.max(1, daysAvailable - gymDays) : 0;
@@ -136,66 +119,48 @@ function buildWeeklyPlan(
   for (let dayIdx = 0; dayIdx < 7 && plan.length < daysAvailable; dayIdx++) {
     if (gymDayIdx < gymSplit.length && gymDayIdx < gymDays) {
       const routine = gymSplit[gymDayIdx];
-
-      // Check muscle recovery
       const canTrain = routine.muscles.every((m) => {
         const lastDay = trainedMuscles[m];
         if (lastDay === undefined) return true;
-        const hoursNeeded = RECOVERY_HOURS[m] || 48;
-        const daysPassed = dayIdx - lastDay;
-        return daysPassed * 24 >= hoursNeeded;
+        return (dayIdx - lastDay) * 24 >= (RECOVERY_HOURS[m] || 48);
       });
 
       if (canTrain) {
         const exercises = pickExercises(routine.muscles, exerciseLib, intensityLevel);
-      plan.push({
-          day: DAYS[dayIdx],
-          type: "gimnasio",
-          routine_name: routine.name,
-          muscle_focus: routine.muscles.join(" · "),
+        plan.push({
+          day: DAYS[dayIdx], type: "gimnasio",
+          routine_name: routine.name, muscle_focus: routine.muscles.join(" · "),
           exercises,
         });
-        for (const m of routine.muscles) {
-          trainedMuscles[m] = dayIdx;
-        }
+        for (const m of routine.muscles) trainedMuscles[m] = dayIdx;
         gymDayIdx++;
         continue;
       }
     }
 
-    // Sport day
     if (sportDays.length < sportDayCount && hasSports) {
       const sport = sports[sportDays.length % sports.length];
-      const intensity = intensityLevel >= 7 ? "Alta" : intensityLevel >= 4 ? "Media" : "Baja";
       plan.push({
-        day: DAYS[dayIdx],
-        type: "actividad",
-        sport,
-        intensity,
+        day: DAYS[dayIdx], type: "actividad", sport,
+        intensity: intensityLevel >= 7 ? "Alta" : intensityLevel >= 4 ? "Media" : "Baja",
         duration: intensityLevel >= 7 ? "60min" : "45min",
       });
       sportDays.push(dayIdx);
       continue;
     }
 
-    // More gym if needed
     if (gymDayIdx < gymSplit.length) {
       const routine = gymSplit[gymDayIdx];
       const exercises = pickExercises(routine.muscles, exerciseLib, intensityLevel);
       plan.push({
-        day: DAYS[dayIdx],
-        type: "gimnasio",
-        routine_name: routine.name,
-        muscle_focus: routine.muscles.join(" · "),
+        day: DAYS[dayIdx], type: "gimnasio",
+        routine_name: routine.name, muscle_focus: routine.muscles.join(" · "),
         exercises,
       });
-      for (const m of routine.muscles) {
-        trainedMuscles[m] = dayIdx;
-      }
+      for (const m of routine.muscles) trainedMuscles[m] = dayIdx;
       gymDayIdx++;
     }
   }
-
   return plan;
 }
 
@@ -211,7 +176,6 @@ serve(async (req) => {
   );
 
   try {
-    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
     const token = authHeader.replace("Bearer ", "");
@@ -220,20 +184,11 @@ serve(async (req) => {
     const user = userData.user;
     if (!user) throw new Error("Not authenticated");
 
-    // Optional: allow admin to generate for another user
     let targetUserId = user.id;
-    try {
-      const body = await req.json();
-      if (body.user_id) targetUserId = body.user_id;
-    } catch { /* no body, use self */ }
+    try { const body = await req.json(); if (body.user_id) targetUserId = body.user_id; } catch { /* no body */ }
 
-    // Fetch onboarding data
     const { data: onb, error: onbError } = await supabase
-      .from("onboarding")
-      .select("*")
-      .eq("user_id", targetUserId)
-      .single();
-
+      .from("onboarding").select("*").eq("user_id", targetUserId).single();
     if (onbError || !onb) throw new Error("Onboarding data not found");
 
     const weight = onb.weight || 70;
@@ -241,64 +196,49 @@ serve(async (req) => {
     const sports = onb.sports ? onb.sports.split(",").map((s: string) => s.trim()).filter(Boolean) : [];
     const daysAvailable = parseInt(
       typeof onb.availability === "object" && onb.availability !== null
-        ? (onb.availability as any).days || "4"
-        : "4"
+        ? (onb.availability as any).days || "4" : "4"
     );
     const intensityLevel = onb.intensity_level || 5;
 
-    // Fetch exercise library
+    // Fetch exercise library WITH image_url
     const { data: allExercises } = await supabase
-      .from("exercises")
-      .select("id, name, muscle_group");
+      .from("exercises").select("id, name, muscle_group, image_url");
 
-    const exerciseLib: Record<string, { id: string; name: string }[]> = {};
+    const exerciseLib: Record<string, { id: string; name: string; image_url: string | null }[]> = {};
     for (const ex of allExercises || []) {
       const g = ex.muscle_group || "Otro";
       if (!exerciseLib[g]) exerciseLib[g] = [];
-      exerciseLib[g].push({ id: ex.id, name: ex.name });
+      exerciseLib[g].push({ id: ex.id, name: ex.name, image_url: ex.image_url });
     }
 
-    // Generate training plan
+    console.log(`[GENERATE-PLAN] Exercise library: ${Object.entries(exerciseLib).map(([k, v]) => `${k}:${v.length}`).join(", ")}`);
+
     const gymSplit = getGymSplit(Math.min(daysAvailable, 6));
     const weeklyPlan = buildWeeklyPlan(gymSplit, sports, Math.min(daysAvailable, 7), intensityLevel, exerciseLib);
 
-    // Generate nutrition plan
+    // Log exercises per day
+    for (const day of weeklyPlan) {
+      if (day.type === "gimnasio") {
+        console.log(`[GENERATE-PLAN] ${day.day} (${day.routine_name}): ${(day.exercises || []).length} exercises`);
+      }
+    }
+
     const macros = calcMacros(weight, goal);
     const meals = getMeals(goal);
 
-    // Save training plan
-    await supabase.from("training_plan").upsert({
-      user_id: targetUserId,
-      workouts_json: weeklyPlan,
-    });
+    await supabase.from("training_plan").upsert({ user_id: targetUserId, workouts_json: weeklyPlan });
+    await supabase.from("nutrition_plan").upsert({ user_id: targetUserId, macros_json: macros, meals_json: meals });
+    await supabase.from("profiles").update({ plan_status: "plan_ready" }).eq("user_id", targetUserId);
 
-    // Save nutrition plan
-    await supabase.from("nutrition_plan").upsert({
-      user_id: targetUserId,
-      macros_json: macros,
-      meals_json: meals,
-    });
-
-    // Update profile status
-    await supabase.from("profiles").update({
-      plan_status: "plan_ready",
-    }).eq("user_id", targetUserId);
-
-    console.log(`[GENERATE-PLAN] Plan generated for user ${targetUserId}: ${weeklyPlan.length} days, macros: P${macros.protein}/C${macros.carbs}/F${macros.fats}`);
+    console.log(`[GENERATE-PLAN] Plan generated for ${targetUserId}: ${weeklyPlan.length} days`);
 
     return new Response(JSON.stringify({
-      success: true,
-      training_days: weeklyPlan.length,
-      macros,
-      meals_count: meals.length,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      success: true, training_days: weeklyPlan.length, macros, meals_count: meals.length,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
     console.error("[GENERATE-PLAN] Error:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500,
     });
   }
 });
