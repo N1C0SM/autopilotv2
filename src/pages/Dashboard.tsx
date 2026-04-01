@@ -184,8 +184,8 @@ const Dashboard = () => {
           </header>
 
           <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
-            {/* Unpaid state */}
-            {paymentStatus === "unpaid" && section === "home" && (
+            {/* Unpaid state — shown on ALL sections */}
+            {paymentStatus === "unpaid" && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
