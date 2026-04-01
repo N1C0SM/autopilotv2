@@ -62,17 +62,22 @@ const Signup = () => {
       return;
     }
 
-    // Paid plan: redirect to Stripe checkout
-    const { data, error: checkoutError } = await supabase.functions.invoke("create-checkout", {
-      body: { tier: "personal", referral_code: referralCode },
-    });
-    if (checkoutError || !data?.url) {
+    // Paid plan: redirect to Stripe payment link
+    const { data: settings } = await supabase.from("settings").select("payment_mode, payment_link_test, payment_link_live").limit(1).single();
+    const paymentLink = (settings as any)?.payment_mode === "live"
+      ? (settings as any)?.payment_link_live
+      : (settings as any)?.payment_link_test;
+
+    if (!paymentLink) {
       toast.error("Error al iniciar el pago. Ve a tu panel para completarlo.");
       window.location.href = "/dashboard";
       setLoading(false);
       return;
     }
-    window.location.href = data.url;
+
+    // Append prefilled email as query param
+    const separator = paymentLink.includes("?") ? "&" : "?";
+    window.location.href = `${paymentLink}${separator}prefilled_email=${encodeURIComponent(email)}`;
   };
 
   return (
