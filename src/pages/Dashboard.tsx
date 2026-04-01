@@ -99,12 +99,33 @@ const Dashboard = () => {
   }, [user, navigate]);
 
   const handleCompletePayment = async () => {
-    const { data, error } = await supabase.functions.invoke("create-checkout", { body: { tier: "personal" } });
-    if (error || !data?.url) {
+    try {
+      const { data: settings, error: settingsError } = await supabase
+        .from("settings")
+        .select("payment_mode, payment_link_test, payment_link_live")
+        .limit(1)
+        .single();
+
+      if (settingsError || !settings) {
+        toast.error("Error al obtener la configuración de pago.");
+        return;
+      }
+
+      const paymentLink = settings.payment_mode === "live"
+        ? settings.payment_link_live
+        : settings.payment_link_test;
+
+      if (!paymentLink) {
+        toast.error("El enlace de pago no está configurado.");
+        return;
+      }
+
+      const email = user?.email || "";
+      const separator = paymentLink.includes("?") ? "&" : "?";
+      window.location.href = `${paymentLink}${separator}prefilled_email=${encodeURIComponent(email)}`;
+    } catch {
       toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
-      return;
     }
-    window.location.href = data.url;
   };
 
   const handleManageSubscription = async () => {
