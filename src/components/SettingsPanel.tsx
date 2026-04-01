@@ -158,17 +158,15 @@ const SettingsPanel = () => {
   const deleteAccount = async () => {
     if (!user) return;
     setDeleting(true);
-    await Promise.all([
-      supabase.from("training_plan").delete().eq("user_id", user.id),
-      supabase.from("nutrition_plan").delete().eq("user_id", user.id),
-      supabase.from("onboarding").delete().eq("user_id", user.id),
-      supabase.from("user_roles").delete().eq("user_id", user.id),
-      supabase.from("profiles").delete().eq("user_id", user.id),
-      supabase.storage.from("avatars").remove([`${user.id}/avatar.jpg`, `${user.id}/avatar.png`, `${user.id}/avatar.webp`]),
-    ]);
+    const { error } = await supabase.functions.invoke("delete-account");
+    if (error) {
+      toast.error("Error al eliminar la cuenta. Inténtalo de nuevo.");
+      setDeleting(false);
+      return;
+    }
     await signOut();
     navigate("/");
-    toast.success("Cuenta eliminada");
+    toast.success("Cuenta eliminada permanentemente");
   };
 
   if (loading) {
