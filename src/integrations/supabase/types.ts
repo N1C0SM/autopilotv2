@@ -288,18 +288,24 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          payment_link_live: string | null
+          payment_link_test: string | null
           payment_mode: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          payment_link_live?: string | null
+          payment_link_test?: string | null
           payment_mode?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          payment_link_live?: string | null
+          payment_link_test?: string | null
           payment_mode?: string
           updated_at?: string
         }
