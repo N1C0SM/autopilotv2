@@ -94,12 +94,17 @@ serve(async (req) => {
       tier = sub.metadata?.tier || "personal";
       logStep("Active subscription found", { endDate: subscriptionEnd, tier, status: sub.status });
 
-      await supabaseClient.from("profiles").update({
+      const updateData: Record<string, string> = {
         subscription_status: sub.status,
         payment_status: "paid",
-        subscription_end: subscriptionEnd,
+        subscription_end: subscriptionEnd!,
         subscription_tier: tier,
-      }).eq("user_id", user.id);
+      };
+      // Auto-activate: if user was onboarding, move to plan_pending
+      if (profile?.plan_status === "onboarding") {
+        updateData.plan_status = "plan_pending";
+      }
+      await supabaseClient.from("profiles").update(updateData).eq("user_id", user.id);
     } else {
       logStep("No active subscription");
       // Only update subscription_status, preserve payment_status for free plan users
