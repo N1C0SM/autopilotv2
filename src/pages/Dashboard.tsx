@@ -184,8 +184,8 @@ const Dashboard = () => {
           </header>
 
           <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
-            {/* Unpaid state — shown on ALL sections */}
-            {paymentStatus === "unpaid" && (
+            {/* Unpaid state — shown on all sections EXCEPT settings */}
+            {paymentStatus === "unpaid" && section !== "settings" && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -295,7 +295,7 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Settings section */}
+            {/* Settings — always accessible */}
             {section === "settings" && (
               <div className="max-w-2xl">
                 <SettingsPanel />

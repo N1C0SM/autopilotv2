@@ -222,29 +222,43 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
             </span>
           </div>
         </div>
-        <Button variant="outline" onClick={autoGeneratePlan} disabled={generating} className="shrink-0">
-          <Wand2 className="w-4 h-4 mr-1" /> {generating ? "Generando..." : "Auto-generar"}
-        </Button>
-        <Button variant="hero" onClick={savePlans} disabled={saving} className="shrink-0">
-          <Save className="w-4 h-4 mr-1" /> {saving ? "Guardando..." : "Guardar"}
-        </Button>
+        {profile.payment_status === "paid" && (
+          <>
+            <Button variant="outline" onClick={autoGeneratePlan} disabled={generating} className="shrink-0">
+              <Wand2 className="w-4 h-4 mr-1" /> {generating ? "Generando..." : "Auto-generar"}
+            </Button>
+            <Button variant="hero" onClick={savePlans} disabled={saving} className="shrink-0">
+              <Save className="w-4 h-4 mr-1" /> {saving ? "Guardando..." : "Guardar"}
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="training" className="space-y-6">
-        <TabsList className="grid grid-cols-4 w-full bg-secondary/50">
+      {profile.payment_status !== "paid" && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-5 text-center">
+          <p className="text-sm font-medium text-amber-400">⚠️ Este usuario aún no ha pagado.</p>
+          <p className="text-xs text-muted-foreground mt-1">Solo puedes ver su info. Para asignar planes, el usuario debe completar el pago primero.</p>
+        </div>
+      )}
+      <Tabs defaultValue="info" className="space-y-6">
+        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-4" : "grid-cols-1"}`}>
           <TabsTrigger value="info" className="text-xs gap-1.5">
             <User2 className="w-3.5 h-3.5" /> Info
           </TabsTrigger>
-          <TabsTrigger value="training" className="text-xs gap-1.5">
-            <Dumbbell className="w-3.5 h-3.5" /> Entreno
-          </TabsTrigger>
-          <TabsTrigger value="nutrition" className="text-xs gap-1.5">
-            <Apple className="w-3.5 h-3.5" /> Nutrición
-          </TabsTrigger>
-          <TabsTrigger value="chat" className="text-xs gap-1.5">
-            <MessageCircle className="w-3.5 h-3.5" /> Chat
-          </TabsTrigger>
+          {profile.payment_status === "paid" && (
+            <>
+              <TabsTrigger value="training" className="text-xs gap-1.5">
+                <Dumbbell className="w-3.5 h-3.5" /> Entreno
+              </TabsTrigger>
+              <TabsTrigger value="nutrition" className="text-xs gap-1.5">
+                <Apple className="w-3.5 h-3.5" /> Nutrición
+              </TabsTrigger>
+              <TabsTrigger value="chat" className="text-xs gap-1.5">
+                <MessageCircle className="w-3.5 h-3.5" /> Chat
+              </TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         {/* Tab: Info */}
