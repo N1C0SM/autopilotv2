@@ -54,13 +54,24 @@ serve(async (req) => {
       const customerEmail = session.customer_details?.email || session.customer_email;
 
       if (customerEmail) {
+        // Check current plan_status to decide next step
+        const { data: existingProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("plan_status")
+          .eq("email", customerEmail)
+          .single();
+
         const updates: any = {
           payment_status: "paid",
-          plan_status: "onboarding",
         };
 
+        // If user was in onboarding or hasn't started, move to plan_pending
+        // If already plan_ready, don't downgrade
+        if (existingProfile?.plan_status !== "plan_ready") {
+          updates.plan_status = "plan_pending";
+        }
+
         if (session.mode === "subscription") {
-          // For trials, the subscription status is "trialing"
           updates.subscription_status = "active";
           updates.stripe_customer_id = session.customer as string;
           updates.subscription_tier = session.metadata?.tier || "personal";
