@@ -295,7 +295,7 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Settings section */}
+            {/* Settings — always accessible */}
             {section === "settings" && (
               <div className="max-w-2xl">
                 <SettingsPanel />
