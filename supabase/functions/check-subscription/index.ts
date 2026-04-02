@@ -47,7 +47,7 @@ serve(async (req) => {
     // Check current profile to avoid overwriting free plan users
     const { data: profile } = await supabaseClient
       .from("profiles")
-      .select("payment_status, subscription_status")
+      .select("payment_status, subscription_status, plan_status")
       .eq("user_id", user.id)
       .single();
 
