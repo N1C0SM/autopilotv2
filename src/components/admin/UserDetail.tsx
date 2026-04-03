@@ -133,13 +133,13 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
     const { error: tpError } = await supabase.from("training_plan").upsert({
       user_id: profile.user_id,
       workouts_json: dayPlans as unknown as Json,
-    });
+    }, { onConflict: "user_id" });
 
     const { error: npError } = await supabase.from("nutrition_plan").upsert({
       user_id: profile.user_id,
       macros_json: { protein: parseInt(macros.protein) || 0, carbs: parseInt(macros.carbs) || 0, fats: parseInt(macros.fats) || 0 } as unknown as Json,
       meals_json: meals as unknown as Json,
-    });
+    }, { onConflict: "user_id" });
 
     if (!tpError && !npError) {
       await supabase.from("profiles").update({ plan_status: "plan_ready" }).eq("user_id", profile.user_id);
