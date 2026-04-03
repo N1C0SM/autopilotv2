@@ -353,7 +353,6 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
 
         {/* Tab: Training */}
         <TabsContent value="training" className="space-y-6">
-          <ExerciseLibrary />
           <TrainingPlanForm dayPlans={dayPlans} onChange={setDayPlans} userSports={onboarding?.sports} />
         </TabsContent>
 
