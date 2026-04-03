@@ -12,7 +12,6 @@ import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Lo
 import type { Profile } from "@/pages/Admin";
 import type { Json } from "@/integrations/supabase/types";
 import type { DayPlan } from "@/types/training";
-import ExerciseLibrary from "./ExerciseLibrary";
 import TrainingPlanForm from "./TrainingPlanForm";
 
 interface OnboardingData {
@@ -354,7 +353,6 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
 
         {/* Tab: Training */}
         <TabsContent value="training" className="space-y-6">
-          <ExerciseLibrary />
           <TrainingPlanForm dayPlans={dayPlans} onChange={setDayPlans} userSports={onboarding?.sports} />
         </TabsContent>
 
