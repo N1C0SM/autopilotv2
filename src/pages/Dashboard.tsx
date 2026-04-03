@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Apple, Clock, Loader2, Crown } from "lucide-react";
+import { Apple, Clock, Loader2, Crown, Camera } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -12,7 +12,8 @@ import WeeklyProgress from "@/components/WeeklyProgress";
 import Chat from "@/components/Chat";
 import Greeting from "@/components/Greeting";
 import HomeOverview from "@/components/dashboard/HomeOverview";
-import WorkoutTracker from "@/components/dashboard/WorkoutTracker";
+import TrainingPlanView from "@/components/dashboard/TrainingPlanView";
+import ProgressPhotos from "@/components/dashboard/ProgressPhotos";
 import UserSidebar from "@/components/UserSidebar";
 import type { UserSection } from "@/components/UserSidebar";
 import SettingsPanel from "@/components/SettingsPanel";
@@ -158,6 +159,7 @@ const Dashboard = () => {
     home: "Inicio",
     training: "Entrenamiento",
     nutrition: "Nutrición",
+    progress: "Progreso",
     chat: "Chat",
     settings: "Ajustes",
   };
@@ -236,9 +238,14 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Training section */}
+            {/* Training section — clean plan view */}
             {hasPlan && section === "training" && user && (
-              <WorkoutTracker userId={user.id} dayPlans={dayPlans} />
+              <TrainingPlanView dayPlans={dayPlans} />
+            )}
+
+            {/* Progress photos */}
+            {hasPlan && section === "progress" && user && (
+              <ProgressPhotos userId={user.id} />
             )}
 
             {/* Nutrition section */}
