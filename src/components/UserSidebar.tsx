@@ -26,6 +26,7 @@ const NAV_ITEMS: { title: string; section: UserSection; icon: typeof Home }[] = 
   { title: "Inicio", section: "home", icon: Home },
   { title: "Entrenamiento", section: "training", icon: Dumbbell },
   { title: "Nutrición", section: "nutrition", icon: Apple },
+  { title: "Progreso", section: "progress", icon: Camera },
   { title: "Chat", section: "chat", icon: MessageCircle },
   { title: "Ajustes", section: "settings", icon: Settings },
 ];
