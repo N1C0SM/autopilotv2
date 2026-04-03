@@ -10,9 +10,9 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Home, Dumbbell, Apple, MessageCircle, Settings, LogOut } from "lucide-react";
+import { Home, Dumbbell, Apple, MessageCircle, Settings, LogOut, Camera } from "lucide-react";
 
-export type UserSection = "home" | "training" | "nutrition" | "chat" | "settings";
+export type UserSection = "home" | "training" | "nutrition" | "progress" | "chat" | "settings";
 
 interface Props {
   section: UserSection;
