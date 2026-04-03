@@ -159,6 +159,7 @@ const Dashboard = () => {
     home: "Inicio",
     training: "Entrenamiento",
     nutrition: "Nutrición",
+    progress: "Progreso",
     chat: "Chat",
     settings: "Ajustes",
   };
