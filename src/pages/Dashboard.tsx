@@ -238,9 +238,14 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Training section */}
+            {/* Training section — clean plan view */}
             {hasPlan && section === "training" && user && (
-              <WorkoutTracker userId={user.id} dayPlans={dayPlans} />
+              <TrainingPlanView dayPlans={dayPlans} />
+            )}
+
+            {/* Progress photos */}
+            {hasPlan && section === "progress" && user && (
+              <ProgressPhotos userId={user.id} />
             )}
 
             {/* Nutrition section */}
