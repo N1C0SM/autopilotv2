@@ -77,7 +77,7 @@ const Onboarding = () => {
       availability: data.availability,
       nutrition_preferences: data.nutrition_preferences,
       allergies: data.allergies,
-    });
+    }, { onConflict: "user_id" });
 
     if (!error) {
       await supabase.from("profiles").update({ plan_status: "plan_pending" }).eq("user_id", user.id);
