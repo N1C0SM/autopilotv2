@@ -5,8 +5,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, Gift } from "lucide-react";
-import { TIER } from "@/config/tiers";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Signup = () => {
@@ -72,24 +71,14 @@ const Signup = () => {
         <div className="text-center mb-8">
           <Link to="/" className="font-display text-2xl font-bold text-gradient">Autopilot</Link>
           <h1 className="text-2xl font-bold font-display mt-6 mb-2">Crea tu cuenta</h1>
-          {isFree ? (
-            <div className="bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 mt-4">
-              <p className="text-sm text-primary font-medium flex items-center justify-center gap-2">
-                <Gift className="w-4 h-4" /> Plan gratuito por invitación
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Acceso completo sin pago</p>
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              Plan <span className="text-primary font-semibold">{TIER.name}</span> — €{TIER.price}/mes
-              <span className="block text-xs mt-1">7 días gratis · Cancela cuando quieras</span>
-            </p>
-          )}
+          <p className="text-muted-foreground text-sm">
+            {isFree ? "Acceso completo por invitación" : "Empieza tu transformación hoy"}
+          </p>
         </div>
 
         {referralCode && !isFree && (
           <div className="bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 mb-4 text-center">
-            <p className="text-sm text-primary font-medium">🎁 ¡20% de descuento aplicado por invitación!</p>
+            <p className="text-sm text-primary font-medium">🎁 ¡Invitación aplicada!</p>
           </div>
         )}
 
@@ -110,17 +99,10 @@ const Signup = () => {
           <Button variant="hero" size="lg" className="w-full" type="submit" disabled={loading}>
             {loading ? (
               <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Procesando...</>
-            ) : isFree ? (
-              "Crear cuenta gratuita"
             ) : (
-              `Empezar 7 días gratis — €${TIER.price}/mes`
+              "Crear cuenta"
             )}
           </Button>
-          {!isFree && (
-            <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3 h-3" /> No se cobra hasta que termine la prueba gratuita
-            </p>
-          )}
           <p className="text-center text-sm text-muted-foreground">
             ¿Ya tienes cuenta? <Link to="/login" className="text-primary hover:underline">Inicia sesión</Link>
           </p>
