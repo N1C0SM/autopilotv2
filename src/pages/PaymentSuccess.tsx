@@ -83,10 +83,10 @@ const PaymentSuccess = () => {
         </div>
         <h1 className="text-3xl font-bold font-display mb-3">¡Pago Exitoso!</h1>
         <p className="text-muted-foreground mb-8">
-          ¡Gracias por tu compra! Ahora vamos a crear tu plan personalizado.
+          ¡Gracias! Tu plan personalizado se está preparando.
         </p>
-        <Button variant="hero" size="lg" onClick={() => navigate("/onboarding")}>
-          Comenzar Cuestionario
+        <Button variant="hero" size="lg" onClick={() => navigate("/dashboard")}>
+          Ir a mi Dashboard
         </Button>
       </div>
     </div>
