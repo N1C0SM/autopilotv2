@@ -48,7 +48,7 @@ const Signup = () => {
       }
     }
 
-    // Free plan: skip Stripe, mark as paid directly
+    // Free plan: mark as paid directly
     if (isFree) {
       if (user) {
         await supabase.from("profiles").update({
@@ -58,26 +58,12 @@ const Signup = () => {
         }).eq("user_id", user.id);
       }
       toast.success("¡Cuenta creada! Plan gratuito activado 🎉");
-      window.location.href = "/onboarding";
-      return;
+    } else {
+      toast.success("¡Cuenta creada! Cuéntanos sobre ti.");
     }
 
-    // Paid plan: redirect to Stripe payment link
-    const { data: settings } = await supabase.from("settings").select("payment_mode, payment_link_test, payment_link_live").limit(1).single();
-    const paymentLink = (settings as any)?.payment_mode === "live"
-      ? (settings as any)?.payment_link_live
-      : (settings as any)?.payment_link_test;
-
-    if (!paymentLink) {
-      toast.error("Error al iniciar el pago. Ve a tu panel para completarlo.");
-      window.location.href = "/dashboard";
-      setLoading(false);
-      return;
-    }
-
-    // Append prefilled email as query param
-    const separator = paymentLink.includes("?") ? "&" : "?";
-    window.location.href = `${paymentLink}${separator}prefilled_email=${encodeURIComponent(email)}`;
+    // Always go to onboarding first
+    window.location.href = "/onboarding";
   };
 
   return (

@@ -81,18 +81,32 @@ const Onboarding = () => {
 
     if (!error) {
       await supabase.from("profiles").update({ plan_status: "plan_pending" }).eq("user_id", user.id);
-      
-      // Auto-generate plan
-      const { error: genError } = await supabase.functions.invoke("generate-plan", {
-        body: { user_id: user.id },
-      });
-      
-      if (genError) {
-        toast.success("¡Cuestionario enviado! Tu plan se está preparando.");
+
+      // Check if user already paid (free plan or already subscribed)
+      const { data: profile } = await supabase.from("profiles").select("payment_status").eq("user_id", user.id).single();
+
+      if (profile?.payment_status === "paid") {
+        // Already paid (free plan) → generate plan and go to dashboard
+        supabase.functions.invoke("generate-plan", { body: { user_id: user.id } });
+        toast.success("¡Tu plan se está preparando! 🎉");
+        navigate("/dashboard");
       } else {
-        toast.success("¡Tu plan personalizado está listo! 🎉");
+        // Not paid yet → redirect to Stripe
+        const { data: settings } = await supabase.from("settings").select("payment_mode, payment_link_test, payment_link_live").limit(1).single();
+        const paymentLink = (settings as any)?.payment_mode === "live"
+          ? (settings as any)?.payment_link_live
+          : (settings as any)?.payment_link_test;
+
+        if (paymentLink) {
+          const userEmail = user.email || "";
+          const separator = paymentLink.includes("?") ? "&" : "?";
+          toast.success("¡Cuestionario completado! Redirigiendo al pago...");
+          window.location.href = `${paymentLink}${separator}prefilled_email=${encodeURIComponent(userEmail)}`;
+        } else {
+          toast.success("¡Cuestionario enviado!");
+          navigate("/dashboard");
+        }
       }
-      navigate("/dashboard");
     } else {
       toast.error("Algo salió mal. Por favor, inténtalo de nuevo.");
     }
