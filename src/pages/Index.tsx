@@ -114,10 +114,10 @@ const Index = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <Button variant="hero" size="xl" onClick={() => navigate("/signup")} className="hover-scale">
-              Prueba Gratis 7 Días — €19/mes
+              Recibe tu plan personalizado
             </Button>
             <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3 h-3" /> 7 días gratis · Cancela cuando quieras
+              <ShieldCheck className="w-3 h-3" /> Solo tardas 2 minutos · 7 días gratis · Cancela cuando quieras
             </p>
           </motion.div>
         </div>
