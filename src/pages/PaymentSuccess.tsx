@@ -90,12 +90,11 @@ const PaymentSuccess = () => {
           <CheckCircle2 className="w-10 h-10 text-primary" />
         </div>
         <h1 className="text-3xl font-bold font-display mb-3">¡Pago Exitoso!</h1>
-        <p className="text-muted-foreground mb-8">
+        <p className="text-muted-foreground mb-4">
           ¡Gracias! Tu plan personalizado se está preparando.
         </p>
-        <Button variant="hero" size="lg" onClick={() => navigate("/dashboard")}>
-          Ir a mi Dashboard
-        </Button>
+        <p className="text-xs text-muted-foreground mb-8">Redirigiendo al dashboard...</p>
+        <Loader2 className="w-5 h-5 text-primary animate-spin mx-auto" />
       </div>
     </div>
   );
