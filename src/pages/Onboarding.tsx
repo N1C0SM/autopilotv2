@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 
-const STEPS = ["Datos Físicos", "Sexo", "Objetivo", "Deportes", "Intensidad", "Lesiones", "Disponibilidad", "Nutrición"];
+const STEPS = ["Datos Físicos", "Sexo", "Objetivo", "Deportes", "Intensidad", "Lesiones", "Disponibilidad", "Nutrición", "Resumen"];
 
 const GOALS = [
   { value: "lose_weight", label: "Perder grasa", emoji: "🔥" },
