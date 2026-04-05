@@ -266,7 +266,7 @@ const Dashboard = () => {
             {/* Home section */}
             {hasPlan && section === "home" && (
               <div className="space-y-8 max-w-4xl">
-                <Greeting name={profileName} />
+                <Greeting name={profileName} createdAt={profileCreatedAt} completedDays={completedDays} />
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   {user && <WeeklyProgress userId={user.id} dayPlans={dayPlans} />}
                 </motion.div>
@@ -275,6 +275,8 @@ const Dashboard = () => {
                   macros={macros}
                   meals={meals}
                   onNavigate={setSection}
+                  weeksActive={profileCreatedAt ? Math.floor((Date.now() - new Date(profileCreatedAt).getTime()) / (1000 * 60 * 60 * 24 * 7)) : 0}
+                  completedDays={completedDays}
                 />
               </div>
             )}
