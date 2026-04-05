@@ -335,7 +335,7 @@ const Index = () => {
               Tu plan personalizado de entrenamiento y nutrición te espera. Empieza hoy gratis.
             </p>
             <Button variant="hero" size="xl" onClick={() => navigate("/signup")} className="hover-scale">
-              Prueba Gratis 7 Días — €19/mes
+              Empieza gratis ahora
             </Button>
           </ScrollReveal>
         </div>
