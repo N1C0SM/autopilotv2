@@ -84,9 +84,10 @@ const Dashboard = () => {
         if (profile.plan_status === "onboarding") { navigate("/onboarding"); return; }
 
         if (profile.plan_status === "plan_ready") {
-          const [{ data: tp }, { data: np }] = await Promise.all([
+          const [{ data: tp }, { data: np }, { data: dc }] = await Promise.all([
             supabase.from("training_plan").select("workouts_json").eq("user_id", user.id).single(),
             supabase.from("nutrition_plan").select("macros_json, meals_json").eq("user_id", user.id).single(),
+            supabase.from("day_completions").select("id").eq("user_id", user.id),
           ]);
 
           if (tp) setDayPlans(tp.workouts_json as unknown as DayPlan[]);
@@ -94,6 +95,7 @@ const Dashboard = () => {
             setMacros(np.macros_json as unknown as Macros);
             setMeals(np.meals_json as unknown as Meal[]);
           }
+          setCompletedDays(dc?.length ?? 0);
         }
       }
       setLoading(false);
