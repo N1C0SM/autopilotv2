@@ -47,6 +47,14 @@ const PaymentSuccess = () => {
     checkPayment();
   }, [user, loading]);
 
+  // Auto-redirect to dashboard once paid
+  useEffect(() => {
+    if (paid && user) {
+      const timer = setTimeout(() => navigate("/dashboard"), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [paid, user, navigate]);
+
   if (loading || checking) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
