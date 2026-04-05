@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Apple, Clock, Loader2, Crown, Camera } from "lucide-react";
+import { Apple, Clock, Loader2, Crown, Camera, Dumbbell, UtensilsCrossed, MessageCircle } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -187,24 +187,60 @@ const Dashboard = () => {
 
           <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
             {/* Unpaid state — shown on all sections EXCEPT settings */}
-            {paymentStatus === "unpaid" && section !== "settings" && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-                className="bg-card rounded-2xl p-10 border border-border card-shadow text-center max-w-2xl mx-auto"
-              >
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Crown className="w-8 h-8 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold font-display mb-2">Obtén tu plan personalizado</h2>
-                <p className="text-muted-foreground mb-6">Entrenamiento y nutrición 100% adaptados a ti. Chat con tu entrenador incluido.</p>
-                <Button variant="hero" size="lg" onClick={handleCompletePayment}>
-                  Empezar 7 días gratis — €19/mes
-                </Button>
-                <p className="text-xs text-muted-foreground mt-3">Cancela cuando quieras. Sin permanencia.</p>
-              </motion.div>
-            )}
+            {paymentStatus === "unpaid" && section !== "settings" && (() => {
+              const paywallContent: Record<string, { icon: React.ReactNode; title: string; description: string; cta: string }> = {
+                home: {
+                  icon: <Crown className="w-8 h-8 text-primary" />,
+                  title: "Obtén tu plan personalizado",
+                  description: "Entrenamiento y nutrición 100% adaptados a ti. Chat con tu entrenador incluido.",
+                  cta: "Empezar 7 días gratis — €19/mes",
+                },
+                training: {
+                  icon: <Dumbbell className="w-8 h-8 text-primary" />,
+                  title: "Tu rutina te está esperando",
+                  description: "Ejercicios, series y descansos diseñados para tus objetivos. Actualizado cada semana por tu entrenador.",
+                  cta: "Desbloquear mi entrenamiento",
+                },
+                nutrition: {
+                  icon: <UtensilsCrossed className="w-8 h-8 text-primary" />,
+                  title: "Come según tu objetivo",
+                  description: "Plan de comidas con macros calculados para ti. Sin recetas genéricas, todo personalizado.",
+                  cta: "Desbloquear mi nutrición",
+                },
+                chat: {
+                  icon: <MessageCircle className="w-8 h-8 text-primary" />,
+                  title: "Habla con tu entrenador",
+                  description: "Resuelve dudas, ajusta tu plan y recibe feedback directo. Siempre disponible.",
+                  cta: "Activar chat con entrenador",
+                },
+                photos: {
+                  icon: <Camera className="w-8 h-8 text-primary" />,
+                  title: "Documenta tu progreso",
+                  description: "Sube fotos semanales y compara tu evolución. Tu entrenador las revisa para ajustar tu plan.",
+                  cta: "Empezar a trackear",
+                },
+              };
+              const content = paywallContent[section] || paywallContent.home;
+              return (
+                <motion.div
+                  key={section}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="bg-card rounded-2xl p-10 border border-border card-shadow text-center max-w-2xl mx-auto"
+                >
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    {content.icon}
+                  </div>
+                  <h2 className="text-xl font-bold font-display mb-2">{content.title}</h2>
+                  <p className="text-muted-foreground mb-6">{content.description}</p>
+                  <Button variant="hero" size="lg" onClick={handleCompletePayment}>
+                    {content.cta}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-3">Cancela cuando quieras. Sin permanencia.</p>
+                </motion.div>
+              );
+            })()}
 
             {/* Plan pending */}
             {paymentStatus === "paid" && planStatus === "plan_pending" && section === "home" && (
