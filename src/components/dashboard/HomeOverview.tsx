@@ -19,6 +19,8 @@ interface Props {
   macros: Macros | null;
   meals: Meal[];
   onNavigate: (s: UserSection) => void;
+  weeksActive?: number;
+  completedDays?: number;
 }
 
 const DAYS_ORDER = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
