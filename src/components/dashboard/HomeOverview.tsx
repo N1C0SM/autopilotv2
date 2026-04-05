@@ -25,7 +25,7 @@ interface Props {
 
 const DAYS_ORDER = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
-const HomeOverview = ({ dayPlans, macros, meals, onNavigate }: Props) => {
+const HomeOverview = ({ dayPlans, macros, meals, onNavigate, weeksActive, completedDays }: Props) => {
   const todayIndex = (new Date().getDay() + 6) % 7;
   const todayName = DAYS_ORDER[todayIndex];
   const todayPlan = dayPlans.find((p) => p.day === todayName);
