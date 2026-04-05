@@ -51,6 +51,8 @@ const Dashboard = () => {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [section, setSection] = useState<UserSection>("home");
+  const [profileCreatedAt, setProfileCreatedAt] = useState<string>("");
+  const [completedDays, setCompletedDays] = useState(0);
 
   useEffect(() => {
     if (!user) return;
