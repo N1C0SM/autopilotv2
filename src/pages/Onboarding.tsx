@@ -322,6 +322,63 @@ const Onboarding = () => {
             </div>
           )}
 
+          {/* Step 8: Summary */}
+          {step === 8 && (
+            <div className="space-y-5">
+              <div className="text-center mb-2">
+                <div className="text-4xl mb-2">🎯</div>
+                <h2 className="text-xl font-bold font-display">Tu plan personalizado</h2>
+                <p className="text-sm text-muted-foreground mt-1">Esto es lo que recibirás en menos de 48h</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                  <span className="text-xl">🏋️</span>
+                  <div>
+                    <p className="font-semibold text-sm">Rutina de {data.availability.days || "?"} días/semana</p>
+                    <p className="text-xs text-muted-foreground">
+                      {data.sports.length > 0
+                        ? SPORTS.filter(s => data.sports.includes(s.value)).map(s => s.label).join(", ")
+                        : "Adaptada a tus deportes"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                  <span className="text-xl">🍽️</span>
+                  <div>
+                    <p className="font-semibold text-sm">
+                      Plan nutricional de ~{data.weight ? Math.round(Number(data.weight) * 30) : "?"} kcal
+                    </p>
+                    <p className="text-xs text-muted-foreground">Macros personalizados para tu objetivo</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                  <span className="text-xl">💬</span>
+                  <div>
+                    <p className="font-semibold text-sm">Chat directo con tu entrenador</p>
+                    <p className="text-xs text-muted-foreground">Dudas, cambios y seguimiento incluido</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                  <span className="text-xl">🔄</span>
+                  <div>
+                    <p className="font-semibold text-sm">Renovación mensual automática</p>
+                    <p className="text-xs text-muted-foreground">Tu plan evoluciona contigo cada mes</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-center text-muted-foreground mt-4">
+                Objetivo: <span className="font-medium text-foreground">{GOALS.find(g => g.value === data.goal)?.label || data.goal}</span>
+                {data.weight && <> · <span className="font-medium text-foreground">{data.weight}kg</span></>}
+                {data.intensity_level && <> · Intensidad <span className="font-medium text-foreground">{data.intensity_level}/10</span></>}
+              </p>
+            </div>
+          )}
+
           <div className="flex justify-between mt-8">
             <Button variant="ghost" onClick={() => setStep((s) => s - 1)} disabled={step === 0}>
               <ArrowLeft className="w-4 h-4 mr-1" /> Atrás

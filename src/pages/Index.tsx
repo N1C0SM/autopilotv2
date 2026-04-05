@@ -86,7 +86,7 @@ const Index = () => {
             className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 mb-8"
           >
             <Zap className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Tu plan listo en menos de 48h</span>
+            <span className="text-sm font-medium text-primary">Recibe tu plan en menos de 24h</span>
           </motion.div>
 
           <motion.h1
