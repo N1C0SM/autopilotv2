@@ -86,7 +86,7 @@ const Index = () => {
             className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 mb-8"
           >
             <Zap className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Tu plan listo en menos de 48h</span>
+            <span className="text-sm font-medium text-primary">Recibe tu plan en menos de 24h</span>
           </motion.div>
 
           <motion.h1
@@ -114,10 +114,10 @@ const Index = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <Button variant="hero" size="xl" onClick={() => navigate("/signup")} className="hover-scale">
-              Prueba Gratis 7 Días — €19/mes
+              Recibe tu plan personalizado
             </Button>
             <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3 h-3" /> 7 días gratis · Cancela cuando quieras
+              <ShieldCheck className="w-3 h-3" /> Solo tardas 2 minutos · 7 días gratis · Cancela cuando quieras
             </p>
           </motion.div>
         </div>
@@ -335,7 +335,7 @@ const Index = () => {
               Tu plan personalizado de entrenamiento y nutrición te espera. Empieza hoy gratis.
             </p>
             <Button variant="hero" size="xl" onClick={() => navigate("/signup")} className="hover-scale">
-              Prueba Gratis 7 Días — €19/mes
+              Empieza gratis ahora
             </Button>
           </ScrollReveal>
         </div>
@@ -351,7 +351,7 @@ const Index = () => {
       {/* Floating CTA on mobile */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border z-50 md:hidden">
         <Button variant="hero" size="lg" className="w-full" onClick={() => navigate("/signup")}>
-          Prueba Gratis 7 Días — €19/mes
+          Recibe tu plan — 2 minutos
         </Button>
       </div>
     </div>

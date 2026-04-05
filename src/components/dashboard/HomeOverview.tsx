@@ -19,11 +19,13 @@ interface Props {
   macros: Macros | null;
   meals: Meal[];
   onNavigate: (s: UserSection) => void;
+  weeksActive?: number;
+  completedDays?: number;
 }
 
 const DAYS_ORDER = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
-const HomeOverview = ({ dayPlans, macros, meals, onNavigate }: Props) => {
+const HomeOverview = ({ dayPlans, macros, meals, onNavigate, weeksActive, completedDays }: Props) => {
   const todayIndex = (new Date().getDay() + 6) % 7;
   const todayName = DAYS_ORDER[todayIndex];
   const todayPlan = dayPlans.find((p) => p.day === todayName);
@@ -168,6 +170,27 @@ const HomeOverview = ({ dayPlans, macros, meals, onNavigate }: Props) => {
           })}
         </div>
       </motion.div>
+      {/* Progress stats */}
+      {(weeksActive !== undefined || completedDays !== undefined) && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-card rounded-2xl p-5 border border-border"
+        >
+          <h3 className="font-display font-bold text-sm mb-3">Tu progreso</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold font-display text-primary">{weeksActive ?? 0}</div>
+              <div className="text-xs text-muted-foreground">Semanas activo</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold font-display text-primary">{completedDays ?? 0}</div>
+              <div className="text-xs text-muted-foreground">Días completados</div>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };

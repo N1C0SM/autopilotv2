@@ -51,6 +51,8 @@ const Dashboard = () => {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [section, setSection] = useState<UserSection>("home");
+  const [profileCreatedAt, setProfileCreatedAt] = useState<string>("");
+  const [completedDays, setCompletedDays] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -67,7 +69,7 @@ const Dashboard = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_status, payment_status, name, avatar_url")
+        .select("plan_status, payment_status, name, avatar_url, created_at")
         .eq("user_id", user.id)
         .single();
 
@@ -76,14 +78,16 @@ const Dashboard = () => {
         setPaymentStatus(profile.payment_status);
         setProfileName((profile as any).name || "");
         setProfileAvatar((profile as any).avatar_url || "");
+        setProfileCreatedAt((profile as any).created_at || "");
 
         if (profile.payment_status === "unpaid") { setLoading(false); return; }
         if (profile.plan_status === "onboarding") { navigate("/onboarding"); return; }
 
         if (profile.plan_status === "plan_ready") {
-          const [{ data: tp }, { data: np }] = await Promise.all([
+          const [{ data: tp }, { data: np }, { data: dc }] = await Promise.all([
             supabase.from("training_plan").select("workouts_json").eq("user_id", user.id).single(),
             supabase.from("nutrition_plan").select("macros_json, meals_json").eq("user_id", user.id).single(),
+            supabase.from("day_completions").select("id").eq("user_id", user.id),
           ]);
 
           if (tp) setDayPlans(tp.workouts_json as unknown as DayPlan[]);
@@ -91,6 +95,7 @@ const Dashboard = () => {
             setMacros(np.macros_json as unknown as Macros);
             setMeals(np.meals_json as unknown as Meal[]);
           }
+          setCompletedDays(dc?.length ?? 0);
         }
       }
       setLoading(false);
@@ -261,7 +266,7 @@ const Dashboard = () => {
             {/* Home section */}
             {hasPlan && section === "home" && (
               <div className="space-y-8 max-w-4xl">
-                <Greeting name={profileName} />
+                <Greeting name={profileName} createdAt={profileCreatedAt} completedDays={completedDays} />
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   {user && <WeeklyProgress userId={user.id} dayPlans={dayPlans} />}
                 </motion.div>
@@ -270,6 +275,8 @@ const Dashboard = () => {
                   macros={macros}
                   meals={meals}
                   onNavigate={setSection}
+                  weeksActive={profileCreatedAt ? Math.floor((Date.now() - new Date(profileCreatedAt).getTime()) / (1000 * 60 * 60 * 24 * 7)) : 0}
+                  completedDays={completedDays}
                 />
               </div>
             )}
