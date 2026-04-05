@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Apple, Clock, Loader2, Crown, Camera } from "lucide-react";
+import { Apple, Clock, Loader2, Crown, Camera, Dumbbell, UtensilsCrossed, MessageCircle } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
