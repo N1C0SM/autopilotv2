@@ -64,7 +64,9 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0]));
 
   useEffect(() => {
-    supabase.from("exercises").select("id, name, muscle_group, image_url").order("muscle_group").order("name")
+    supabase.from("exercises")
+      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order")
+      .order("muscle_group").order("recommended_order").order("name")
       .then(({ data }) => { if (data) setExercises(data as Exercise[]); });
   }, []);
 

@@ -11,6 +11,17 @@ const RECOVERY_HOURS: Record<string, number> = {
   Piernas: 72, Glúteos: 48, Core: 24, "Cuerpo completo": 48, Cardio: 24,
 };
 
+// ─── Helpers ───
+
+interface ExerciseRow {
+  id: string; name: string; image_url: string | null;
+  muscle_group: string | null; exercise_type: string | null;
+  movement_pattern: string | null; level: number | null;
+  priority: number | null; stimulus_type: string | null;
+  load_level: string | null; fatigue_level: string | null;
+  recommended_order: number | null;
+}
+
 function calcMacros(weight: number, goal: string) {
   switch (goal) {
     case "gain_muscle": return { protein: Math.round(weight * 2.2), carbs: Math.round(weight * 4), fats: Math.round(weight * 1) };
@@ -38,6 +49,25 @@ function getMeals(goal: string) {
   }
   return base;
 }
+
+// ─── Stimulus-based rep schemes ───
+
+function getRepScheme(stimulus: string | null, intensityLevel: number) {
+  switch (stimulus) {
+    case "Fuerza":      return { series: 5, reps: 5, rest: "180s" };
+    case "Hipertrofia":  return { series: 4, reps: intensityLevel >= 7 ? 10 : 12, rest: "90s" };
+    case "Resistencia":  return { series: 3, reps: 15, rest: "45s" };
+    case "Isométrico":   return { series: 3, reps: 30, rest: "60s" }; // reps = seconds
+    default:             return { series: intensityLevel >= 7 ? 4 : 3, reps: 10, rest: intensityLevel >= 7 ? "90s" : "60s" };
+  }
+}
+
+// ─── Fatigue tracking ───
+
+const FATIGUE_POINTS: Record<string, number> = { Alta: 3, Media: 2, Baja: 1 };
+const MAX_FATIGUE_PER_SESSION = 18;
+
+// ─── Gym split ───
 
 interface RoutineDay { name: string; muscles: string[]; }
 
@@ -67,46 +97,78 @@ function getGymSplit(daysAvailable: number): RoutineDay[] {
   ];
 }
 
+// ─── Smart exercise picker ───
+
 function pickExercises(
   muscles: string[],
-  exerciseLib: Record<string, { id: string; name: string; image_url: string | null }[]>,
-  intensityLevel: number
+  exerciseLib: Record<string, ExerciseRow[]>,
+  intensityLevel: number,
+  userLevel: number,
 ) {
   const exercises: any[] = [];
   const exercisesPerMuscle = intensityLevel >= 7 ? 3 : 2;
+  let sessionFatigue = 0;
 
   for (const muscle of muscles) {
-    const available = exerciseLib[muscle] || [];
+    const available = (exerciseLib[muscle] || [])
+      // Filter by user level: show exercises at or below user level
+      .filter((ex) => (ex.level ?? 1) <= userLevel);
+
     if (available.length === 0) {
-      console.log(`[GENERATE-PLAN] No exercises found for muscle: ${muscle}`);
+      console.log(`[GENERATE-PLAN] No exercises for ${muscle} at level ${userLevel}, skipping`);
       continue;
     }
-    const shuffled = [...available].sort(() => Math.random() - 0.5);
-    const picked = shuffled.slice(0, exercisesPerMuscle);
+
+    // Sort: priority 1 (base) first, then by recommended_order
+    const sorted = [...available].sort((a, b) => {
+      const pDiff = (a.priority ?? 2) - (b.priority ?? 2);
+      if (pDiff !== 0) return pDiff;
+      return (a.recommended_order ?? 2) - (b.recommended_order ?? 2);
+    });
+
+    const picked: ExerciseRow[] = [];
+    for (const ex of sorted) {
+      if (picked.length >= exercisesPerMuscle) break;
+      const fatigueCost = FATIGUE_POINTS[ex.fatigue_level || "Media"] || 2;
+      if (sessionFatigue + fatigueCost > MAX_FATIGUE_PER_SESSION) continue;
+      picked.push(ex);
+      sessionFatigue += fatigueCost;
+    }
 
     for (const ex of picked) {
-      const series = intensityLevel >= 7 ? 4 : 3;
-      const reps = muscle === "Piernas" || muscle === "Glúteos" ? 10 :
-                   muscle === "Core" ? 15 : intensityLevel >= 7 ? 8 : 10;
+      const scheme = getRepScheme(ex.stimulus_type, intensityLevel);
       exercises.push({
         exercise_id: ex.id,
         name: ex.name,
-        series, reps,
+        series: scheme.series,
+        reps: scheme.reps,
         weight: "",
-        rest: intensityLevel >= 7 ? "90s" : "60s",
+        rest: scheme.rest,
         image_url: ex.image_url || undefined,
       });
     }
   }
+
+  // Sort final list by recommended_order for proper session flow
+  const orderMap: Record<string, number> = {};
+  for (const muscle of muscles) {
+    for (const ex of exerciseLib[muscle] || []) {
+      orderMap[ex.id] = ex.recommended_order ?? 2;
+    }
+  }
+  exercises.sort((a, b) => (orderMap[a.exercise_id] ?? 2) - (orderMap[b.exercise_id] ?? 2));
+
   return exercises;
 }
+
+// ─── Build weekly plan ───
 
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
 function buildWeeklyPlan(
   gymSplit: RoutineDay[], sports: string[], daysAvailable: number,
-  intensityLevel: number,
-  exerciseLib: Record<string, { id: string; name: string; image_url: string | null }[]>
+  intensityLevel: number, userLevel: number,
+  exerciseLib: Record<string, ExerciseRow[]>,
 ) {
   const plan: any[] = [];
   const trainedMuscles: Record<string, number> = {};
@@ -126,7 +188,7 @@ function buildWeeklyPlan(
       });
 
       if (canTrain) {
-        const exercises = pickExercises(routine.muscles, exerciseLib, intensityLevel);
+        const exercises = pickExercises(routine.muscles, exerciseLib, intensityLevel, userLevel);
         plan.push({
           day: DAYS[dayIdx], type: "gimnasio",
           routine_name: routine.name, muscle_focus: routine.muscles.join(" · "),
@@ -151,7 +213,7 @@ function buildWeeklyPlan(
 
     if (gymDayIdx < gymSplit.length) {
       const routine = gymSplit[gymDayIdx];
-      const exercises = pickExercises(routine.muscles, exerciseLib, intensityLevel);
+      const exercises = pickExercises(routine.muscles, exerciseLib, intensityLevel, userLevel);
       plan.push({
         day: DAYS[dayIdx], type: "gimnasio",
         routine_name: routine.name, muscle_focus: routine.muscles.join(" · "),
@@ -163,6 +225,16 @@ function buildWeeklyPlan(
   }
   return plan;
 }
+
+// ─── Map intensity to user level ───
+
+function intensityToLevel(intensity: number): number {
+  if (intensity >= 8) return 3; // avanzado
+  if (intensity >= 5) return 2; // intermedio
+  return 1; // básico
+}
+
+// ─── Serve ───
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -199,24 +271,26 @@ serve(async (req) => {
         ? (onb.availability as any).days || "4" : "4"
     );
     const intensityLevel = onb.intensity_level || 5;
+    const userLevel = intensityToLevel(intensityLevel);
 
-    // Fetch exercise library WITH image_url
+    // Fetch full exercise library
     const { data: allExercises } = await supabase
-      .from("exercises").select("id, name, muscle_group, image_url");
+      .from("exercises")
+      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order");
 
-    const exerciseLib: Record<string, { id: string; name: string; image_url: string | null }[]> = {};
-    for (const ex of allExercises || []) {
+    const exerciseLib: Record<string, ExerciseRow[]> = {};
+    for (const ex of (allExercises || []) as ExerciseRow[]) {
       const g = ex.muscle_group || "Otro";
       if (!exerciseLib[g]) exerciseLib[g] = [];
-      exerciseLib[g].push({ id: ex.id, name: ex.name, image_url: ex.image_url });
+      exerciseLib[g].push(ex);
     }
 
     console.log(`[GENERATE-PLAN] Exercise library: ${Object.entries(exerciseLib).map(([k, v]) => `${k}:${v.length}`).join(", ")}`);
+    console.log(`[GENERATE-PLAN] User level: ${userLevel}, intensity: ${intensityLevel}`);
 
     const gymSplit = getGymSplit(Math.min(daysAvailable, 6));
-    const weeklyPlan = buildWeeklyPlan(gymSplit, sports, Math.min(daysAvailable, 7), intensityLevel, exerciseLib);
+    const weeklyPlan = buildWeeklyPlan(gymSplit, sports, Math.min(daysAvailable, 7), intensityLevel, userLevel, exerciseLib);
 
-    // Log exercises per day
     for (const day of weeklyPlan) {
       if (day.type === "gimnasio") {
         console.log(`[GENERATE-PLAN] ${day.day} (${day.routine_name}): ${(day.exercises || []).length} exercises`);
