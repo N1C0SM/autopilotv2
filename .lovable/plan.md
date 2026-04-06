@@ -1,53 +1,44 @@
 
 
-## Plan revisado: Conversión y retención para plataforma de coaching online
+## Ampliar la tabla de ejercicios con campos avanzados
 
-La app no es un tracker de gym. Es una web donde el usuario paga por un servicio de coaching y consulta qué entrenar y qué comer. El valor está en el plan personalizado + acceso al entrenador.
+### Cambios necesarios
 
----
+**1. Migración de base de datos** — Añadir 8 columnas nuevas a la tabla `exercises`:
 
-### A. Conversión (Onboarding → Pago)
+```sql
+ALTER TABLE exercises
+  ADD COLUMN exercise_type text,        -- Calistenia, Gimnasio, Mixto
+  ADD COLUMN movement_pattern text,     -- Empuje, Tirón, Sentadilla, Bisagra, Core
+  ADD COLUMN level integer DEFAULT 1,   -- 1 básico, 2 intermedio, 3 avanzado
+  ADD COLUMN priority integer DEFAULT 2,-- 1 base, 2 desarrollo, 3 accesorio
+  ADD COLUMN stimulus_type text,        -- Fuerza, Hipertrofia, Resistencia, Isométrico
+  ADD COLUMN load_level text,           -- Alta, Media, Baja
+  ADD COLUMN fatigue_level text,        -- Alta, Media, Baja
+  ADD COLUMN recommended_order integer DEFAULT 2; -- 1 inicio, 2 medio, 3 final
+```
 
-**1. Resumen pre-pago al final del onboarding**
-- Después del último paso del cuestionario, mostrar una pantalla resumen antes de redirigir a Stripe
-- Contenido personalizado con los datos que acaba de rellenar: "Tu plan personalizado: rutina de 4 días · dieta de 2200 kcal · chat directo con tu entrenador"
-- Archivo: `Onboarding.tsx` (nuevo paso final)
+**2. Actualizar `src/types/training.ts`** — Ampliar la interfaz `Exercise` con los nuevos campos.
 
-**2. Mejorar CTAs de la landing**
-- Cambiar textos genéricos por copy más directo: "Recibe tu plan en 24h", "Solo tardas 2 minutos"
-- Hacer el CTA principal más visible y urgente
-- Archivo: `Index.tsx`
+**3. Actualizar `src/components/admin/ExerciseLibrary.tsx`** — Formulario de alta con todos los campos nuevos (selects para cada uno) y mostrar los atributos en la lista.
 
----
+**4. Actualizar `supabase/functions/generate-plan/index.ts`** — El generador usará los nuevos campos para:
+- Filtrar por `exercise_type` según equipamiento del usuario (si tiene gym o no)
+- Ordenar ejercicios por `recommended_order` (base primero, accesorios al final)
+- Filtrar por `priority` (siempre incluir ejercicios base, luego desarrollo, luego accesorios)
+- Ajustar series/reps según `stimulus_type` (fuerza: 5x5, hipertrofia: 4x10, resistencia: 3x15)
+- Controlar fatiga acumulada por sesión usando `fatigue_level`
+- Filtrar por `level` según la experiencia/intensidad del usuario
 
-### B. Retención (que vuelvan a abrir la web)
+**5. Actualizar `src/components/admin/TrainingPlanForm.tsx`** — Mostrar los nuevos atributos del ejercicio cuando se selecciona en el formulario de plan manual.
 
-**3. Greeting contextual**
-- Mejorar el saludo del dashboard con mensajes basados en tiempo como cliente y actividad
-- Ej: "Llevas 3 semanas con tu plan. ¿Alguna duda? Escríbeme por el chat"
-- Archivo: `Greeting.tsx`
+### Archivos afectados
 
-**4. Widget de resumen en Home**
-- Añadir en HomeOverview un mini-resumen: semanas activo, días de plan completados (usando `day_completions`)
-- Da sensación de progreso y justifica la renovación
-- Archivo: `HomeOverview.tsx`
-
-**5. Email de reactivación (opcional)**
-- Edge function programada que envía email si el usuario no ha abierto la web en X días
-- Mensaje tipo "Tu plan de esta semana te espera"
-- Nueva edge function `send-reminder`
-
----
-
-### Resumen técnico
-
-| Cambio | Archivos | DB |
-|---|---|---|
-| Resumen pre-pago | `Onboarding.tsx` | No |
-| CTAs landing | `Index.tsx` | No |
-| Greeting contextual | `Greeting.tsx` | No |
-| Widget resumen Home | `HomeOverview.tsx` | No |
-| Email reactivación | Nueva edge function | No |
-
-Prioridad recomendada: 1 → 2 → 3 → 4 → 5
+| Archivo | Cambio |
+|---|---|
+| Tabla `exercises` (migración) | +8 columnas |
+| `src/types/training.ts` | Ampliar interfaz Exercise |
+| `src/components/admin/ExerciseLibrary.tsx` | Formulario con todos los campos |
+| `supabase/functions/generate-plan/index.ts` | Lógica inteligente de selección |
+| `src/components/admin/TrainingPlanForm.tsx` | Mostrar atributos en selector |
 
