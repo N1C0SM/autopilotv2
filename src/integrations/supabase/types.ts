@@ -65,24 +65,48 @@ export type Database = {
       exercises: {
         Row: {
           created_at: string
+          exercise_type: string | null
+          fatigue_level: string | null
           id: string
           image_url: string | null
+          level: number | null
+          load_level: string | null
+          movement_pattern: string | null
           muscle_group: string | null
           name: string
+          priority: number | null
+          recommended_order: number | null
+          stimulus_type: string | null
         }
         Insert: {
           created_at?: string
+          exercise_type?: string | null
+          fatigue_level?: string | null
           id?: string
           image_url?: string | null
+          level?: number | null
+          load_level?: string | null
+          movement_pattern?: string | null
           muscle_group?: string | null
           name: string
+          priority?: number | null
+          recommended_order?: number | null
+          stimulus_type?: string | null
         }
         Update: {
           created_at?: string
+          exercise_type?: string | null
+          fatigue_level?: string | null
           id?: string
           image_url?: string | null
+          level?: number | null
+          load_level?: string | null
+          movement_pattern?: string | null
           muscle_group?: string | null
           name?: string
+          priority?: number | null
+          recommended_order?: number | null
+          stimulus_type?: string | null
         }
         Relationships: []
       }
