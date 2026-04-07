@@ -106,29 +106,14 @@ const Dashboard = () => {
 
   const handleCompletePayment = async () => {
     try {
-      const { data: settings, error: settingsError } = await supabase
-        .from("settings")
-        .select("payment_mode, payment_link_test, payment_link_live")
-        .limit(1)
-        .single();
-
-      if (settingsError || !settings) {
-        toast.error("Error al obtener la configuración de pago.");
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke("create-checkout", {
+        body: { referral_code: "" },
+      });
+      if (checkoutError || !checkoutData?.url) {
+        toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
         return;
       }
-
-      const paymentLink = settings.payment_mode === "live"
-        ? settings.payment_link_live
-        : settings.payment_link_test;
-
-      if (!paymentLink) {
-        toast.error("El enlace de pago no está configurado.");
-        return;
-      }
-
-      const email = user?.email || "";
-      const separator = paymentLink.includes("?") ? "&" : "?";
-      window.location.href = `${paymentLink}${separator}prefilled_email=${encodeURIComponent(email)}`;
+      window.location.href = checkoutData.url;
     } catch {
       toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
     }
