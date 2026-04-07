@@ -4,15 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Settings, Loader2, Link as LinkIcon, Save } from "lucide-react";
+import { Settings, Loader2, Link as LinkIcon, Save, Shield } from "lucide-react";
 
 const PaymentModeToggle = () => {
   const [paymentMode, setPaymentMode] = useState<string>("test");
   const [paymentLinkTest, setPaymentLinkTest] = useState("");
   const [paymentLinkLive, setPaymentLinkLive] = useState("");
+  const [webhookSecretTest, setWebhookSecretTest] = useState("");
+  const [webhookSecretLive, setWebhookSecretLive] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingLinks, setSavingLinks] = useState(false);
+  const [savingWebhooks, setSavingWebhooks] = useState(false);
   const [settingsId, setSettingsId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -22,6 +25,8 @@ const PaymentModeToggle = () => {
         setPaymentMode(data.payment_mode);
         setPaymentLinkTest((data as any).payment_link_test || "");
         setPaymentLinkLive((data as any).payment_link_live || "");
+        setWebhookSecretTest((data as any).webhook_secret_test || "");
+        setWebhookSecretLive((data as any).webhook_secret_live || "");
         setSettingsId(data.id);
       }
       setLoading(false);
