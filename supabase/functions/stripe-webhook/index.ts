@@ -18,7 +18,7 @@ serve(async (req) => {
   );
 
   try {
-    const { data: settings } = await supabaseAdmin.from("settings").select("payment_mode").limit(1).single();
+    const { data: settings } = await supabaseAdmin.from("settings").select("payment_mode, webhook_secret_test, webhook_secret_live").limit(1).single();
     const paymentMode = settings?.payment_mode || "test";
 
     const stripeKey = paymentMode === "live"
