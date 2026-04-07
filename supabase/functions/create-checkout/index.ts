@@ -43,7 +43,7 @@ serve(async (req) => {
     // Read all settings from DB
     const { data: settings } = await supabaseClient
       .from("settings")
-      .select("payment_mode, price_id_test, price_id_live, referral_coupon_id")
+      .select("payment_mode, price_id_test, price_id_live, payment_link_test, payment_link_live, referral_coupon_id")
       .limit(1)
       .single();
 
@@ -58,8 +58,13 @@ serve(async (req) => {
     const PRICE_ID = paymentMode === "live"
       ? (settings?.price_id_live || "")
       : (settings?.price_id_test || "");
-    if (!PRICE_ID) throw new Error(`Price ID for ${paymentMode} mode not configured in settings`);
-    log("Price ID", { PRICE_ID });
+    const PAYMENT_LINK = paymentMode === "live"
+      ? (settings?.payment_link_live || "")
+      : (settings?.payment_link_test || "");
+    log("Price config", {
+      priceId: PRICE_ID || "missing",
+      hasPaymentLink: Boolean(PAYMENT_LINK),
+    });
 
     const REFERRAL_COUPON_ID = settings?.referral_coupon_id || "";
 
@@ -94,6 +99,16 @@ serve(async (req) => {
       }
     }
 
+    if (!PRICE_ID) {
+      if (PAYMENT_LINK) {
+        log("Using payment link fallback because price ID is missing", { paymentMode });
+        return new Response(JSON.stringify({ url: PAYMENT_LINK, fallback: "payment_link" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`Price ID for ${paymentMode} mode not configured in settings`);
+    }
+
     const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -112,17 +127,35 @@ serve(async (req) => {
       sessionParams.discounts = discounts;
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
-    log("Session created", { url: session.url });
+    try {
+      const session = await stripe.checkout.sessions.create(sessionParams);
+      log("Session created", { url: session.url });
 
-    await supabaseClient
-      .from("profiles")
-      .update({ subscription_tier: "personal" })
-      .eq("user_id", user.id);
+      await supabaseClient
+        .from("profiles")
+        .update({ subscription_tier: "personal" })
+        .eq("user_id", user.id);
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      return new Response(JSON.stringify({ url: session.url }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (stripeError) {
+      const message = stripeError instanceof Error ? stripeError.message : String(stripeError);
+      const canFallback = PAYMENT_LINK && /no such price|similar object exists in live mode/i.test(message);
+
+      if (canFallback) {
+        log("Using payment link fallback because checkout session failed", {
+          paymentMode,
+          message,
+        });
+
+        return new Response(JSON.stringify({ url: PAYMENT_LINK, fallback: "payment_link" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      throw stripeError;
+    }
   } catch (error) {
     log("ERROR", { message: error.message, stack: error.stack });
     return new Response(JSON.stringify({ error: error.message }), {
