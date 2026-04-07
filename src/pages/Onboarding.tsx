@@ -91,20 +91,16 @@ const Onboarding = () => {
         toast.success("¡Tu plan se está preparando! 🎉");
         navigate("/dashboard");
       } else {
-        // Not paid yet → redirect to Stripe
-        const { data: settings } = await supabase.from("settings").select("payment_mode, payment_link_test, payment_link_live").limit(1).single();
-        const paymentLink = (settings as any)?.payment_mode === "live"
-          ? (settings as any)?.payment_link_live
-          : (settings as any)?.payment_link_test;
-
-        if (paymentLink) {
-          const userEmail = user.email || "";
-          const separator = paymentLink.includes("?") ? "&" : "?";
-          toast.success("¡Cuestionario completado! Redirigiendo al pago...");
-          window.location.href = `${paymentLink}${separator}prefilled_email=${encodeURIComponent(userEmail)}`;
-        } else {
-          toast.success("¡Cuestionario enviado!");
+        // Not paid yet → create Stripe Checkout Session
+        toast.success("¡Cuestionario completado! Redirigiendo al pago...");
+        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke("create-checkout", {
+          body: { referral_code: "" },
+        });
+        if (checkoutError || !checkoutData?.url) {
+          toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
           navigate("/dashboard");
+        } else {
+          window.location.href = checkoutData.url;
         }
       }
     } else {
