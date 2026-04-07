@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Settings, Loader2, Save, Shield, CreditCard, Tag } from "lucide-react";
+import { Settings, Loader2, Save, Shield, CreditCard, Tag, Key, Link } from "lucide-react";
 
 interface SettingsData {
   id: string;
@@ -76,13 +76,107 @@ const PaymentModeToggle = () => {
     setSavingSection(null);
   };
 
+  const saveSecrets = async (section: string, secrets: Record<string, string>) => {
+    setSavingSection(section);
+    try {
+      const response = await supabase.functions.invoke("update-secrets", {
+        body: secrets,
+      });
+      if (response.error) {
+        toast.error(`Error al guardar ${section}`);
+      } else {
+        toast.success(`${section} actualizados. Se aplicarán en la próxima ejecución.`);
+      }
+    } catch {
+      toast.error(`Error al guardar ${section}`);
+    }
+    setSavingSection(null);
+  };
+
   if (loading) return null;
   if (!settings) return <div className="text-sm text-muted-foreground">No se encontró configuración</div>;
 
   const isSaving = (section: string) => savingSection === section;
 
+  const sections = [
+    {
+      icon: CreditCard,
+      title: "Price IDs de Stripe",
+      description: "IDs de precio para la suscripción (price_...)",
+      fields: [
+        { key: "price_id_test" as keyof SettingsData, label: "Price ID Test", placeholder: "price_..." },
+        { key: "price_id_live" as keyof SettingsData, label: "Price ID Live", placeholder: "price_..." },
+      ],
+      saveKey: "Price IDs",
+      saveFields: () => ({ price_id_test: settings.price_id_test, price_id_live: settings.price_id_live }),
+    },
+    {
+      icon: Link,
+      title: "Payment Links",
+      description: "Links de pago de Stripe (fallback si falla el checkout session)",
+      fields: [
+        { key: "payment_link_test" as keyof SettingsData, label: "Payment Link Test", placeholder: "https://buy.stripe.com/test_..." },
+        { key: "payment_link_live" as keyof SettingsData, label: "Payment Link Live", placeholder: "https://buy.stripe.com/..." },
+      ],
+      saveKey: "Payment Links",
+      saveFields: () => ({ payment_link_test: settings.payment_link_test, payment_link_live: settings.payment_link_live }),
+    },
+    {
+      icon: Shield,
+      title: "Webhook Secrets",
+      description: "Secrets para verificar firmas de Stripe (whsec_...)",
+      fields: [
+        { key: "webhook_secret_test" as keyof SettingsData, label: "Webhook Secret Test", placeholder: "whsec_..." },
+        { key: "webhook_secret_live" as keyof SettingsData, label: "Webhook Secret Live", placeholder: "whsec_..." },
+      ],
+      saveKey: "Webhook Secrets",
+      saveFields: () => ({ webhook_secret_test: settings.webhook_secret_test, webhook_secret_live: settings.webhook_secret_live }),
+    },
+    {
+      icon: Tag,
+      title: "Cupón de Referidos",
+      description: "ID del cupón de Stripe para descuento por referido",
+      fields: [
+        { key: "referral_coupon_id" as keyof SettingsData, label: "Coupon ID", placeholder: "coupon_id" },
+      ],
+      saveKey: "Cupón",
+      saveFields: () => ({ referral_coupon_id: settings.referral_coupon_id }),
+    },
+  ];
+
   return (
     <div className="space-y-4">
+      {/* Resumen rápido */}
+      <div className="bg-card rounded-xl p-4 border border-border">
+        <div className="text-xs font-medium text-muted-foreground mb-2">Resumen de configuración</div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${settings.price_id_test ? "bg-green-500" : "bg-destructive"}`} />
+            <span>Price ID Test</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${settings.price_id_live ? "bg-green-500" : "bg-destructive"}`} />
+            <span>Price ID Live</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${settings.webhook_secret_test ? "bg-green-500" : "bg-destructive"}`} />
+            <span>Webhook Test</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${settings.webhook_secret_live ? "bg-green-500" : "bg-destructive"}`} />
+            <span>Webhook Live</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${settings.payment_link_test ? "bg-green-500" : "bg-yellow-500"}`} />
+            <span>Link Test</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${settings.payment_link_live ? "bg-green-500" : "bg-yellow-500"}`} />
+            <span>Link Live</span>
+          </div>
+        </div>
+      </div>
+
       {/* Payment mode toggle */}
       <div className="bg-card rounded-xl p-5 border border-border flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -105,73 +199,54 @@ const PaymentModeToggle = () => {
         </Button>
       </div>
 
-      {/* Price IDs */}
-      <div className="bg-card rounded-xl p-5 border border-border space-y-4">
-        <div className="flex items-center gap-3 mb-2">
-          <CreditCard className="w-5 h-5 text-muted-foreground" />
-          <div>
-            <div className="font-medium text-sm">Price IDs de Stripe</div>
-            <div className="text-xs text-muted-foreground">IDs de precio para la suscripción (price_...)</div>
+      {/* Dynamic sections */}
+      {sections.map((section) => {
+        const Icon = section.icon;
+        return (
+          <div key={section.saveKey} className="bg-card rounded-xl p-5 border border-border space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <Icon className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <div className="font-medium text-sm">{section.title}</div>
+                <div className="text-xs text-muted-foreground">{section.description}</div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {section.fields!.map((field) => (
+                <div key={field.key}>
+                  <Label className="text-xs text-muted-foreground">{field.label}</Label>
+                  <Input
+                    value={settings[field.key]}
+                    onChange={(e) => updateField(field.key, e.target.value)}
+                    placeholder={field.placeholder}
+                    className="mt-1 text-sm font-mono"
+                    type="text"
+                  />
+                </div>
+              ))}
+            </div>
+            <Button
+              size="sm"
+              onClick={() => saveSection(section.saveKey!, section.saveFields!())}
+              disabled={isSaving(section.saveKey!)}
+              className="w-full"
+            >
+              {isSaving(section.saveKey!) ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
+              Guardar {section.saveKey}
+            </Button>
           </div>
-        </div>
-        <div className="space-y-3">
-          <div>
-            <Label className="text-xs text-muted-foreground">Price ID Test</Label>
-            <Input value={settings.price_id_test} onChange={(e) => updateField("price_id_test", e.target.value)} placeholder="price_..." className="mt-1 text-sm font-mono" />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Price ID Live</Label>
-            <Input value={settings.price_id_live} onChange={(e) => updateField("price_id_live", e.target.value)} placeholder="price_..." className="mt-1 text-sm font-mono" />
-          </div>
-        </div>
-        <Button size="sm" onClick={() => saveSection("Price IDs", { price_id_test: settings.price_id_test, price_id_live: settings.price_id_live })} disabled={isSaving("Price IDs")} className="w-full">
-          {isSaving("Price IDs") ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
-          Guardar Price IDs
-        </Button>
-      </div>
+        );
+      })}
 
-      {/* Webhook Secrets */}
-      <div className="bg-card rounded-xl p-5 border border-border space-y-4">
-        <div className="flex items-center gap-3 mb-2">
-          <Shield className="w-5 h-5 text-muted-foreground" />
-          <div>
-            <div className="font-medium text-sm">Webhook Secrets</div>
-            <div className="text-xs text-muted-foreground">Secrets para verificar firmas de Stripe (whsec_...)</div>
-          </div>
+      {/* Info box */}
+      <div className="bg-muted/50 rounded-xl p-4 border border-border">
+        <div className="text-xs font-medium mb-2 flex items-center gap-1.5">
+          <Key className="w-3.5 h-3.5" />
+          API Keys (sk_test / sk_live)
         </div>
-        <div className="space-y-3">
-          <div>
-            <Label className="text-xs text-muted-foreground">Webhook Secret Test</Label>
-            <Input value={settings.webhook_secret_test} onChange={(e) => updateField("webhook_secret_test", e.target.value)} placeholder="whsec_..." className="mt-1 text-sm font-mono" type="text" />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Webhook Secret Live</Label>
-            <Input value={settings.webhook_secret_live} onChange={(e) => updateField("webhook_secret_live", e.target.value)} placeholder="whsec_..." className="mt-1 text-sm font-mono" type="text" />
-          </div>
-        </div>
-        <Button size="sm" onClick={() => saveSection("Webhook Secrets", { webhook_secret_test: settings.webhook_secret_test, webhook_secret_live: settings.webhook_secret_live })} disabled={isSaving("Webhook Secrets")} className="w-full">
-          {isSaving("Webhook Secrets") ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
-          Guardar Webhook Secrets
-        </Button>
-      </div>
-
-      {/* Referral Coupon */}
-      <div className="bg-card rounded-xl p-5 border border-border space-y-4">
-        <div className="flex items-center gap-3 mb-2">
-          <Tag className="w-5 h-5 text-muted-foreground" />
-          <div>
-            <div className="font-medium text-sm">Cupón de Referidos</div>
-            <div className="text-xs text-muted-foreground">ID del cupón de Stripe para descuento por referido</div>
-          </div>
-        </div>
-        <div>
-          <Label className="text-xs text-muted-foreground">Coupon ID</Label>
-          <Input value={settings.referral_coupon_id} onChange={(e) => updateField("referral_coupon_id", e.target.value)} placeholder="coupon_id" className="mt-1 text-sm font-mono" />
-        </div>
-        <Button size="sm" onClick={() => saveSection("Cupón", { referral_coupon_id: settings.referral_coupon_id })} disabled={isSaving("Cupón")} className="w-full">
-          {isSaving("Cupón") ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
-          Guardar Cupón
-        </Button>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Las Secret Keys de Stripe (sk_test_... / sk_live_...) se configuran como secretos del servidor y no se muestran aquí por seguridad. Para actualizarlas, pídelo en el chat.
+        </p>
       </div>
     </div>
   );
