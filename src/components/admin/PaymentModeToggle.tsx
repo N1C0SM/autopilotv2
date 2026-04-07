@@ -200,7 +200,7 @@ const PaymentModeToggle = () => {
       </div>
 
       {/* Dynamic sections */}
-      {sections.filter(s => s.type !== "toggle").map((section) => {
+      {sections.map((section) => {
         const Icon = section.icon;
         return (
           <div key={section.saveKey} className="bg-card rounded-xl p-5 border border-border space-y-4">
