@@ -31,85 +31,85 @@ interface PickedExercise {
 }
 
 interface UserConfig {
-  userLevel: number;        // 1-3
-  goal: string;             // gain_muscle, lose_weight, recomp, improve_endurance, general_health
-  exerciseType: string;     // Calistenia, Gimnasio, Mixto
-  intensityLevel: number;   // 1-10
+  userLevel: number;
+  goal: string;
+  exerciseType: string;
+  intensityLevel: number;
 }
 
-// ─── Constants ───
+interface Rules {
+  min_sets_per_session: number;
+  max_sets_per_session: number;
+  series_p1_min: number; series_p1_max: number;
+  series_p2_min: number; series_p2_max: number;
+  series_p3_min: number; series_p3_max: number;
+  reps_fuerza: string; reps_hipertrofia: string;
+  reps_resistencia: string; reps_isometrico: string;
+  rest_fuerza: string; rest_hipertrofia: string;
+  rest_resistencia: string; rest_isometrico: string;
+  max_consecutive_high_fatigue: number;
+  max_heavy_hinges: number;
+  max_pattern_repeats: number;
+  push_pull_max_diff: number;
+  max_p2_exercises: number;
+  max_p3_exercises: number;
+  required_patterns: string[];
+  recovery_hours: Record<string, number>;
+}
 
-const RECOVERY_HOURS: Record<string, number> = {
-  Pecho: 48, Espalda: 48, Hombros: 48, Bíceps: 36, Tríceps: 36,
-  Piernas: 72, Glúteos: 48, Core: 24, "Cuerpo completo": 48, Cardio: 24,
+const DEFAULT_RULES: Rules = {
+  min_sets_per_session: 12, max_sets_per_session: 20,
+  series_p1_min: 3, series_p1_max: 5,
+  series_p2_min: 3, series_p2_max: 4,
+  series_p3_min: 2, series_p3_max: 3,
+  reps_fuerza: "4-8", reps_hipertrofia: "8-15", reps_resistencia: "15-25", reps_isometrico: "20-60s",
+  rest_fuerza: "180s", rest_hipertrofia: "90s", rest_resistencia: "45s", rest_isometrico: "60s",
+  max_consecutive_high_fatigue: 2, max_heavy_hinges: 1, max_pattern_repeats: 2, push_pull_max_diff: 1,
+  max_p2_exercises: 2, max_p3_exercises: 2,
+  required_patterns: ["Empuje", "Tirón", "Sentadilla", "Bisagra", "Core"],
+  recovery_hours: { Pecho: 48, Espalda: 48, Hombros: 48, Bíceps: 36, Tríceps: 36, Piernas: 72, Glúteos: 48, Core: 24, "Cuerpo completo": 48, Cardio: 24 },
 };
 
-const REQUIRED_PATTERNS = ["Empuje", "Tirón", "Sentadilla", "Bisagra", "Core"];
+// ─── Rep/series scheme using dynamic rules ───
 
-const MIN_SETS_PER_SESSION = 12;
-const MAX_SETS_PER_SESSION = 20;
-
-// ─── Rule 6: Rep schemes by stimulus ───
-
-function getRepScheme(stimulus: string | null, priority: number): { series: number; reps: string; rest: string } {
-  // Rule 5: series by priority
+function getRepScheme(stimulus: string | null, priority: number, rules: Rules): { series: number; reps: string; rest: string } {
   let seriesRange: [number, number];
   switch (priority) {
-    case 1: seriesRange = [3, 5]; break;
-    case 2: seriesRange = [3, 4]; break;
-    case 3: seriesRange = [2, 3]; break;
-    default: seriesRange = [3, 4];
+    case 1: seriesRange = [rules.series_p1_min, rules.series_p1_max]; break;
+    case 2: seriesRange = [rules.series_p2_min, rules.series_p2_max]; break;
+    case 3: seriesRange = [rules.series_p3_min, rules.series_p3_max]; break;
+    default: seriesRange = [rules.series_p2_min, rules.series_p2_max];
   }
 
   let reps: string;
   let rest: string;
-
-  // Rule 6: reps by stimulus
   switch (stimulus) {
-    case "Fuerza":
-      reps = "4-8";
-      rest = "180s";
-      break;
-    case "Hipertrofia":
-      reps = "8-15";
-      rest = "90s";
-      break;
-    case "Resistencia":
-      reps = "15-25";
-      rest = "45s";
-      break;
-    case "Isométrico":
-      reps = "20-60s";
-      rest = "60s";
-      break;
-    default:
-      reps = "8-12";
-      rest = "90s";
+    case "Fuerza": reps = rules.reps_fuerza; rest = rules.rest_fuerza; break;
+    case "Hipertrofia": reps = rules.reps_hipertrofia; rest = rules.rest_hipertrofia; break;
+    case "Resistencia": reps = rules.reps_resistencia; rest = rules.rest_resistencia; break;
+    case "Isométrico": reps = rules.reps_isometrico; rest = rules.rest_isometrico; break;
+    default: reps = rules.reps_hipertrofia; rest = rules.rest_hipertrofia;
   }
 
-  // Use higher end of series range for priority 1 (compound), lower for accessories
   const series = priority === 1 ? seriesRange[1] : seriesRange[0];
-
   return { series, reps, rest };
 }
 
-// ─── Rule 1-2: Smart exercise picker following mandatory structure ───
+// ─── Smart exercise picker ───
 
 function pickExercisesForSession(
   targetMuscles: string[],
   exerciseLib: Record<string, ExerciseRow[]>,
   config: UserConfig,
+  rules: Rules,
 ): PickedExercise[] {
   const { userLevel, goal, exerciseType } = config;
 
-  // Collect all available exercises for these muscles, filtered by type and level
   const allAvailable: ExerciseRow[] = [];
   for (const muscle of targetMuscles) {
     const muscleExercises = exerciseLib[muscle] || [];
     for (const ex of muscleExercises) {
-      // Rule 7: Filter by exercise type preference
       if (exerciseType !== "Mixto" && ex.exercise_type && ex.exercise_type !== "Mixto" && ex.exercise_type !== exerciseType) continue;
-      // Rule 8: Filter by level (allow user level + 1 level up for progression)
       if ((ex.level ?? 1) > userLevel + 1) continue;
       allAvailable.push(ex);
     }
@@ -127,9 +127,7 @@ function pickExercisesForSession(
   let consecutiveHighFatigue = 0;
   let heavyHingeCount = 0;
 
-  // Helper to pick best exercise for a pattern+priority combo
   function findBest(pattern: string, targetPriority: number): ExerciseRow | null {
-    // Prefer user's exact level, then allow one level up for progression (Rule 8)
     const candidates = allAvailable
       .filter(ex =>
         ex.movement_pattern === pattern &&
@@ -137,44 +135,34 @@ function pickExercisesForSession(
         !usedIds.has(ex.id)
       )
       .sort((a, b) => {
-        // Prefer exact level match
         const aLevelDiff = Math.abs((a.level ?? 1) - userLevel);
         const bLevelDiff = Math.abs((b.level ?? 1) - userLevel);
         if (aLevelDiff !== bLevelDiff) return aLevelDiff - bLevelDiff;
-        // Then by recommended_order
         return (a.recommended_order ?? 2) - (b.recommended_order ?? 2);
       });
     return candidates[0] || null;
   }
 
-  // Helper to add exercise with all rule checks
   function tryAdd(ex: ExerciseRow): boolean {
     const pattern = ex.movement_pattern || "Otro";
     const fatigue = ex.fatigue_level || "Media";
     const priority = ex.priority ?? 2;
 
-    // Rule 3: No more than 2 of same pattern
-    if ((patternCounts[pattern] || 0) >= 2) return false;
+    if ((patternCounts[pattern] || 0) >= rules.max_pattern_repeats) return false;
+    if (pattern === "Bisagra" && ex.load_level === "Alta" && heavyHingeCount >= rules.max_heavy_hinges) return false;
 
-    // Rule 3: No more than 1 heavy hinge
-    if (pattern === "Bisagra" && (ex.load_level === "Alta") && heavyHingeCount >= 1) return false;
-
-    // Rule 3: Balance push/pull — don't let difference exceed 1
     const pushCount = patternCounts["Empuje"] || 0;
     const pullCount = patternCounts["Tirón"] || 0;
-    if (pattern === "Empuje" && pushCount > pullCount + 1) return false;
-    if (pattern === "Tirón" && pullCount > pushCount + 1) return false;
+    if (pattern === "Empuje" && pushCount > pullCount + rules.push_pull_max_diff) return false;
+    if (pattern === "Tirón" && pullCount > pushCount + rules.push_pull_max_diff) return false;
 
-    // Determine stimulus based on goal override or exercise default
     const stimulus = getEffectiveStimulus(ex.stimulus_type, goal);
-    const scheme = getRepScheme(stimulus, priority);
+    const scheme = getRepScheme(stimulus, priority, rules);
 
-    // Rule 8: Check total volume (12-20 sets)
-    if (totalSets + scheme.series > MAX_SETS_PER_SESSION) return false;
+    if (totalSets + scheme.series > rules.max_sets_per_session) return false;
 
-    // Rule 3: No more than 2 high-fatigue exercises in a row
     if (fatigue === "Alta") {
-      if (consecutiveHighFatigue >= 2) return false;
+      if (consecutiveHighFatigue >= rules.max_consecutive_high_fatigue) return false;
       consecutiveHighFatigue++;
     } else {
       consecutiveHighFatigue = 0;
@@ -189,7 +177,7 @@ function pickExercisesForSession(
       rest: scheme.rest,
       image_url: ex.image_url || undefined,
       movement_pattern: pattern,
-      priority: priority,
+      priority,
       fatigue_level: fatigue,
     });
 
@@ -201,70 +189,61 @@ function pickExercisesForSession(
     return true;
   }
 
-  // ── STEP 1: Mandatory base structure (Rule 1) ──
-  // Pick 1 exercise per required pattern at priority 1
-  for (const pattern of REQUIRED_PATTERNS) {
+  // STEP 1: Mandatory base structure
+  for (const pattern of rules.required_patterns) {
     const ex = findBest(pattern, 1);
     if (ex) {
       tryAdd(ex);
     } else {
-      // Fallback: try priority 2 for this pattern
       const fallback = findBest(pattern, 2);
       if (fallback) tryAdd(fallback);
       else console.log(`[GENERATE-PLAN] Missing base exercise for pattern: ${pattern}`);
     }
   }
 
-  // ── STEP 2: Complements (Rule 2) ──
-  // Add 1-2 priority 2 exercises
+  // STEP 2: Complements
   const p2Candidates = allAvailable
     .filter(ex => (ex.priority ?? 2) === 2 && !usedIds.has(ex.id))
     .sort((a, b) => (a.recommended_order ?? 2) - (b.recommended_order ?? 2));
 
   let p2Added = 0;
   for (const ex of p2Candidates) {
-    if (p2Added >= 2 || totalSets >= MAX_SETS_PER_SESSION) break;
+    if (p2Added >= rules.max_p2_exercises || totalSets >= rules.max_sets_per_session) break;
     if (tryAdd(ex)) p2Added++;
   }
 
-  // Add 1-2 priority 3 exercises (accessories)
   const p3Candidates = allAvailable
     .filter(ex => (ex.priority ?? 2) === 3 && !usedIds.has(ex.id))
     .sort((a, b) => (a.recommended_order ?? 2) - (b.recommended_order ?? 2));
 
   let p3Added = 0;
   for (const ex of p3Candidates) {
-    if (p3Added >= 2 || totalSets >= MAX_SETS_PER_SESSION) break;
+    if (p3Added >= rules.max_p3_exercises || totalSets >= rules.max_sets_per_session) break;
     if (tryAdd(ex)) p3Added++;
   }
 
-  // ── STEP 3: Fill to minimum volume if needed ──
-  if (totalSets < MIN_SETS_PER_SESSION) {
+  // STEP 3: Fill to minimum volume
+  if (totalSets < rules.min_sets_per_session) {
     const remaining = allAvailable
       .filter(ex => !usedIds.has(ex.id))
       .sort((a, b) => (a.priority ?? 2) - (b.priority ?? 2));
     for (const ex of remaining) {
-      if (totalSets >= MIN_SETS_PER_SESSION) break;
+      if (totalSets >= rules.min_sets_per_session) break;
       tryAdd(ex);
     }
   }
 
-  // ── STEP 4: Sort final list (Rule 4) ──
+  // STEP 4: Sort
   picked.sort((a, b) => {
     const orderA = getOrder(a, allAvailable);
     const orderB = getOrder(b, allAvailable);
-    // 1) recommended_order
     if (orderA !== orderB) return orderA - orderB;
-    // 2) priority
     if ((a.priority ?? 2) !== (b.priority ?? 2)) return (a.priority ?? 2) - (b.priority ?? 2);
-    // 3) fatigue (low fatigue first within same group to manage consecutive high fatigue)
     const fatigueOrder: Record<string, number> = { Baja: 1, Media: 2, Alta: 3 };
     return (fatigueOrder[a.fatigue_level || "Media"] || 2) - (fatigueOrder[b.fatigue_level || "Media"] || 2);
   });
 
-  // Validate Rule 3 post-sort: no more than 2 high-fatigue in a row
-  // (Re-arrange if needed)
-  const final = enforceConsecutiveFatigueRule(picked);
+  const final = enforceConsecutiveFatigueRule(picked, rules.max_consecutive_high_fatigue);
 
   console.log(`[GENERATE-PLAN] Session: ${final.length} exercises, ${totalSets} total sets`);
   return final;
@@ -275,21 +254,16 @@ function getOrder(ex: PickedExercise, lib: ExerciseRow[]): number {
   return found?.recommended_order ?? 2;
 }
 
-function enforceConsecutiveFatigueRule(exercises: PickedExercise[]): PickedExercise[] {
-  // Simple bubble-swap if 3+ high-fatigue are consecutive
+function enforceConsecutiveFatigueRule(exercises: PickedExercise[], maxConsecutive: number): PickedExercise[] {
   const result = [...exercises];
   let changed = true;
   let iterations = 0;
   while (changed && iterations < 10) {
     changed = false;
     iterations++;
-    for (let i = 2; i < result.length; i++) {
-      if (
-        result[i].fatigue_level === "Alta" &&
-        result[i - 1].fatigue_level === "Alta" &&
-        result[i - 2].fatigue_level === "Alta"
-      ) {
-        // Find next non-Alta exercise to swap with
+    for (let i = maxConsecutive; i < result.length; i++) {
+      const allHigh = Array.from({ length: maxConsecutive + 1 }, (_, k) => result[i - k]?.fatigue_level === "Alta").every(Boolean);
+      if (allHigh) {
         for (let j = i + 1; j < result.length; j++) {
           if (result[j].fatigue_level !== "Alta") {
             [result[i], result[j]] = [result[j], result[i]];
@@ -304,9 +278,7 @@ function enforceConsecutiveFatigueRule(exercises: PickedExercise[]): PickedExerc
 }
 
 function getEffectiveStimulus(exerciseStimulus: string | null, goal: string): string {
-  // If exercise has a defined stimulus, use it
   if (exerciseStimulus) return exerciseStimulus;
-  // Otherwise derive from user goal
   switch (goal) {
     case "gain_muscle": return "Hipertrofia";
     case "lose_weight": return "Resistencia";
@@ -384,6 +356,7 @@ function buildWeeklyPlan(
   gymSplit: RoutineDay[], sports: string[], daysAvailable: number,
   config: UserConfig,
   exerciseLib: Record<string, ExerciseRow[]>,
+  rules: Rules,
 ) {
   const plan: any[] = [];
   const trainedMuscles: Record<string, number> = {};
@@ -399,11 +372,12 @@ function buildWeeklyPlan(
       const canTrain = routine.muscles.every((m) => {
         const lastDay = trainedMuscles[m];
         if (lastDay === undefined) return true;
-        return (dayIdx - lastDay) * 24 >= (RECOVERY_HOURS[m] || 48);
+        const recoveryNeeded = rules.recovery_hours[m] || 48;
+        return (dayIdx - lastDay) * 24 >= recoveryNeeded;
       });
 
       if (canTrain) {
-        const exercises = pickExercisesForSession(routine.muscles, exerciseLib, config);
+        const exercises = pickExercisesForSession(routine.muscles, exerciseLib, config, rules);
         plan.push({
           day: DAYS[dayIdx], type: "gimnasio",
           routine_name: routine.name, muscle_focus: routine.muscles.join(" · "),
@@ -428,7 +402,7 @@ function buildWeeklyPlan(
 
     if (gymDayIdx < gymSplit.length) {
       const routine = gymSplit[gymDayIdx];
-      const exercises = pickExercisesForSession(routine.muscles, exerciseLib, config);
+      const exercises = pickExercisesForSession(routine.muscles, exerciseLib, config, rules);
       plan.push({
         day: DAYS[dayIdx], type: "gimnasio",
         routine_name: routine.name, muscle_focus: routine.muscles.join(" · "),
@@ -474,9 +448,47 @@ serve(async (req) => {
     let targetUserId = user.id;
     try { const body = await req.json(); if (body.user_id) targetUserId = body.user_id; } catch { /* no body */ }
 
-    const { data: onb, error: onbError } = await supabase
-      .from("onboarding").select("*").eq("user_id", targetUserId).single();
-    if (onbError || !onb) throw new Error("Onboarding data not found");
+    // Fetch rules and onboarding in parallel
+    const [onbResult, rulesResult] = await Promise.all([
+      supabase.from("onboarding").select("*").eq("user_id", targetUserId).single(),
+      supabase.from("training_rules").select("*").limit(1).single(),
+    ]);
+
+    const onb = onbResult.data;
+    if (onbResult.error || !onb) throw new Error("Onboarding data not found");
+
+    // Build rules object — fallback to defaults if no row
+    let rules: Rules = DEFAULT_RULES;
+    if (rulesResult.data) {
+      const r = rulesResult.data;
+      rules = {
+        min_sets_per_session: r.min_sets_per_session ?? DEFAULT_RULES.min_sets_per_session,
+        max_sets_per_session: r.max_sets_per_session ?? DEFAULT_RULES.max_sets_per_session,
+        series_p1_min: r.series_p1_min ?? DEFAULT_RULES.series_p1_min,
+        series_p1_max: r.series_p1_max ?? DEFAULT_RULES.series_p1_max,
+        series_p2_min: r.series_p2_min ?? DEFAULT_RULES.series_p2_min,
+        series_p2_max: r.series_p2_max ?? DEFAULT_RULES.series_p2_max,
+        series_p3_min: r.series_p3_min ?? DEFAULT_RULES.series_p3_min,
+        series_p3_max: r.series_p3_max ?? DEFAULT_RULES.series_p3_max,
+        reps_fuerza: r.reps_fuerza ?? DEFAULT_RULES.reps_fuerza,
+        reps_hipertrofia: r.reps_hipertrofia ?? DEFAULT_RULES.reps_hipertrofia,
+        reps_resistencia: r.reps_resistencia ?? DEFAULT_RULES.reps_resistencia,
+        reps_isometrico: r.reps_isometrico ?? DEFAULT_RULES.reps_isometrico,
+        rest_fuerza: r.rest_fuerza ?? DEFAULT_RULES.rest_fuerza,
+        rest_hipertrofia: r.rest_hipertrofia ?? DEFAULT_RULES.rest_hipertrofia,
+        rest_resistencia: r.rest_resistencia ?? DEFAULT_RULES.rest_resistencia,
+        rest_isometrico: r.rest_isometrico ?? DEFAULT_RULES.rest_isometrico,
+        max_consecutive_high_fatigue: r.max_consecutive_high_fatigue ?? DEFAULT_RULES.max_consecutive_high_fatigue,
+        max_heavy_hinges: r.max_heavy_hinges ?? DEFAULT_RULES.max_heavy_hinges,
+        max_pattern_repeats: r.max_pattern_repeats ?? DEFAULT_RULES.max_pattern_repeats,
+        push_pull_max_diff: r.push_pull_max_diff ?? DEFAULT_RULES.push_pull_max_diff,
+        max_p2_exercises: r.max_p2_exercises ?? DEFAULT_RULES.max_p2_exercises,
+        max_p3_exercises: r.max_p3_exercises ?? DEFAULT_RULES.max_p3_exercises,
+        required_patterns: Array.isArray(r.required_patterns) ? r.required_patterns as string[] : DEFAULT_RULES.required_patterns,
+        recovery_hours: typeof r.recovery_hours === "object" && r.recovery_hours !== null ? r.recovery_hours as Record<string, number> : DEFAULT_RULES.recovery_hours,
+      };
+    }
+    console.log(`[GENERATE-PLAN] Rules loaded: min=${rules.min_sets_per_session} max=${rules.max_sets_per_session} patterns=${rules.required_patterns.join(",")}`);
 
     const weight = onb.weight || 70;
     const goal = onb.goal || "general_health";
@@ -491,11 +503,10 @@ serve(async (req) => {
     const config: UserConfig = {
       userLevel,
       goal,
-      exerciseType: "Mixto", // Default; could be derived from onboarding in the future
+      exerciseType: "Mixto",
       intensityLevel,
     };
 
-    // Fetch full exercise library
     const { data: allExercises } = await supabase
       .from("exercises")
       .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order");
@@ -511,7 +522,7 @@ serve(async (req) => {
     console.log(`[GENERATE-PLAN] User level: ${userLevel}, intensity: ${intensityLevel}, goal: ${goal}`);
 
     const gymSplit = getGymSplit(Math.min(daysAvailable, 6));
-    const weeklyPlan = buildWeeklyPlan(gymSplit, sports, Math.min(daysAvailable, 7), config, exerciseLib);
+    const weeklyPlan = buildWeeklyPlan(gymSplit, sports, Math.min(daysAvailable, 7), config, exerciseLib, rules);
 
     for (const day of weeklyPlan) {
       if (day.type === "gimnasio") {
