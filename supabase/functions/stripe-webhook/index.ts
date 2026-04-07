@@ -18,7 +18,12 @@ serve(async (req) => {
   );
 
   try {
-    const { data: settings } = await supabaseAdmin.from("settings").select("payment_mode, webhook_secret_test, webhook_secret_live").limit(1).single();
+    const { data: settings } = await supabaseAdmin
+      .from("settings")
+      .select("payment_mode, webhook_secret_test, webhook_secret_live")
+      .limit(1)
+      .single();
+
     const paymentMode = settings?.payment_mode || "test";
 
     const stripeKey = paymentMode === "live"
@@ -48,13 +53,11 @@ serve(async (req) => {
 
     console.log(`Received Stripe event: ${event.type}`);
 
-    // Handle checkout completed (both payment and subscription)
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const customerEmail = session.customer_details?.email || session.customer_email;
 
       if (customerEmail) {
-        // Check current plan_status to decide next step
         const { data: existingProfile } = await supabaseAdmin
           .from("profiles")
           .select("plan_status")
@@ -65,8 +68,6 @@ serve(async (req) => {
           payment_status: "paid",
         };
 
-        // If user was in onboarding or hasn't started, move to plan_pending
-        // If already plan_ready, don't downgrade
         if (existingProfile?.plan_status !== "plan_ready") {
           updates.plan_status = "plan_pending";
         }
@@ -84,7 +85,6 @@ serve(async (req) => {
       }
     }
 
-    // Handle subscription updates
     if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
       const customerId = subscription.customer as string;
@@ -103,7 +103,6 @@ serve(async (req) => {
       }
     }
 
-    // Handle invoice payment failed
     if (event.type === "invoice.payment_failed") {
       const invoice = event.data.object as Stripe.Invoice;
       const customerEmail = invoice.customer_email;
