@@ -5,17 +5,38 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
+  const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    let email = identifier.trim();
+
+    if (!isEmail(email)) {
+      const { data, error: lookupError } = await supabase
+        .from("profiles")
+        .select("email")
+        .ilike("name", email)
+        .maybeSingle();
+
+      if (lookupError || !data) {
+        setLoading(false);
+        toast.error("No se encontró ningún usuario con ese nombre");
+        return;
+      }
+      email = data.email;
+    }
+
     const { error } = await signIn(email, password);
     setLoading(false);
     if (error) {
@@ -35,8 +56,8 @@ const Login = () => {
         </div>
         <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-8 border border-border card-shadow space-y-5">
           <div>
-            <Label htmlFor="email">Correo electrónico</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5" placeholder="tu@ejemplo.com" />
+            <Label htmlFor="identifier">Nombre o correo electrónico</Label>
+            <Input id="identifier" type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required className="mt-1.5" placeholder="tu nombre o tu@ejemplo.com" />
           </div>
           <div>
             <Label htmlFor="password">Contraseña</Label>
