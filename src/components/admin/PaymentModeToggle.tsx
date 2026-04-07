@@ -125,6 +125,58 @@ const PaymentModeToggle = () => {
           Guardar Payment Links
         </Button>
       </div>
+
+      {/* Webhook Secrets */}
+      <div className="bg-card rounded-xl p-5 border border-border space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+          <Shield className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <div className="font-medium text-sm">Webhook Secrets</div>
+            <div className="text-xs text-muted-foreground">Stripe webhook signing secrets (whsec_...)</div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-muted-foreground">Test Webhook Secret</Label>
+            <Input
+              value={webhookSecretTest}
+              onChange={(e) => setWebhookSecretTest(e.target.value)}
+              placeholder="whsec_..."
+              className="mt-1 text-sm font-mono"
+              type="password"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Live Webhook Secret</Label>
+            <Input
+              value={webhookSecretLive}
+              onChange={(e) => setWebhookSecretLive(e.target.value)}
+              placeholder="whsec_..."
+              className="mt-1 text-sm font-mono"
+              type="password"
+            />
+          </div>
+        </div>
+
+        <Button size="sm" onClick={async () => {
+          if (!settingsId) return;
+          setSavingWebhooks(true);
+          const { error } = await supabase.from("settings").update({
+            webhook_secret_test: webhookSecretTest,
+            webhook_secret_live: webhookSecretLive,
+          } as any).eq("id", settingsId);
+          if (error) {
+            toast.error("Error al guardar webhook secrets");
+          } else {
+            toast.success("Webhook secrets actualizados");
+          }
+          setSavingWebhooks(false);
+        }} disabled={savingWebhooks} className="w-full">
+          {savingWebhooks ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
+          Guardar Webhook Secrets
+        </Button>
+      </div>
     </div>
   );
 };
