@@ -401,6 +401,96 @@ export type Database = {
         }
         Relationships: []
       }
+      training_rules: {
+        Row: {
+          created_at: string
+          id: string
+          max_consecutive_high_fatigue: number
+          max_heavy_hinges: number
+          max_p2_exercises: number
+          max_p3_exercises: number
+          max_pattern_repeats: number
+          max_sets_per_session: number
+          min_sets_per_session: number
+          push_pull_max_diff: number
+          recovery_hours: Json
+          reps_fuerza: string
+          reps_hipertrofia: string
+          reps_isometrico: string
+          reps_resistencia: string
+          required_patterns: Json
+          rest_fuerza: string
+          rest_hipertrofia: string
+          rest_isometrico: string
+          rest_resistencia: string
+          series_p1_max: number
+          series_p1_min: number
+          series_p2_max: number
+          series_p2_min: number
+          series_p3_max: number
+          series_p3_min: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_consecutive_high_fatigue?: number
+          max_heavy_hinges?: number
+          max_p2_exercises?: number
+          max_p3_exercises?: number
+          max_pattern_repeats?: number
+          max_sets_per_session?: number
+          min_sets_per_session?: number
+          push_pull_max_diff?: number
+          recovery_hours?: Json
+          reps_fuerza?: string
+          reps_hipertrofia?: string
+          reps_isometrico?: string
+          reps_resistencia?: string
+          required_patterns?: Json
+          rest_fuerza?: string
+          rest_hipertrofia?: string
+          rest_isometrico?: string
+          rest_resistencia?: string
+          series_p1_max?: number
+          series_p1_min?: number
+          series_p2_max?: number
+          series_p2_min?: number
+          series_p3_max?: number
+          series_p3_min?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_consecutive_high_fatigue?: number
+          max_heavy_hinges?: number
+          max_p2_exercises?: number
+          max_p3_exercises?: number
+          max_pattern_repeats?: number
+          max_sets_per_session?: number
+          min_sets_per_session?: number
+          push_pull_max_diff?: number
+          recovery_hours?: Json
+          reps_fuerza?: string
+          reps_hipertrofia?: string
+          reps_isometrico?: string
+          reps_resistencia?: string
+          required_patterns?: Json
+          rest_fuerza?: string
+          rest_hipertrofia?: string
+          rest_isometrico?: string
+          rest_resistencia?: string
+          series_p1_max?: number
+          series_p1_min?: number
+          series_p2_max?: number
+          series_p2_min?: number
+          series_p3_max?: number
+          series_p3_min?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
