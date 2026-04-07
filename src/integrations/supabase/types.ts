@@ -342,6 +342,9 @@ export type Database = {
           payment_link_live: string | null
           payment_link_test: string | null
           payment_mode: string
+          price_id_live: string | null
+          price_id_test: string | null
+          referral_coupon_id: string | null
           updated_at: string
           webhook_secret_live: string | null
           webhook_secret_test: string | null
@@ -352,6 +355,9 @@ export type Database = {
           payment_link_live?: string | null
           payment_link_test?: string | null
           payment_mode?: string
+          price_id_live?: string | null
+          price_id_test?: string | null
+          referral_coupon_id?: string | null
           updated_at?: string
           webhook_secret_live?: string | null
           webhook_secret_test?: string | null
@@ -362,6 +368,9 @@ export type Database = {
           payment_link_live?: string | null
           payment_link_test?: string | null
           payment_mode?: string
+          price_id_live?: string | null
+          price_id_test?: string | null
+          referral_coupon_id?: string | null
           updated_at?: string
           webhook_secret_live?: string | null
           webhook_secret_test?: string | null
