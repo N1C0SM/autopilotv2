@@ -142,11 +142,11 @@ const PaymentModeToggle = () => {
         <div className="space-y-3">
           <div>
             <Label className="text-xs text-muted-foreground">Webhook Secret Test</Label>
-            <Input value={settings.webhook_secret_test} onChange={(e) => updateField("webhook_secret_test", e.target.value)} placeholder="whsec_..." className="mt-1 text-sm font-mono" type="password" />
+            <Input value={settings.webhook_secret_test} onChange={(e) => updateField("webhook_secret_test", e.target.value)} placeholder="whsec_..." className="mt-1 text-sm font-mono" type="text" />
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Webhook Secret Live</Label>
-            <Input value={settings.webhook_secret_live} onChange={(e) => updateField("webhook_secret_live", e.target.value)} placeholder="whsec_..." className="mt-1 text-sm font-mono" type="password" />
+            <Input value={settings.webhook_secret_live} onChange={(e) => updateField("webhook_secret_live", e.target.value)} placeholder="whsec_..." className="mt-1 text-sm font-mono" type="text" />
           </div>
         </div>
         <Button size="sm" onClick={() => saveSection("Webhook Secrets", { webhook_secret_test: settings.webhook_secret_test, webhook_secret_live: settings.webhook_secret_live })} disabled={isSaving("Webhook Secrets")} className="w-full">
