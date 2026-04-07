@@ -29,10 +29,9 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
-    const { data: settings } = await supabaseAdmin.from("settings").select("payment_mode").limit(1).single();
+    const { data: settings } = await supabaseAdmin.from("settings").select("payment_mode, price_id_test, price_id_live").limit(1).single();
     const paymentMode = settings?.payment_mode || "test";
 
-    // Select the correct Stripe key based on mode
     const stripeKey = paymentMode === "live"
       ? Deno.env.get("STRIPE_LIVE_SECRET_KEY")
       : Deno.env.get("STRIPE_TEST_SECRET_KEY");
@@ -49,10 +48,10 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    // Use correct price ID based on payment mode
     const priceId = paymentMode === "live"
-      ? "price_1T8jVsJttvYKlxWa9R13xZKP"
-      : "price_1T8jvcJttvYKlxWawZYB45pS";
+      ? (settings?.price_id_live || "")
+      : (settings?.price_id_test || "");
+    if (!priceId) throw new Error(`Price ID for ${paymentMode} mode not configured in settings`);
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
