@@ -57,7 +57,7 @@ serve(async (req) => {
     // Select correct price ID based on mode
     const PRICE_ID = paymentMode === "live"
       ? "price_1T8o5WJttvYKlxWaKGiSG26L"
-      : "price_1T8jvcJttvYKlxWawZYB45pS";
+      : "price_1T8xazJttvYKlxWaK8EfKELu";
     log("Price ID", { PRICE_ID });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
