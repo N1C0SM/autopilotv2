@@ -9,6 +9,7 @@ import UserList from "@/components/admin/UserList";
 import UserDetail from "@/components/admin/UserDetail";
 import PaymentModeToggle from "@/components/admin/PaymentModeToggle";
 import ExerciseLibrary from "@/components/admin/ExerciseLibrary";
+import TrainingRulesEditor from "@/components/admin/TrainingRulesEditor";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export interface Profile {
@@ -19,7 +20,7 @@ export interface Profile {
   created_at: string;
 }
 
-export type AdminSection = "dashboard" | "users" | "exercises" | "settings";
+export type AdminSection = "dashboard" | "users" | "exercises" | "rules" | "settings";
 
 const Admin = () => {
   const { user, signOut } = useAuth();
@@ -89,6 +90,7 @@ const Admin = () => {
               {section === "dashboard" && "Panel general"}
               {section === "users" && (selectedUser ? selectedUser.email : "Usuarios")}
               {section === "exercises" && "Biblioteca de ejercicios"}
+              {section === "rules" && "Reglas de generación"}
               {section === "settings" && "Configuración"}
             </h1>
           </header>
@@ -171,6 +173,12 @@ const Admin = () => {
             {section === "exercises" && (
               <div className="max-w-3xl">
                 <ExerciseLibraryFull />
+              </div>
+            )}
+
+            {section === "rules" && (
+              <div className="max-w-2xl">
+                <TrainingRulesEditor />
               </div>
             )}
 
