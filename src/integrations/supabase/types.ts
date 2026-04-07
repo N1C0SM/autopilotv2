@@ -343,6 +343,8 @@ export type Database = {
           payment_link_test: string | null
           payment_mode: string
           updated_at: string
+          webhook_secret_live: string | null
+          webhook_secret_test: string | null
         }
         Insert: {
           created_at?: string
@@ -351,6 +353,8 @@ export type Database = {
           payment_link_test?: string | null
           payment_mode?: string
           updated_at?: string
+          webhook_secret_live?: string | null
+          webhook_secret_test?: string | null
         }
         Update: {
           created_at?: string
@@ -359,6 +363,8 @@ export type Database = {
           payment_link_test?: string | null
           payment_mode?: string
           updated_at?: string
+          webhook_secret_live?: string | null
+          webhook_secret_test?: string | null
         }
         Relationships: []
       }

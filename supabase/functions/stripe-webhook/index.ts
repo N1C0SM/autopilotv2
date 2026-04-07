@@ -18,7 +18,7 @@ serve(async (req) => {
   );
 
   try {
-    const { data: settings } = await supabaseAdmin.from("settings").select("payment_mode").limit(1).single();
+    const { data: settings } = await supabaseAdmin.from("settings").select("payment_mode, webhook_secret_test, webhook_secret_live").limit(1).single();
     const paymentMode = settings?.payment_mode || "test";
 
     const stripeKey = paymentMode === "live"
@@ -32,8 +32,8 @@ serve(async (req) => {
     const signature = req.headers.get("stripe-signature");
 
     const webhookSecret = paymentMode === "live"
-      ? Deno.env.get("STRIPE_LIVE_WEBHOOK_SECRET")
-      : Deno.env.get("STRIPE_TEST_WEBHOOK_SECRET");
+      ? (settings?.webhook_secret_live || Deno.env.get("STRIPE_LIVE_WEBHOOK_SECRET"))
+      : (settings?.webhook_secret_test || Deno.env.get("STRIPE_TEST_WEBHOOK_SECRET"));
 
     let event: Stripe.Event;
 
