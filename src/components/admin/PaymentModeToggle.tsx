@@ -100,10 +100,6 @@ const PaymentModeToggle = () => {
 
   const sections = [
     {
-      icon: Settings,
-      type: "toggle" as const,
-    },
-    {
       icon: CreditCard,
       title: "Price IDs de Stripe",
       description: "IDs de precio para la suscripción (price_...)",
