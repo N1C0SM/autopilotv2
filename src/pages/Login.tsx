@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const [identifier, setIdentifier] = useState("");
@@ -23,13 +24,12 @@ const Login = () => {
     let email = identifier.trim();
 
     if (!isEmail(email)) {
-      const { data, error: lookupError } = await supabase
-        .from("profiles")
-        .select("email")
-        .ilike("name", email)
-        .maybeSingle();
+      // Lookup email by username via edge function
+      const { data, error: fnError } = await supabase.functions.invoke("check-availability", {
+        body: { name: email, lookup: true },
+      });
 
-      if (lookupError || !data) {
+      if (fnError || !data?.email) {
         setLoading(false);
         toast.error("No se encontró ningún usuario con ese nombre");
         return;
@@ -40,7 +40,11 @@ const Login = () => {
     const { error } = await signIn(email, password);
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      if (error.message.includes("Email not confirmed")) {
+        toast.error("Debes verificar tu correo electrónico antes de iniciar sesión");
+      } else {
+        toast.error("Credenciales incorrectas");
+      }
     } else {
       navigate("/dashboard");
     }
@@ -60,11 +64,14 @@ const Login = () => {
             <Input id="identifier" type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required className="mt-1.5" placeholder="tu nombre o tu@ejemplo.com" />
           </div>
           <div>
-            <Label htmlFor="password">Contraseña</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Contraseña</Label>
+              <Link to="/forgot-password" className="text-xs text-primary hover:underline">¿Olvidaste tu contraseña?</Link>
+            </div>
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5" />
           </div>
           <Button variant="hero" size="lg" className="w-full" type="submit" disabled={loading}>
-            {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+            {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Iniciando sesión...</> : "Iniciar Sesión"}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
             ¿No tienes cuenta? <Link to="/signup" className="text-primary hover:underline">Regístrate</Link>

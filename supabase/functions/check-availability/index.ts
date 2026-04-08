@@ -1,0 +1,62 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const { name, email, lookup } = await req.json();
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Lookup mode: find email by name (for login)
+    if (lookup && name) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("email")
+        .ilike("name", name.trim())
+        .maybeSingle();
+      return new Response(JSON.stringify({ email: data?.email || null }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Availability check mode (for signup)
+    const result: Record<string, boolean> = {};
+
+    if (name) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .ilike("name", name.trim())
+        .maybeSingle();
+      result.nameTaken = !!data;
+    }
+
+    if (email) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .ilike("email", email.trim())
+        .maybeSingle();
+      result.emailTaken = !!data;
+    }
+
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
