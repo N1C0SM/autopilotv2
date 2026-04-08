@@ -68,7 +68,11 @@ const Signup = () => {
       return;
     }
 
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(email, password, {
+      display_name: name.trim(),
+      referral_code: referralCode,
+      is_free: isFree ? "true" : "false",
+    });
     if (error) {
       toast.error(error.message);
       setLoading(false);
