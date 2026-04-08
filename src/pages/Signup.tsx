@@ -79,40 +79,9 @@ const Signup = () => {
       return;
     }
 
-    // Try to sign in — if email verification is required this will fail
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) {
-      // Email verification required
-      setEmailSent(true);
-      setLoading(false);
-      return;
-    }
-
-    // Save name and referral
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const updates: any = {};
-      if (name.trim()) updates.name = name.trim();
-      if (referralCode) updates.referred_by = referralCode;
-      if (Object.keys(updates).length > 0) {
-        await supabase.from("profiles").update(updates).eq("user_id", user.id);
-      }
-    }
-
-    if (isFree) {
-      if (user) {
-        await supabase.from("profiles").update({
-          payment_status: "paid",
-          subscription_tier: "personal",
-          subscription_status: "active",
-        }).eq("user_id", user.id);
-      }
-      toast.success("¡Cuenta creada! Plan gratuito activado 🎉");
-    } else {
-      toast.success("¡Cuenta creada! Cuéntanos sobre ti.");
-    }
-
-    window.location.href = "/onboarding";
+    // Email verification required — show confirmation screen
+    setEmailSent(true);
+    setLoading(false);
   };
 
   if (emailSent) {
