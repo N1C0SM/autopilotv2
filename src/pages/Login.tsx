@@ -24,24 +24,12 @@ const Login = () => {
     let email = identifier.trim();
 
     if (!isEmail(email)) {
-      // Lookup by name using edge function (no auth required)
-      try {
-        const { data, error: fnError } = await supabase.functions.invoke("check-availability", {
-          body: { name: email },
-        });
-        // We need a different approach - check-availability only tells if taken
-        // Let's use direct query since login page user isn't authenticated yet
-        // We'll create a simple lookup via the edge function
-      } catch {}
+      // Lookup email by username via edge function
+      const { data, error: fnError } = await supabase.functions.invoke("check-availability", {
+        body: { name: email, lookup: true },
+      });
 
-      // Use the profiles lookup approach with service role via edge function
-      const { data, error: lookupError } = await supabase
-        .from("profiles")
-        .select("email")
-        .ilike("name", email)
-        .maybeSingle();
-
-      if (lookupError || !data) {
+      if (fnError || !data?.email) {
         setLoading(false);
         toast.error("No se encontró ningún usuario con ese nombre");
         return;

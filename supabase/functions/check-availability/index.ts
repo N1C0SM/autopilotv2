@@ -11,12 +11,25 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { name, email } = await req.json();
+    const { name, email, lookup } = await req.json();
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Lookup mode: find email by name (for login)
+    if (lookup && name) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("email")
+        .ilike("name", name.trim())
+        .maybeSingle();
+      return new Response(JSON.stringify({ email: data?.email || null }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Availability check mode (for signup)
     const result: Record<string, boolean> = {};
 
     if (name) {
