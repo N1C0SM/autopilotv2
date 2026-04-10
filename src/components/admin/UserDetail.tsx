@@ -66,7 +66,7 @@ interface Props {
   onDelete?: (userId: string) => void;
 }
 
-const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
+const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
   const [onboarding, setOnboarding] = useState<OnboardingData | null>(null);
   const [dayPlans, setDayPlans] = useState<DayPlan[]>([]);
   const [macros, setMacros] = useState({ protein: "", carbs: "", fats: "" });
@@ -76,6 +76,7 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
   const [isUserAdmin, setIsUserAdmin] = useState(false);
   const [roleLoading, setRoleLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
