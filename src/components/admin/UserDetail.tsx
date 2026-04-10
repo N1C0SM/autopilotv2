@@ -8,7 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { Profile } from "@/pages/Admin";
 import type { Json } from "@/integrations/supabase/types";
 import type { DayPlan } from "@/types/training";
@@ -52,9 +63,10 @@ interface Props {
   profile: Profile;
   onBack: () => void;
   onUpdate: (userId: string, updates: Partial<Profile>) => void;
+  onDelete?: (userId: string) => void;
 }
 
-const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
+const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
   const [onboarding, setOnboarding] = useState<OnboardingData | null>(null);
   const [dayPlans, setDayPlans] = useState<DayPlan[]>([]);
   const [macros, setMacros] = useState({ protein: "", carbs: "", fats: "" });
@@ -64,6 +76,7 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
   const [isUserAdmin, setIsUserAdmin] = useState(false);
   const [roleLoading, setRoleLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,6 +121,21 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
       else toast.error("Error al cambiar rol");
     }
     setRoleLoading(false);
+  };
+
+  const handleDeleteUser = async () => {
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+      body: { target_user_id: profile.user_id },
+    });
+    if (error || !data?.success) {
+      toast.error("Error al eliminar usuario: " + (error?.message || data?.error || "Error desconocido"));
+      setDeleting(false);
+      return;
+    }
+    toast.success("Usuario eliminado correctamente");
+    onDelete?.(profile.user_id);
+    onBack();
   };
 
   const applyMacroTemplate = (key: string) => {
@@ -231,6 +259,27 @@ const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
             </Button>
           </>
         )}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="icon" className="shrink-0" disabled={deleting}>
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Se eliminarán permanentemente todos los datos de <strong>{profile.email}</strong>: perfil, planes, entrenamientos, chat, fotos y cuenta. Esta acción no se puede deshacer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {deleting ? "Eliminando..." : "Eliminar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Tabs */}
