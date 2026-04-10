@@ -123,6 +123,21 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
     setRoleLoading(false);
   };
 
+  const handleDeleteUser = async () => {
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+      body: { target_user_id: profile.user_id },
+    });
+    if (error || !data?.success) {
+      toast.error("Error al eliminar usuario: " + (error?.message || data?.error || "Error desconocido"));
+      setDeleting(false);
+      return;
+    }
+    toast.success("Usuario eliminado correctamente");
+    onDelete?.(profile.user_id);
+    onBack();
+  };
+
   const applyMacroTemplate = (key: string) => {
     const tpl = MACRO_TEMPLATES[key];
     const weight = onboarding?.weight || 70;
