@@ -8,7 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { Profile } from "@/pages/Admin";
 import type { Json } from "@/integrations/supabase/types";
 import type { DayPlan } from "@/types/training";
@@ -52,6 +63,7 @@ interface Props {
   profile: Profile;
   onBack: () => void;
   onUpdate: (userId: string, updates: Partial<Profile>) => void;
+  onDelete?: (userId: string) => void;
 }
 
 const UserDetail = ({ profile, onBack, onUpdate }: Props) => {
