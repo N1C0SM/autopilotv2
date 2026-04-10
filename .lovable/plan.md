@@ -1,44 +1,36 @@
 
 
-## Ampliar la tabla de ejercicios con campos avanzados
+## Rediseño de la sección "Ejercicios" del Admin
 
-### Cambios necesarios
+La interfaz actual es funcional pero densa: una lista plana con badges pequeños, formulario de creación apretado en grid, y todo dentro de un único collapsible. El rediseño la convertirá en una experiencia más visual y organizada.
 
-**1. Migración de base de datos** — Añadir 8 columnas nuevas a la tabla `exercises`:
+### Cambios planificados
 
-```sql
-ALTER TABLE exercises
-  ADD COLUMN exercise_type text,        -- Calistenia, Gimnasio, Mixto
-  ADD COLUMN movement_pattern text,     -- Empuje, Tirón, Sentadilla, Bisagra, Core
-  ADD COLUMN level integer DEFAULT 1,   -- 1 básico, 2 intermedio, 3 avanzado
-  ADD COLUMN priority integer DEFAULT 2,-- 1 base, 2 desarrollo, 3 accesorio
-  ADD COLUMN stimulus_type text,        -- Fuerza, Hipertrofia, Resistencia, Isométrico
-  ADD COLUMN load_level text,           -- Alta, Media, Baja
-  ADD COLUMN fatigue_level text,        -- Alta, Media, Baja
-  ADD COLUMN recommended_order integer DEFAULT 2; -- 1 inicio, 2 medio, 3 final
-```
+**1. Layout con barra de búsqueda y filtros**
+- Barra de búsqueda prominente en la parte superior con icono de lupa
+- Filtros rápidos por grupo muscular como chips/tabs horizontales scrollables (Pecho, Espalda, Hombros, etc.) con contador de ejercicios por grupo
+- Filtro adicional por tipo (Calistenia/Gimnasio/Mixto)
 
-**2. Actualizar `src/types/training.ts`** — Ampliar la interfaz `Exercise` con los nuevos campos.
+**2. Tarjetas de ejercicio en grid**
+- Reemplazar la lista plana por cards en grid responsive (2-3 columnas)
+- Cada card muestra: nombre destacado, grupo muscular con icono de color, badges visuales para nivel/prioridad/estímulo con colores diferenciados
+- Indicador visual de prioridad (borde dorado para "Base", neutro para el resto)
+- Botones de editar/eliminar visibles con hover elegante
 
-**3. Actualizar `src/components/admin/ExerciseLibrary.tsx`** — Formulario de alta con todos los campos nuevos (selects para cada uno) y mostrar los atributos en la lista.
+**3. Modal/Dialog para crear y editar**
+- Mover el formulario de "Nuevo ejercicio" a un Dialog/Sheet que se abre con un botón FAB o botón prominente "+"
+- El mismo Dialog se reutiliza para edición
+- Campos mejor organizados en secciones: Info básica, Clasificación, Parámetros de generación
 
-**4. Actualizar `supabase/functions/generate-plan/index.ts`** — El generador usará los nuevos campos para:
-- Filtrar por `exercise_type` según equipamiento del usuario (si tiene gym o no)
-- Ordenar ejercicios por `recommended_order` (base primero, accesorios al final)
-- Filtrar por `priority` (siempre incluir ejercicios base, luego desarrollo, luego accesorios)
-- Ajustar series/reps según `stimulus_type` (fuerza: 5x5, hipertrofia: 4x10, resistencia: 3x15)
-- Controlar fatiga acumulada por sesión usando `fatigue_level`
-- Filtrar por `level` según la experiencia/intensidad del usuario
+**4. Mejoras visuales**
+- Badges con colores semánticos: nivel (verde/amarillo/rojo), prioridad (dorado/gris), estímulo (azul/morado/naranja)
+- Contador total de ejercicios y por grupo visible
+- Animaciones suaves de entrada con framer-motion
+- Empty state más visual cuando no hay ejercicios
 
-**5. Actualizar `src/components/admin/TrainingPlanForm.tsx`** — Mostrar los nuevos atributos del ejercicio cuando se selecciona en el formulario de plan manual.
+### Archivo a modificar
+- `src/components/admin/ExerciseLibrary.tsx` — reescritura completa del componente
 
-### Archivos afectados
-
-| Archivo | Cambio |
-|---|---|
-| Tabla `exercises` (migración) | +8 columnas |
-| `src/types/training.ts` | Ampliar interfaz Exercise |
-| `src/components/admin/ExerciseLibrary.tsx` | Formulario con todos los campos |
-| `supabase/functions/generate-plan/index.ts` | Lógica inteligente de selección |
-| `src/components/admin/TrainingPlanForm.tsx` | Mostrar atributos en selector |
+### Resultado
+Una biblioteca de ejercicios con aspecto premium: filtrable, con cards visuales, formularios en modal, y badges de colores que hacen la información legible de un vistazo.
 
