@@ -280,6 +280,7 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      </div>
 
       {/* Tabs */}
       {profile.payment_status !== "paid" && (
