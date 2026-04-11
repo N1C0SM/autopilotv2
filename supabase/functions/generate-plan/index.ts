@@ -500,10 +500,12 @@ serve(async (req) => {
     const intensityLevel = onb.intensity_level || 5;
     const userLevel = intensityToLevel(intensityLevel);
 
+    const equipmentType = onb.equipment_type || "Mixto";
+
     const config: UserConfig = {
       userLevel,
       goal,
-      exerciseType: "Mixto",
+      exerciseType: equipmentType,
       intensityLevel,
     };
 

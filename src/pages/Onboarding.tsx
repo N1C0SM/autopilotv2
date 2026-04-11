@@ -10,7 +10,13 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 
-const STEPS = ["Datos Físicos", "Sexo", "Objetivo", "Deportes", "Intensidad", "Lesiones", "Disponibilidad", "Nutrición", "Resumen"];
+const STEPS = ["Datos Físicos", "Sexo", "Equipamiento", "Objetivo", "Deportes", "Intensidad", "Lesiones", "Disponibilidad", "Nutrición", "Resumen"];
+
+const EQUIPMENT_TYPES = [
+  { value: "Gimnasio", label: "Gimnasio", emoji: "🏋️", desc: "Máquinas, barras, mancuernas" },
+  { value: "Calistenia", label: "Calistenia", emoji: "🤸", desc: "Solo peso corporal" },
+  { value: "Mixto", label: "Mixto", emoji: "⚡", desc: "Combina ambos" },
+];
 
 const GOALS = [
   { value: "lose_weight", label: "Perder grasa", emoji: "🔥" },
@@ -41,6 +47,7 @@ const Onboarding = () => {
     height: "",
     weight: "",
     sex: "",
+    equipment_type: "",
     goal: "",
     sports: [] as string[],
     intensity_level: 5,
@@ -70,6 +77,7 @@ const Onboarding = () => {
       height: parseFloat(data.height) || null,
       weight: parseFloat(data.weight) || null,
       sex: data.sex || null,
+      equipment_type: data.equipment_type || "Mixto",
       goal: data.goal,
       sports: data.sports.join(", "),
       intensity_level: data.intensity_level,
@@ -112,7 +120,8 @@ const Onboarding = () => {
   const canNext = () => {
     if (step === 0) return data.age && data.height && data.weight;
     if (step === 1) return data.sex;
-    if (step === 2) return data.goal;
+    if (step === 2) return data.equipment_type;
+    if (step === 3) return data.goal;
     return true;
   };
 
@@ -178,8 +187,35 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 2: Goal */}
+          {/* Step 2: Equipment type */}
           {step === 2 && (
+            <div>
+              <Label className="mb-3 block">¿Cómo prefieres entrenar?</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {EQUIPMENT_TYPES.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => update("equipment_type", opt.value)}
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                      data.equipment_type === opt.value
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <span className="text-2xl">{opt.emoji}</span>
+                    <div>
+                      <span className="font-medium">{opt.label}</span>
+                      <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Goal */}
+          {step === 9 && (
             <div>
               <Label className="mb-3 block">¿Cuál es tu objetivo principal?</Label>
               <div className="grid grid-cols-1 gap-2">
@@ -202,8 +238,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 3: Sports - chips */}
-          {step === 3 && (
+          {/* Step 4: Sports - chips */}
+          {step === 9 && (
             <div>
               <Label className="mb-3 block">¿Qué deportes practicas o te interesan?</Label>
               <p className="text-xs text-muted-foreground mb-4">Selecciona todos los que quieras</p>
@@ -227,8 +263,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 4: Intensity */}
-          {step === 4 && (
+          {/* Step 5: Intensity */}
+          {step === 9 && (
             <div>
               <Label className="mb-3 block">¿Qué nivel de intensidad buscas?</Label>
               <p className="text-xs text-muted-foreground mb-6">1 = suave y progresivo · 10 = máxima intensidad</p>
@@ -249,8 +285,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 5: Injuries */}
-          {step === 5 && (
+          {/* Step 6: Injuries */}
+          {step === 9 && (
             <div>
               <Label className="mb-1.5 block">¿Tienes lesiones, molestias o condiciones físicas?</Label>
               <p className="text-xs text-muted-foreground mb-3">Déjalo vacío si no tienes ninguna</p>
@@ -263,8 +299,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 6: Availability */}
-          {step === 6 && (
+          {/* Step 7: Availability */}
+          {step === 9 && (
             <div className="space-y-4">
               <div>
                 <Label>Días por semana disponibles</Label>
@@ -292,8 +328,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 7: Nutrition */}
-          {step === 7 && (
+          {/* Step 8: Nutrition */}
+          {step === 9 && (
             <div className="space-y-4">
               <div>
                 <Label>Preferencias nutricionales</Label>
@@ -318,8 +354,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 8: Summary */}
-          {step === 8 && (
+          {/* Step 9: Summary */}
+          {step === 9 && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
@@ -331,7 +367,7 @@ const Onboarding = () => {
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
                   <span className="text-xl">🏋️</span>
                   <div>
-                    <p className="font-semibold text-sm">Rutina de {data.availability.days || "?"} días/semana</p>
+                    <p className="font-semibold text-sm">Rutina de {data.availability.days || "?"} días/semana · {data.equipment_type || "Mixto"}</p>
                     <p className="text-xs text-muted-foreground">
                       {data.sports.length > 0
                         ? SPORTS.filter(s => data.sports.includes(s.value)).map(s => s.label).join(", ")
