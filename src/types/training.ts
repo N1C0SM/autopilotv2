@@ -11,6 +11,7 @@ export interface Exercise {
   load_level?: string | null;
   fatigue_level?: string | null;
   recommended_order?: number | null;
+  alternative_id?: string | null;
 }
 
 export interface GymExerciseEntry {
