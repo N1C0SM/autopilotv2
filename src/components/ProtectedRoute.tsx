@@ -1,12 +1,32 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const [planStatus, setPlanStatus] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    if (!user) {
+      setChecking(false);
+      return;
+    }
+    supabase
+      .from("profiles")
+      .select("plan_status")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        setPlanStatus(data?.plan_status ?? null);
+        setChecking(false);
+      });
+  }, [user]);
+
+  if (loading || checking) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -15,5 +35,11 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   }
 
   if (!user) return <Navigate to="/login" replace />;
+
+  // If user hasn't completed onboarding, redirect there (unless already on /onboarding)
+  if (planStatus === "onboarding" && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   return <>{children}</>;
 };
