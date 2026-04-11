@@ -184,6 +184,7 @@ export type Database = {
           allergies: string | null
           availability: Json | null
           created_at: string
+          equipment_type: string
           goal: string | null
           height: number | null
           id: string
@@ -200,6 +201,7 @@ export type Database = {
           allergies?: string | null
           availability?: Json | null
           created_at?: string
+          equipment_type?: string
           goal?: string | null
           height?: number | null
           id?: string
@@ -216,6 +218,7 @@ export type Database = {
           allergies?: string | null
           availability?: Json | null
           created_at?: string
+          equipment_type?: string
           goal?: string | null
           height?: number | null
           id?: string
