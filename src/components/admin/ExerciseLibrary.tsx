@@ -76,26 +76,53 @@ const STIMULUS_COLORS: Record<string, string> = {
 /* ── Exercise Form Dialog ── */
 
 const ExerciseFormDialog = ({
-  open, onOpenChange, initial, onSave, loading,
+  open, onOpenChange, initial, onSave, loading, allExercises,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initial?: Exercise | null;
   onSave: (data: Partial<Exercise>) => void;
   loading: boolean;
+  allExercises: Exercise[];
 }) => {
   const [form, setForm] = useState<Partial<Exercise>>({});
+  const [altSearch, setAltSearch] = useState("");
 
   useEffect(() => {
     if (open) {
       setForm(initial ? { ...initial } : {
         name: "", muscle_group: "", exercise_type: "", movement_pattern: "",
         level: 1, priority: 2, stimulus_type: "", load_level: "", fatigue_level: "", recommended_order: 2,
+        alternative_id: null,
       });
+      setAltSearch("");
     }
   }, [open, initial]);
 
   const set = (k: keyof Exercise, v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Filter exercises for alternative selection: different type, same muscle group preferred
+  const altCandidates = useMemo(() => {
+    const currentId = initial?.id;
+    let candidates = allExercises.filter((e) => e.id !== currentId);
+    if (altSearch) {
+      const q = altSearch.toLowerCase();
+      candidates = candidates.filter((e) => e.name.toLowerCase().includes(q));
+    }
+    // Sort: same muscle group first, then opposite type first
+    const currentType = form.exercise_type;
+    candidates.sort((a, b) => {
+      const aOpp = currentType && a.exercise_type && a.exercise_type !== currentType ? -1 : 0;
+      const bOpp = currentType && b.exercise_type && b.exercise_type !== currentType ? -1 : 0;
+      if (aOpp !== bOpp) return aOpp - bOpp;
+      const aSame = a.muscle_group === form.muscle_group ? -1 : 0;
+      const bSame = b.muscle_group === form.muscle_group ? -1 : 0;
+      return aSame - bSame;
+    });
+    return candidates.slice(0, 20);
+  }, [allExercises, initial, altSearch, form.exercise_type, form.muscle_group]);
+
+  const selectedAlt = allExercises.find((e) => e.id === form.alternative_id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -166,6 +193,49 @@ const ExerciseFormDialog = ({
                 <NumSelect value={form.recommended_order} onChange={(v) => set("recommended_order", v)} options={RECOMMENDED_ORDERS} />
               </div>
             </div>
+          </div>
+
+          {/* Alternative exercise */}
+          <div className="space-y-3">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <ArrowLeftRight className="w-3.5 h-3.5" /> Alternativa
+            </p>
+            {selectedAlt ? (
+              <div className="flex items-center gap-2 p-2.5 rounded-lg border border-primary/30 bg-primary/5">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{selectedAlt.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{selectedAlt.exercise_type} · {selectedAlt.muscle_group}</p>
+                </div>
+                <button onClick={() => set("alternative_id", null)} className="p-1 rounded hover:bg-secondary">
+                  <X className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Buscar alternativa..."
+                  value={altSearch}
+                  onChange={(e) => setAltSearch(e.target.value)}
+                  className="h-8 text-xs"
+                />
+                {altSearch && (
+                  <div className="max-h-32 overflow-y-auto rounded-md border bg-popover">
+                    {altCandidates.length > 0 ? altCandidates.map((e) => (
+                      <button
+                        key={e.id}
+                        onClick={() => { set("alternative_id", e.id); setAltSearch(""); }}
+                        className="w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors flex items-center justify-between"
+                      >
+                        <span className="font-medium truncate">{e.name}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{e.exercise_type}</span>
+                      </button>
+                    )) : (
+                      <p className="px-3 py-2 text-xs text-muted-foreground">Sin resultados</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <Button className="w-full" onClick={() => onSave(form)} disabled={loading || !form.name?.trim()}>
