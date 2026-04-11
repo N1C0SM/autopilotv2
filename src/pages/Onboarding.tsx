@@ -215,7 +215,7 @@ const Onboarding = () => {
           )}
 
           {/* Step 3: Goal */}
-          {step === 3 && (
+          {step === 9 && (
             <div>
               <Label className="mb-3 block">¿Cuál es tu objetivo principal?</Label>
               <div className="grid grid-cols-1 gap-2">
@@ -238,8 +238,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 3: Sports - chips */}
-          {step === 3 && (
+          {/* Step 4: Sports - chips */}
+          {step === 9 && (
             <div>
               <Label className="mb-3 block">¿Qué deportes practicas o te interesan?</Label>
               <p className="text-xs text-muted-foreground mb-4">Selecciona todos los que quieras</p>
@@ -263,8 +263,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 4: Intensity */}
-          {step === 4 && (
+          {/* Step 5: Intensity */}
+          {step === 9 && (
             <div>
               <Label className="mb-3 block">¿Qué nivel de intensidad buscas?</Label>
               <p className="text-xs text-muted-foreground mb-6">1 = suave y progresivo · 10 = máxima intensidad</p>
@@ -285,8 +285,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 5: Injuries */}
-          {step === 5 && (
+          {/* Step 6: Injuries */}
+          {step === 9 && (
             <div>
               <Label className="mb-1.5 block">¿Tienes lesiones, molestias o condiciones físicas?</Label>
               <p className="text-xs text-muted-foreground mb-3">Déjalo vacío si no tienes ninguna</p>
@@ -299,8 +299,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 6: Availability */}
-          {step === 6 && (
+          {/* Step 7: Availability */}
+          {step === 9 && (
             <div className="space-y-4">
               <div>
                 <Label>Días por semana disponibles</Label>
@@ -328,8 +328,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 7: Nutrition */}
-          {step === 7 && (
+          {/* Step 8: Nutrition */}
+          {step === 9 && (
             <div className="space-y-4">
               <div>
                 <Label>Preferencias nutricionales</Label>
@@ -354,8 +354,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 8: Summary */}
-          {step === 8 && (
+          {/* Step 9: Summary */}
+          {step === 9 && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
