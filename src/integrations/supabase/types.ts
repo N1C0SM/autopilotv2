@@ -64,6 +64,7 @@ export type Database = {
       }
       exercises: {
         Row: {
+          alternative_id: string | null
           created_at: string
           exercise_type: string | null
           fatigue_level: string | null
@@ -79,6 +80,7 @@ export type Database = {
           stimulus_type: string | null
         }
         Insert: {
+          alternative_id?: string | null
           created_at?: string
           exercise_type?: string | null
           fatigue_level?: string | null
@@ -94,6 +96,7 @@ export type Database = {
           stimulus_type?: string | null
         }
         Update: {
+          alternative_id?: string | null
           created_at?: string
           exercise_type?: string | null
           fatigue_level?: string | null
@@ -108,7 +111,15 @@ export type Database = {
           recommended_order?: number | null
           stimulus_type?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exercises_alternative_id_fkey"
+            columns: ["alternative_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
