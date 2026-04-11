@@ -187,8 +187,35 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 2: Goal */}
+          {/* Step 2: Equipment type */}
           {step === 2 && (
+            <div>
+              <Label className="mb-3 block">¿Cómo prefieres entrenar?</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {EQUIPMENT_TYPES.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => update("equipment_type", opt.value)}
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                      data.equipment_type === opt.value
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <span className="text-2xl">{opt.emoji}</span>
+                    <div>
+                      <span className="font-medium">{opt.label}</span>
+                      <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Goal */}
+          {step === 3 && (
             <div>
               <Label className="mb-3 block">¿Cuál es tu objetivo principal?</Label>
               <div className="grid grid-cols-1 gap-2">
