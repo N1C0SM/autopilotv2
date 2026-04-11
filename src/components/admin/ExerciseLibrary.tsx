@@ -263,7 +263,7 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
 
   const fetchExercises = async () => {
     const { data } = await supabase.from("exercises")
-      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order")
+      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order, alternative_id")
       .order("muscle_group").order("recommended_order").order("name");
     if (data) setExercises(data as Exercise[]);
   };
@@ -303,6 +303,7 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
       load_level: form.load_level || null,
       fatigue_level: form.fatigue_level || null,
       recommended_order: form.recommended_order ?? 2,
+      alternative_id: form.alternative_id || null,
     };
 
     if (editingExercise) {
@@ -471,6 +472,20 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
                       </span>
                     )}
                   </div>
+
+                  {/* Alternative */}
+                  {ex.alternative_id && (() => {
+                    const alt = exercises.find((a) => a.id === ex.alternative_id);
+                    return alt ? (
+                      <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent/50 border border-border/50">
+                        <ArrowLeftRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                        <span className="text-[10px] text-muted-foreground truncate">
+                          Alt: <span className="font-medium text-foreground">{alt.name}</span>
+                          {alt.exercise_type && <span className="opacity-60"> · {alt.exercise_type}</span>}
+                        </span>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
               ))}
             </div>
@@ -492,6 +507,7 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
         initial={editingExercise}
         onSave={handleSave}
         loading={loading}
+        allExercises={exercises}
       />
     </div>
   );
