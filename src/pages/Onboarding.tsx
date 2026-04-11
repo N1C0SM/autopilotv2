@@ -367,7 +367,7 @@ const Onboarding = () => {
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
                   <span className="text-xl">🏋️</span>
                   <div>
-                    <p className="font-semibold text-sm">Rutina de {data.availability.days || "?"} días/semana</p>
+                    <p className="font-semibold text-sm">Rutina de {data.availability.days || "?"} días/semana · {data.equipment_type || "Mixto"}</p>
                     <p className="text-xs text-muted-foreground">
                       {data.sports.length > 0
                         ? SPORTS.filter(s => data.sports.includes(s.value)).map(s => s.label).join(", ")
