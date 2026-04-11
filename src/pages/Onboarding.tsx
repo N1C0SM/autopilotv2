@@ -10,7 +10,13 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 
-const STEPS = ["Datos Físicos", "Sexo", "Objetivo", "Deportes", "Intensidad", "Lesiones", "Disponibilidad", "Nutrición", "Resumen"];
+const STEPS = ["Datos Físicos", "Sexo", "Equipamiento", "Objetivo", "Deportes", "Intensidad", "Lesiones", "Disponibilidad", "Nutrición", "Resumen"];
+
+const EQUIPMENT_TYPES = [
+  { value: "Gimnasio", label: "Gimnasio", emoji: "🏋️", desc: "Máquinas, barras, mancuernas" },
+  { value: "Calistenia", label: "Calistenia", emoji: "🤸", desc: "Solo peso corporal" },
+  { value: "Mixto", label: "Mixto", emoji: "⚡", desc: "Combina ambos" },
+];
 
 const GOALS = [
   { value: "lose_weight", label: "Perder grasa", emoji: "🔥" },
@@ -41,6 +47,7 @@ const Onboarding = () => {
     height: "",
     weight: "",
     sex: "",
+    equipment_type: "",
     goal: "",
     sports: [] as string[],
     intensity_level: 5,
@@ -70,6 +77,7 @@ const Onboarding = () => {
       height: parseFloat(data.height) || null,
       weight: parseFloat(data.weight) || null,
       sex: data.sex || null,
+      equipment_type: data.equipment_type || "Mixto",
       goal: data.goal,
       sports: data.sports.join(", "),
       intensity_level: data.intensity_level,
@@ -112,7 +120,8 @@ const Onboarding = () => {
   const canNext = () => {
     if (step === 0) return data.age && data.height && data.weight;
     if (step === 1) return data.sex;
-    if (step === 2) return data.goal;
+    if (step === 2) return data.equipment_type;
+    if (step === 3) return data.goal;
     return true;
   };
 
