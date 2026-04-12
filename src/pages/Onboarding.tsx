@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 
-const STEPS = ["Datos Físicos", "Sexo", "Equipamiento", "Objetivo", "Deportes", "Intensidad", "Lesiones", "Disponibilidad", "Nutrición", "Resumen"];
+const STEPS = ["Datos Físicos", "Sexo", "Equipamiento", "Objetivo", "Meta Específica", "Deportes", "Intensidad", "Lesiones", "Disponibilidad", "Nutrición", "Resumen"];
 
 const EQUIPMENT_TYPES = [
   { value: "Gimnasio", label: "Gimnasio", emoji: "🏋️", desc: "Máquinas, barras, mancuernas" },
@@ -24,6 +24,7 @@ const GOALS = [
   { value: "recomp", label: "Recomposición", emoji: "⚡" },
   { value: "improve_endurance", label: "Mejorar resistencia", emoji: "🏃" },
   { value: "general_health", label: "Salud general", emoji: "❤️" },
+  { value: "skill_based", label: "Lograr un skill concreto", emoji: "🎯" },
 ];
 
 const SPORTS = [
@@ -37,6 +38,12 @@ const SPORTS = [
   { value: "yoga", label: "Yoga", emoji: "🧘" },
 ];
 
+const SPECIFIC_GOAL_SUGGESTIONS: Record<string, string[]> = {
+  Calistenia: ["Handstand / Pino", "Muscle Up", "Planche", "Front Lever", "Back Lever", "Human Flag", "Pistol Squat"],
+  Gimnasio: ["Press banca 100kg", "Sentadilla 120kg", "Peso muerto 140kg", "Press militar 60kg", "Dominadas lastradas +20kg"],
+  Mixto: ["Handstand / Pino", "Muscle Up", "Press banca 100kg", "Front Lever", "Sentadilla 120kg"],
+};
+
 const Onboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -49,6 +56,7 @@ const Onboarding = () => {
     sex: "",
     equipment_type: "",
     goal: "",
+    specific_goal: "",
     sports: [] as string[],
     intensity_level: 5,
     injuries: "",
@@ -79,6 +87,7 @@ const Onboarding = () => {
       sex: data.sex || null,
       equipment_type: data.equipment_type || "Mixto",
       goal: data.goal,
+      specific_goal: data.specific_goal || null,
       sports: data.sports.join(", "),
       intensity_level: data.intensity_level,
       injuries: data.injuries || null,
@@ -90,16 +99,13 @@ const Onboarding = () => {
     if (!error) {
       await supabase.from("profiles").update({ plan_status: "plan_pending" }).eq("user_id", user.id);
 
-      // Check if user already paid (free plan or already subscribed)
       const { data: profile } = await supabase.from("profiles").select("payment_status").eq("user_id", user.id).single();
 
       if (profile?.payment_status === "paid") {
-        // Already paid (free plan) → generate plan and go to dashboard
         supabase.functions.invoke("generate-plan", { body: { user_id: user.id } });
         toast.success("¡Tu plan se está preparando! 🎉");
         navigate("/dashboard");
       } else {
-        // Not paid yet → create Stripe Checkout Session
         toast.success("¡Cuestionario completado! Redirigiendo al pago...");
         const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke("create-checkout", {
           body: { referral_code: "" },
@@ -124,6 +130,8 @@ const Onboarding = () => {
     if (step === 3) return data.goal;
     return true;
   };
+
+  const suggestions = SPECIFIC_GOAL_SUGGESTIONS[data.equipment_type] || SPECIFIC_GOAL_SUGGESTIONS["Mixto"];
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
@@ -215,7 +223,7 @@ const Onboarding = () => {
           )}
 
           {/* Step 3: Goal */}
-          {step === 9 && (
+          {step === 3 && (
             <div>
               <Label className="mb-3 block">¿Cuál es tu objetivo principal?</Label>
               <div className="grid grid-cols-1 gap-2">
@@ -238,8 +246,44 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 4: Sports - chips */}
-          {step === 9 && (
+          {/* Step 4: Specific Goal */}
+          {step === 4 && (
+            <div>
+              <Label className="mb-1.5 block">¿Tienes alguna meta específica?</Label>
+              <p className="text-xs text-muted-foreground mb-4">
+                Cuéntanos qué quieres lograr y adaptaremos tu rutina para ello
+              </p>
+              <Textarea
+                value={data.specific_goal}
+                onChange={(e) => update("specific_goal", e.target.value)}
+                placeholder="Ej: Hacer handstand, muscle up, levantar 100kg en press banca..."
+                rows={3}
+                className="mb-4"
+              />
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Sugerencias para {data.equipment_type || "tu tipo"}:</p>
+                <div className="flex flex-wrap gap-2">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => update("specific_goal", data.specific_goal ? `${data.specific_goal}, ${s}` : s)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                        data.specific_goal.includes(s)
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:border-primary/30"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Sports */}
+          {step === 5 && (
             <div>
               <Label className="mb-3 block">¿Qué deportes practicas o te interesan?</Label>
               <p className="text-xs text-muted-foreground mb-4">Selecciona todos los que quieras</p>
@@ -263,8 +307,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 5: Intensity */}
-          {step === 9 && (
+          {/* Step 6: Intensity */}
+          {step === 6 && (
             <div>
               <Label className="mb-3 block">¿Qué nivel de intensidad buscas?</Label>
               <p className="text-xs text-muted-foreground mb-6">1 = suave y progresivo · 10 = máxima intensidad</p>
@@ -285,8 +329,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 6: Injuries */}
-          {step === 9 && (
+          {/* Step 7: Injuries */}
+          {step === 7 && (
             <div>
               <Label className="mb-1.5 block">¿Tienes lesiones, molestias o condiciones físicas?</Label>
               <p className="text-xs text-muted-foreground mb-3">Déjalo vacío si no tienes ninguna</p>
@@ -299,8 +343,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 7: Availability */}
-          {step === 9 && (
+          {/* Step 8: Availability */}
+          {step === 8 && (
             <div className="space-y-4">
               <div>
                 <Label>Días por semana disponibles</Label>
@@ -328,7 +372,7 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 8: Nutrition */}
+          {/* Step 9: Nutrition */}
           {step === 9 && (
             <div className="space-y-4">
               <div>
@@ -354,8 +398,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 9: Summary */}
-          {step === 9 && (
+          {/* Step 10: Summary */}
+          {step === 10 && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
@@ -375,6 +419,16 @@ const Onboarding = () => {
                     </p>
                   </div>
                 </div>
+
+                {data.specific_goal && (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                    <span className="text-xl">🎯</span>
+                    <div>
+                      <p className="font-semibold text-sm">Meta: {data.specific_goal}</p>
+                      <p className="text-xs text-muted-foreground">Tu rutina se ajustará para lograrlo</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
                   <span className="text-xl">🍽️</span>
