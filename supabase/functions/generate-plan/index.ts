@@ -33,8 +33,9 @@ interface PickedExercise {
 interface UserConfig {
   userLevel: number;
   goal: string;
-  exerciseType: string;
+  exerciseType: string; // Gimnasio | Calistenia | Mixto
   intensityLevel: number;
+  specificGoal: string;
 }
 
 interface Rules {
@@ -70,6 +71,59 @@ const DEFAULT_RULES: Rules = {
   recovery_hours: { Pecho: 48, Espalda: 48, Hombros: 48, Bíceps: 36, Tríceps: 36, Piernas: 72, Glúteos: 48, Core: 24, "Cuerpo completo": 48, Cardio: 24 },
 };
 
+// ─── Specific goal → muscle/pattern boosts ───
+
+interface SkillProfile {
+  priorityMuscles: string[];
+  priorityPatterns: string[];
+  extraExercises: number; // extra P2 slots for skill work
+  stimulus: string;
+}
+
+function getSkillProfile(specificGoal: string): SkillProfile | null {
+  if (!specificGoal) return null;
+  const g = specificGoal.toLowerCase();
+
+  if (g.includes("handstand") || g.includes("pino")) {
+    return { priorityMuscles: ["Hombros", "Core", "Tríceps"], priorityPatterns: ["Empuje", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("muscle up") || g.includes("muscle-up")) {
+    return { priorityMuscles: ["Espalda", "Pecho", "Bíceps", "Core"], priorityPatterns: ["Tirón", "Empuje"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("planche")) {
+    return { priorityMuscles: ["Hombros", "Pecho", "Core", "Tríceps"], priorityPatterns: ["Empuje", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("front lever")) {
+    return { priorityMuscles: ["Espalda", "Core", "Bíceps"], priorityPatterns: ["Tirón", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("back lever")) {
+    return { priorityMuscles: ["Espalda", "Hombros", "Core"], priorityPatterns: ["Tirón", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("human flag") || g.includes("bandera")) {
+    return { priorityMuscles: ["Core", "Hombros", "Espalda"], priorityPatterns: ["Core", "Tirón"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("pistol squat") || g.includes("sentadilla a una pierna")) {
+    return { priorityMuscles: ["Piernas", "Glúteos", "Core"], priorityPatterns: ["Sentadilla", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("press banca") || g.includes("bench press")) {
+    return { priorityMuscles: ["Pecho", "Tríceps", "Hombros"], priorityPatterns: ["Empuje"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("sentadilla") || g.includes("squat")) {
+    return { priorityMuscles: ["Piernas", "Glúteos", "Core"], priorityPatterns: ["Sentadilla", "Bisagra"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("peso muerto") || g.includes("deadlift")) {
+    return { priorityMuscles: ["Espalda", "Piernas", "Glúteos"], priorityPatterns: ["Bisagra", "Tirón"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("press militar") || g.includes("overhead press")) {
+    return { priorityMuscles: ["Hombros", "Tríceps", "Core"], priorityPatterns: ["Empuje"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+  if (g.includes("dominadas") || g.includes("pull up") || g.includes("pull-up")) {
+    return { priorityMuscles: ["Espalda", "Bíceps", "Core"], priorityPatterns: ["Tirón"], extraExercises: 1, stimulus: "Fuerza" };
+  }
+
+  return null;
+}
+
 // ─── Rep/series scheme using dynamic rules ───
 
 function getRepScheme(stimulus: string | null, priority: number, rules: Rules): { series: number; reps: string; rest: string } {
@@ -102,21 +156,33 @@ function pickExercisesForSession(
   exerciseLib: Record<string, ExerciseRow[]>,
   config: UserConfig,
   rules: Rules,
+  skillProfile: SkillProfile | null,
 ): PickedExercise[] {
   const { userLevel, goal, exerciseType } = config;
 
+  // Boost target muscles with skill-specific muscles
+  const boostedMuscles = [...targetMuscles];
+  if (skillProfile) {
+    for (const m of skillProfile.priorityMuscles) {
+      if (!boostedMuscles.includes(m)) boostedMuscles.push(m);
+    }
+  }
+
   const allAvailable: ExerciseRow[] = [];
-  for (const muscle of targetMuscles) {
+  for (const muscle of boostedMuscles) {
     const muscleExercises = exerciseLib[muscle] || [];
     for (const ex of muscleExercises) {
-      if (exerciseType !== "Mixto" && ex.exercise_type && ex.exercise_type !== "Mixto" && ex.exercise_type !== exerciseType) continue;
+      // Equipment type filtering: strict enforcement
+      if (exerciseType === "Gimnasio" && ex.exercise_type === "Calistenia") continue;
+      if (exerciseType === "Calistenia" && ex.exercise_type === "Gimnasio") continue;
+      // Mixto allows everything
       if ((ex.level ?? 1) > userLevel + 1) continue;
       allAvailable.push(ex);
     }
   }
 
   if (allAvailable.length === 0) {
-    console.log(`[GENERATE-PLAN] No exercises available for muscles: ${targetMuscles.join(", ")}`);
+    console.log(`[GENERATE-PLAN] No exercises available for muscles: ${boostedMuscles.join(", ")} (type: ${exerciseType})`);
     return [];
   }
 
@@ -127,6 +193,14 @@ function pickExercisesForSession(
   let consecutiveHighFatigue = 0;
   let heavyHingeCount = 0;
 
+  // Adjust max pattern repeats for skill-priority patterns
+  const effectiveMaxPatternRepeats = (pattern: string) => {
+    if (skillProfile?.priorityPatterns.includes(pattern)) {
+      return rules.max_pattern_repeats + 1; // allow one extra for skill focus
+    }
+    return rules.max_pattern_repeats;
+  };
+
   function findBest(pattern: string, targetPriority: number): ExerciseRow | null {
     const candidates = allAvailable
       .filter(ex =>
@@ -135,6 +209,12 @@ function pickExercisesForSession(
         !usedIds.has(ex.id)
       )
       .sort((a, b) => {
+        // Prefer skill-priority muscles
+        if (skillProfile) {
+          const aSkill = skillProfile.priorityMuscles.includes(a.muscle_group || "") ? 0 : 1;
+          const bSkill = skillProfile.priorityMuscles.includes(b.muscle_group || "") ? 0 : 1;
+          if (aSkill !== bSkill) return aSkill - bSkill;
+        }
         const aLevelDiff = Math.abs((a.level ?? 1) - userLevel);
         const bLevelDiff = Math.abs((b.level ?? 1) - userLevel);
         if (aLevelDiff !== bLevelDiff) return aLevelDiff - bLevelDiff;
@@ -143,12 +223,12 @@ function pickExercisesForSession(
     return candidates[0] || null;
   }
 
-  function tryAdd(ex: ExerciseRow): boolean {
+  function tryAdd(ex: ExerciseRow, forceStimulus?: string): boolean {
     const pattern = ex.movement_pattern || "Otro";
     const fatigue = ex.fatigue_level || "Media";
     const priority = ex.priority ?? 2;
 
-    if ((patternCounts[pattern] || 0) >= rules.max_pattern_repeats) return false;
+    if ((patternCounts[pattern] || 0) >= effectiveMaxPatternRepeats(pattern)) return false;
     if (pattern === "Bisagra" && ex.load_level === "Alta" && heavyHingeCount >= rules.max_heavy_hinges) return false;
 
     const pushCount = patternCounts["Empuje"] || 0;
@@ -156,7 +236,7 @@ function pickExercisesForSession(
     if (pattern === "Empuje" && pushCount > pullCount + rules.push_pull_max_diff) return false;
     if (pattern === "Tirón" && pullCount > pushCount + rules.push_pull_max_diff) return false;
 
-    const stimulus = getEffectiveStimulus(ex.stimulus_type, goal);
+    const stimulus = forceStimulus || getEffectiveStimulus(ex.stimulus_type, goal, skillProfile);
     const scheme = getRepScheme(stimulus, priority, rules);
 
     if (totalSets + scheme.series > rules.max_sets_per_session) return false;
@@ -201,14 +281,34 @@ function pickExercisesForSession(
     }
   }
 
+  // STEP 1.5: Skill-specific extra exercises from priority patterns
+  if (skillProfile) {
+    for (const pattern of skillProfile.priorityPatterns) {
+      if (totalSets >= rules.max_sets_per_session) break;
+      const ex = allAvailable
+        .filter(e => e.movement_pattern === pattern && !usedIds.has(e.id) && skillProfile.priorityMuscles.includes(e.muscle_group || ""))
+        .sort((a, b) => (a.priority ?? 2) - (b.priority ?? 2))[0];
+      if (ex) tryAdd(ex, skillProfile.stimulus);
+    }
+  }
+
   // STEP 2: Complements
+  const maxP2 = rules.max_p2_exercises + (skillProfile?.extraExercises || 0);
   const p2Candidates = allAvailable
     .filter(ex => (ex.priority ?? 2) === 2 && !usedIds.has(ex.id))
-    .sort((a, b) => (a.recommended_order ?? 2) - (b.recommended_order ?? 2));
+    .sort((a, b) => {
+      // Prefer skill muscles
+      if (skillProfile) {
+        const aSkill = skillProfile.priorityMuscles.includes(a.muscle_group || "") ? 0 : 1;
+        const bSkill = skillProfile.priorityMuscles.includes(b.muscle_group || "") ? 0 : 1;
+        if (aSkill !== bSkill) return aSkill - bSkill;
+      }
+      return (a.recommended_order ?? 2) - (b.recommended_order ?? 2);
+    });
 
   let p2Added = 0;
   for (const ex of p2Candidates) {
-    if (p2Added >= rules.max_p2_exercises || totalSets >= rules.max_sets_per_session) break;
+    if (p2Added >= maxP2 || totalSets >= rules.max_sets_per_session) break;
     if (tryAdd(ex)) p2Added++;
   }
 
@@ -277,13 +377,16 @@ function enforceConsecutiveFatigueRule(exercises: PickedExercise[], maxConsecuti
   return result;
 }
 
-function getEffectiveStimulus(exerciseStimulus: string | null, goal: string): string {
+function getEffectiveStimulus(exerciseStimulus: string | null, goal: string, skillProfile: SkillProfile | null): string {
   if (exerciseStimulus) return exerciseStimulus;
+  // If user has a skill goal, bias towards strength for compound movements
+  if (skillProfile) return skillProfile.stimulus;
   switch (goal) {
     case "gain_muscle": return "Hipertrofia";
     case "lose_weight": return "Resistencia";
     case "recomp": return "Hipertrofia";
     case "improve_endurance": return "Resistencia";
+    case "skill_based": return "Fuerza";
     default: return "Hipertrofia";
   }
 }
@@ -296,6 +399,7 @@ function calcMacros(weight: number, goal: string) {
     case "lose_weight": return { protein: Math.round(weight * 2.4), carbs: Math.round(weight * 2), fats: Math.round(weight * 0.8) };
     case "recomp": return { protein: Math.round(weight * 2.2), carbs: Math.round(weight * 3), fats: Math.round(weight * 0.9) };
     case "improve_endurance": return { protein: Math.round(weight * 1.8), carbs: Math.round(weight * 4.5), fats: Math.round(weight * 0.9) };
+    case "skill_based": return { protein: Math.round(weight * 2.0), carbs: Math.round(weight * 3.5), fats: Math.round(weight * 1) };
     default: return { protein: Math.round(weight * 1.8), carbs: Math.round(weight * 3.5), fats: Math.round(weight * 1) };
   }
 }
@@ -308,7 +412,7 @@ function getMeals(goal: string) {
     { name: "Merienda", description: "Tostada integral con aguacate y huevo duro" },
     { name: "Cena", description: "Salmón al horno con patata y ensalada variada" },
   ];
-  if (goal === "gain_muscle") {
+  if (goal === "gain_muscle" || goal === "skill_based") {
     base.push({ name: "Pre-entreno", description: "Plátano con mantequilla de cacahuete y pan integral" });
     base.push({ name: "Post-entreno", description: "Batido de proteínas con avena y frutos rojos" });
   }
@@ -322,30 +426,54 @@ function getMeals(goal: string) {
 
 interface RoutineDay { name: string; muscles: string[]; }
 
-function getGymSplit(daysAvailable: number): RoutineDay[] {
-  if (daysAvailable >= 6) return [
-    { name: "Push A", muscles: ["Pecho", "Hombros", "Tríceps"] },
-    { name: "Pull A", muscles: ["Espalda", "Bíceps"] },
-    { name: "Legs A", muscles: ["Piernas", "Glúteos"] },
-    { name: "Push B", muscles: ["Pecho", "Hombros", "Tríceps"] },
-    { name: "Pull B", muscles: ["Espalda", "Bíceps"] },
-    { name: "Legs B", muscles: ["Piernas", "Glúteos", "Core"] },
-  ];
-  if (daysAvailable >= 4) return [
-    { name: "Upper A", muscles: ["Pecho", "Espalda", "Hombros"] },
-    { name: "Lower A", muscles: ["Piernas", "Glúteos", "Core"] },
-    { name: "Upper B", muscles: ["Pecho", "Espalda", "Bíceps", "Tríceps"] },
-    { name: "Lower B", muscles: ["Piernas", "Glúteos", "Core"] },
-  ];
-  if (daysAvailable >= 3) return [
-    { name: "Full Body A", muscles: ["Pecho", "Espalda", "Piernas"] },
-    { name: "Full Body B", muscles: ["Hombros", "Piernas", "Core"] },
-    { name: "Full Body C", muscles: ["Espalda", "Pecho", "Glúteos"] },
-  ];
-  return [
-    { name: "Full Body A", muscles: ["Pecho", "Espalda", "Piernas", "Core"] },
-    { name: "Full Body B", muscles: ["Hombros", "Piernas", "Glúteos", "Core"] },
-  ];
+function getGymSplit(daysAvailable: number, skillProfile: SkillProfile | null): RoutineDay[] {
+  const baseSplit = (() => {
+    if (daysAvailable >= 6) return [
+      { name: "Push A", muscles: ["Pecho", "Hombros", "Tríceps"] },
+      { name: "Pull A", muscles: ["Espalda", "Bíceps"] },
+      { name: "Legs A", muscles: ["Piernas", "Glúteos"] },
+      { name: "Push B", muscles: ["Pecho", "Hombros", "Tríceps"] },
+      { name: "Pull B", muscles: ["Espalda", "Bíceps"] },
+      { name: "Legs B", muscles: ["Piernas", "Glúteos", "Core"] },
+    ];
+    if (daysAvailable >= 4) return [
+      { name: "Upper A", muscles: ["Pecho", "Espalda", "Hombros"] },
+      { name: "Lower A", muscles: ["Piernas", "Glúteos", "Core"] },
+      { name: "Upper B", muscles: ["Pecho", "Espalda", "Bíceps", "Tríceps"] },
+      { name: "Lower B", muscles: ["Piernas", "Glúteos", "Core"] },
+    ];
+    if (daysAvailable >= 3) return [
+      { name: "Full Body A", muscles: ["Pecho", "Espalda", "Piernas"] },
+      { name: "Full Body B", muscles: ["Hombros", "Piernas", "Core"] },
+      { name: "Full Body C", muscles: ["Espalda", "Pecho", "Glúteos"] },
+    ];
+    return [
+      { name: "Full Body A", muscles: ["Pecho", "Espalda", "Piernas", "Core"] },
+      { name: "Full Body B", muscles: ["Hombros", "Piernas", "Glúteos", "Core"] },
+    ];
+  })();
+
+  // If skill profile, ensure priority muscles appear in the split
+  if (skillProfile) {
+    for (const day of baseSplit) {
+      for (const m of skillProfile.priorityMuscles) {
+        if (!day.muscles.includes(m)) {
+          // Add skill muscles to days that have related patterns
+          const hasRelated = day.muscles.some(dm => 
+            (dm === "Pecho" && m === "Tríceps") ||
+            (dm === "Espalda" && m === "Bíceps") ||
+            (dm === "Hombros" && (m === "Core" || m === "Tríceps")) ||
+            (dm === "Piernas" && (m === "Glúteos" || m === "Core"))
+          );
+          if (hasRelated && !day.muscles.includes(m)) {
+            day.muscles.push(m);
+          }
+        }
+      }
+    }
+  }
+
+  return baseSplit;
 }
 
 // ─── Build weekly plan ───
@@ -357,6 +485,7 @@ function buildWeeklyPlan(
   config: UserConfig,
   exerciseLib: Record<string, ExerciseRow[]>,
   rules: Rules,
+  skillProfile: SkillProfile | null,
 ) {
   const plan: any[] = [];
   const trainedMuscles: Record<string, number> = {};
@@ -377,7 +506,7 @@ function buildWeeklyPlan(
       });
 
       if (canTrain) {
-        const exercises = pickExercisesForSession(routine.muscles, exerciseLib, config, rules);
+        const exercises = pickExercisesForSession(routine.muscles, exerciseLib, config, rules, skillProfile);
         plan.push({
           day: DAYS[dayIdx], type: "gimnasio",
           routine_name: routine.name, muscle_focus: routine.muscles.join(" · "),
@@ -402,7 +531,7 @@ function buildWeeklyPlan(
 
     if (gymDayIdx < gymSplit.length) {
       const routine = gymSplit[gymDayIdx];
-      const exercises = pickExercisesForSession(routine.muscles, exerciseLib, config, rules);
+      const exercises = pickExercisesForSession(routine.muscles, exerciseLib, config, rules, skillProfile);
       plan.push({
         day: DAYS[dayIdx], type: "gimnasio",
         routine_name: routine.name, muscle_focus: routine.muscles.join(" · "),
@@ -492,6 +621,7 @@ serve(async (req) => {
 
     const weight = onb.weight || 70;
     const goal = onb.goal || "general_health";
+    const specificGoal = onb.specific_goal || "";
     const sports = onb.sports ? onb.sports.split(",").map((s: string) => s.trim()).filter(Boolean) : [];
     const daysAvailable = parseInt(
       typeof onb.availability === "object" && onb.availability !== null
@@ -499,14 +629,19 @@ serve(async (req) => {
     );
     const intensityLevel = onb.intensity_level || 5;
     const userLevel = intensityToLevel(intensityLevel);
-
     const equipmentType = onb.equipment_type || "Mixto";
+
+    const skillProfile = getSkillProfile(specificGoal);
+    if (skillProfile) {
+      console.log(`[GENERATE-PLAN] Skill profile detected: "${specificGoal}" → muscles=${skillProfile.priorityMuscles.join(",")}, patterns=${skillProfile.priorityPatterns.join(",")}`);
+    }
 
     const config: UserConfig = {
       userLevel,
       goal,
       exerciseType: equipmentType,
       intensityLevel,
+      specificGoal,
     };
 
     const { data: allExercises } = await supabase
@@ -521,10 +656,10 @@ serve(async (req) => {
     }
 
     console.log(`[GENERATE-PLAN] Exercise library: ${Object.entries(exerciseLib).map(([k, v]) => `${k}:${v.length}`).join(", ")}`);
-    console.log(`[GENERATE-PLAN] User level: ${userLevel}, intensity: ${intensityLevel}, goal: ${goal}`);
+    console.log(`[GENERATE-PLAN] User: level=${userLevel}, intensity=${intensityLevel}, goal=${goal}, equipment=${equipmentType}, specificGoal="${specificGoal}"`);
 
-    const gymSplit = getGymSplit(Math.min(daysAvailable, 6));
-    const weeklyPlan = buildWeeklyPlan(gymSplit, sports, Math.min(daysAvailable, 7), config, exerciseLib, rules);
+    const gymSplit = getGymSplit(Math.min(daysAvailable, 6), skillProfile);
+    const weeklyPlan = buildWeeklyPlan(gymSplit, sports, Math.min(daysAvailable, 7), config, exerciseLib, rules, skillProfile);
 
     for (const day of weeklyPlan) {
       if (day.type === "gimnasio") {
@@ -539,10 +674,11 @@ serve(async (req) => {
     await supabase.from("nutrition_plan").upsert({ user_id: targetUserId, macros_json: macros, meals_json: meals });
     await supabase.from("profiles").update({ plan_status: "plan_ready" }).eq("user_id", targetUserId);
 
-    console.log(`[GENERATE-PLAN] Plan generated for ${targetUserId}: ${weeklyPlan.length} days`);
+    console.log(`[GENERATE-PLAN] Plan generated for ${targetUserId}: ${weeklyPlan.length} days, skill="${specificGoal}"`);
 
     return new Response(JSON.stringify({
       success: true, training_days: weeklyPlan.length, macros, meals_count: meals.length,
+      skill_profile: skillProfile ? { muscles: skillProfile.priorityMuscles, patterns: skillProfile.priorityPatterns } : null,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
     console.error("[GENERATE-PLAN] Error:", error.message);
