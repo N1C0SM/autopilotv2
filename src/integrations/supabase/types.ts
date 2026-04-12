@@ -192,6 +192,7 @@ export type Database = {
           intensity_level: number | null
           nutrition_preferences: string | null
           sex: string | null
+          specific_goal: string | null
           sports: string | null
           user_id: string
           weight: number | null
@@ -209,6 +210,7 @@ export type Database = {
           intensity_level?: number | null
           nutrition_preferences?: string | null
           sex?: string | null
+          specific_goal?: string | null
           sports?: string | null
           user_id: string
           weight?: number | null
@@ -226,6 +228,7 @@ export type Database = {
           intensity_level?: number | null
           nutrition_preferences?: string | null
           sex?: string | null
+          specific_goal?: string | null
           sports?: string | null
           user_id?: string
           weight?: number | null
