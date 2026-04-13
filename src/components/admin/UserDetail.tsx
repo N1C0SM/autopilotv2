@@ -82,14 +82,16 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: onb }, { data: roleData }, { data: tp }, { data: np }] = await Promise.all([
+      const [{ data: onb }, { data: roleData }, { data: tp }, { data: np }, { data: photos }] = await Promise.all([
         supabase.from("onboarding").select("*").eq("user_id", profile.user_id).single(),
         supabase.from("user_roles").select("role").eq("user_id", profile.user_id).eq("role", "admin").maybeSingle(),
         supabase.from("training_plan").select("workouts_json").eq("user_id", profile.user_id).single(),
         supabase.from("nutrition_plan").select("macros_json, meals_json").eq("user_id", profile.user_id).single(),
+        supabase.from("progress_photos").select("id, photo_url, note, taken_at").eq("user_id", profile.user_id).order("taken_at", { ascending: false }),
       ]);
       setOnboarding(onb as OnboardingData | null);
       setIsUserAdmin(!!roleData);
+      if (photos) setProgressPhotos(photos);
 
       if (tp?.workouts_json) {
         const existing = tp.workouts_json as unknown as DayPlan[];
