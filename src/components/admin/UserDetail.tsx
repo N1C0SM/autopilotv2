@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2, Camera, Image } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
