@@ -77,6 +77,9 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
   const [roleLoading, setRoleLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [progressPhotos, setProgressPhotos] = useState<{ id: string; photo_url: string; note: string | null; taken_at: string }[]>([]);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
