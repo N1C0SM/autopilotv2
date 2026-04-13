@@ -15,6 +15,7 @@ interface ExerciseRow {
   priority: number | null; stimulus_type: string | null;
   load_level: string | null; fatigue_level: string | null;
   recommended_order: number | null;
+  skill_tag: string | null; progression_order: number | null;
 }
 
 interface PickedExercise {
