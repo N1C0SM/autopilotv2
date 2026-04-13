@@ -661,6 +661,23 @@ serve(async (req) => {
     }
 
     console.log(`[GENERATE-PLAN] Exercise library: ${Object.entries(exerciseLib).map(([k, v]) => `${k}:${v.length}`).join(", ")}`);
+
+    // ─── Find skill progressions ───
+    let skillProgressions: ExerciseRow[] = [];
+    if (skillProfile) {
+      skillProgressions = ((allExercises || []) as ExerciseRow[])
+        .filter(ex => ex.skill_tag === skillProfile.skillTag && ex.progression_order !== null)
+        .sort((a, b) => (a.progression_order ?? 0) - (b.progression_order ?? 0));
+      
+      // Filter by user level: include exercises up to userLevel+1 in progression order
+      // This gives the user their current progression step + the next one to work towards
+      if (skillProgressions.length > 0) {
+        const maxProgression = Math.min(userLevel + 1, skillProgressions.length);
+        skillProgressions = skillProgressions.slice(0, maxProgression);
+        console.log(`[GENERATE-PLAN] Skill progressions for "${skillProfile.skillTag}": ${skillProgressions.map(e => `${e.name}(#${e.progression_order})`).join(" → ")}`);
+      }
+    }
+
     console.log(`[GENERATE-PLAN] User: level=${userLevel}, intensity=${intensityLevel}, goal=${goal}, equipment=${equipmentType}, specificGoal="${specificGoal}"`);
 
     const gymSplit = getGymSplit(Math.min(daysAvailable, 6), skillProfile);
