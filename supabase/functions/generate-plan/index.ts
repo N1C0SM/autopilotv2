@@ -77,8 +77,9 @@ const DEFAULT_RULES: Rules = {
 interface SkillProfile {
   priorityMuscles: string[];
   priorityPatterns: string[];
-  extraExercises: number; // extra P2 slots for skill work
+  extraExercises: number;
   stimulus: string;
+  skillTag: string; // matches skill_tag in exercises table
 }
 
 function getSkillProfile(specificGoal: string): SkillProfile | null {
@@ -86,40 +87,43 @@ function getSkillProfile(specificGoal: string): SkillProfile | null {
   const g = specificGoal.toLowerCase();
 
   if (g.includes("handstand") || g.includes("pino")) {
-    return { priorityMuscles: ["Hombros", "Core", "Tríceps"], priorityPatterns: ["Empuje", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Hombros", "Core", "Tríceps"], priorityPatterns: ["Empuje", "Core"], extraExercises: 1, stimulus: "Fuerza", skillTag: "handstand" };
   }
   if (g.includes("muscle up") || g.includes("muscle-up")) {
-    return { priorityMuscles: ["Espalda", "Pecho", "Bíceps", "Core"], priorityPatterns: ["Tirón", "Empuje"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Espalda", "Pecho", "Bíceps", "Core"], priorityPatterns: ["Tirón", "Empuje"], extraExercises: 1, stimulus: "Fuerza", skillTag: "muscle_up" };
   }
   if (g.includes("planche")) {
-    return { priorityMuscles: ["Hombros", "Pecho", "Core", "Tríceps"], priorityPatterns: ["Empuje", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Hombros", "Pecho", "Core", "Tríceps"], priorityPatterns: ["Empuje", "Core"], extraExercises: 1, stimulus: "Fuerza", skillTag: "planche" };
   }
   if (g.includes("front lever")) {
-    return { priorityMuscles: ["Espalda", "Core", "Bíceps"], priorityPatterns: ["Tirón", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Espalda", "Core", "Bíceps"], priorityPatterns: ["Tirón", "Core"], extraExercises: 1, stimulus: "Fuerza", skillTag: "front_lever" };
   }
   if (g.includes("back lever")) {
-    return { priorityMuscles: ["Espalda", "Hombros", "Core"], priorityPatterns: ["Tirón", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Espalda", "Hombros", "Core"], priorityPatterns: ["Tirón", "Core"], extraExercises: 1, stimulus: "Fuerza", skillTag: "back_lever" };
   }
   if (g.includes("human flag") || g.includes("bandera")) {
-    return { priorityMuscles: ["Core", "Hombros", "Espalda"], priorityPatterns: ["Core", "Tirón"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Core", "Hombros", "Espalda"], priorityPatterns: ["Core", "Tirón"], extraExercises: 1, stimulus: "Fuerza", skillTag: "human_flag" };
   }
   if (g.includes("pistol squat") || g.includes("sentadilla a una pierna")) {
-    return { priorityMuscles: ["Piernas", "Glúteos", "Core"], priorityPatterns: ["Sentadilla", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Piernas", "Glúteos", "Core"], priorityPatterns: ["Sentadilla", "Core"], extraExercises: 1, stimulus: "Fuerza", skillTag: "pistol_squat" };
   }
   if (g.includes("press banca") || g.includes("bench press")) {
-    return { priorityMuscles: ["Pecho", "Tríceps", "Hombros"], priorityPatterns: ["Empuje"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Pecho", "Tríceps", "Hombros"], priorityPatterns: ["Empuje"], extraExercises: 1, stimulus: "Fuerza", skillTag: "press_banca" };
   }
   if (g.includes("sentadilla") || g.includes("squat")) {
-    return { priorityMuscles: ["Piernas", "Glúteos", "Core"], priorityPatterns: ["Sentadilla", "Bisagra"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Piernas", "Glúteos", "Core"], priorityPatterns: ["Sentadilla", "Bisagra"], extraExercises: 1, stimulus: "Fuerza", skillTag: "sentadilla" };
   }
   if (g.includes("peso muerto") || g.includes("deadlift")) {
-    return { priorityMuscles: ["Espalda", "Piernas", "Glúteos"], priorityPatterns: ["Bisagra", "Tirón"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Espalda", "Piernas", "Glúteos"], priorityPatterns: ["Bisagra", "Tirón"], extraExercises: 1, stimulus: "Fuerza", skillTag: "peso_muerto" };
   }
   if (g.includes("press militar") || g.includes("overhead press")) {
-    return { priorityMuscles: ["Hombros", "Tríceps", "Core"], priorityPatterns: ["Empuje"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Hombros", "Tríceps", "Core"], priorityPatterns: ["Empuje"], extraExercises: 1, stimulus: "Fuerza", skillTag: "press_militar" };
   }
   if (g.includes("dominadas") || g.includes("pull up") || g.includes("pull-up")) {
-    return { priorityMuscles: ["Espalda", "Bíceps", "Core"], priorityPatterns: ["Tirón"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Espalda", "Bíceps", "Core"], priorityPatterns: ["Tirón"], extraExercises: 1, stimulus: "Fuerza", skillTag: "dominadas" };
+  }
+  if (g.includes("l-sit") || g.includes("l sit")) {
+    return { priorityMuscles: ["Core", "Hombros", "Tríceps"], priorityPatterns: ["Core", "Empuje"], extraExercises: 1, stimulus: "Fuerza", skillTag: "l_sit" };
   }
 
   return null;
