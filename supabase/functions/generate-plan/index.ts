@@ -683,6 +683,35 @@ serve(async (req) => {
     const gymSplit = getGymSplit(Math.min(daysAvailable, 6), skillProfile);
     const weeklyPlan = buildWeeklyPlan(gymSplit, sports, Math.min(daysAvailable, 7), config, exerciseLib, rules, skillProfile);
 
+    // ─── Inject skill progressions into gym days ───
+    if (skillProgressions.length > 0 && skillProfile) {
+      const progressionExercises = skillProgressions.map(ex => ({
+        exercise_id: ex.id,
+        name: ex.name,
+        series: rules.series_p1_max,
+        reps: rules.reps_fuerza,
+        weight: "",
+        rest: rules.rest_fuerza,
+        image_url: ex.image_url || undefined,
+        is_progression: true,
+      }));
+
+      // Distribute progressions across gym days that train relevant muscles
+      let progIdx = 0;
+      for (const day of weeklyPlan) {
+        if (day.type !== "gimnasio" || !day.exercises) continue;
+        const muscles = (day.muscle_focus || "").split(" · ");
+        const isRelevant = muscles.some((m: string) => skillProfile.priorityMuscles.includes(m));
+        if (isRelevant && progIdx < progressionExercises.length) {
+          // Insert progression exercises at the beginning of the session
+          day.exercises.unshift(progressionExercises[progIdx]);
+          progIdx++;
+          if (progIdx >= progressionExercises.length) progIdx = 0; // cycle
+        }
+      }
+      console.log(`[GENERATE-PLAN] Injected ${progressionExercises.length} progression exercises across gym days`);
+    }
+
     for (const day of weeklyPlan) {
       if (day.type === "gimnasio") {
         console.log(`[GENERATE-PLAN] ${day.day} (${day.routine_name}): ${(day.exercises || []).length} exercises`);
