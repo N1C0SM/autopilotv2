@@ -497,6 +497,15 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
                     )}
                   </div>
 
+                  {/* Skill tag */}
+                  {ex.skill_tag && (
+                    <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-violet-500/10 border border-violet-500/20">
+                      <span className="text-[10px] text-violet-400 font-medium">
+                        🎯 {ex.skill_tag} {ex.progression_order ? `#${ex.progression_order}` : ""}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Alternative */}
                   {ex.alternative_id && (() => {
                     const alt = exercises.find((a) => a.id === ex.alternative_id);
