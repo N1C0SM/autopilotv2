@@ -76,7 +76,9 @@ export type Database = {
           muscle_group: string | null
           name: string
           priority: number | null
+          progression_order: number | null
           recommended_order: number | null
+          skill_tag: string | null
           stimulus_type: string | null
         }
         Insert: {
@@ -92,7 +94,9 @@ export type Database = {
           muscle_group?: string | null
           name: string
           priority?: number | null
+          progression_order?: number | null
           recommended_order?: number | null
+          skill_tag?: string | null
           stimulus_type?: string | null
         }
         Update: {
@@ -108,7 +112,9 @@ export type Database = {
           muscle_group?: string | null
           name?: string
           priority?: number | null
+          progression_order?: number | null
           recommended_order?: number | null
+          skill_tag?: string | null
           stimulus_type?: string | null
         }
         Relationships: [

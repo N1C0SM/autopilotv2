@@ -15,6 +15,7 @@ interface ExerciseRow {
   priority: number | null; stimulus_type: string | null;
   load_level: string | null; fatigue_level: string | null;
   recommended_order: number | null;
+  skill_tag: string | null; progression_order: number | null;
 }
 
 interface PickedExercise {
@@ -76,8 +77,9 @@ const DEFAULT_RULES: Rules = {
 interface SkillProfile {
   priorityMuscles: string[];
   priorityPatterns: string[];
-  extraExercises: number; // extra P2 slots for skill work
+  extraExercises: number;
   stimulus: string;
+  skillTag: string; // matches skill_tag in exercises table
 }
 
 function getSkillProfile(specificGoal: string): SkillProfile | null {
@@ -85,40 +87,43 @@ function getSkillProfile(specificGoal: string): SkillProfile | null {
   const g = specificGoal.toLowerCase();
 
   if (g.includes("handstand") || g.includes("pino")) {
-    return { priorityMuscles: ["Hombros", "Core", "Tríceps"], priorityPatterns: ["Empuje", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Hombros", "Core", "Tríceps"], priorityPatterns: ["Empuje", "Core"], extraExercises: 1, stimulus: "Fuerza", skillTag: "handstand" };
   }
   if (g.includes("muscle up") || g.includes("muscle-up")) {
-    return { priorityMuscles: ["Espalda", "Pecho", "Bíceps", "Core"], priorityPatterns: ["Tirón", "Empuje"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Espalda", "Pecho", "Bíceps", "Core"], priorityPatterns: ["Tirón", "Empuje"], extraExercises: 1, stimulus: "Fuerza", skillTag: "muscle_up" };
   }
   if (g.includes("planche")) {
-    return { priorityMuscles: ["Hombros", "Pecho", "Core", "Tríceps"], priorityPatterns: ["Empuje", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Hombros", "Pecho", "Core", "Tríceps"], priorityPatterns: ["Empuje", "Core"], extraExercises: 1, stimulus: "Fuerza", skillTag: "planche" };
   }
   if (g.includes("front lever")) {
-    return { priorityMuscles: ["Espalda", "Core", "Bíceps"], priorityPatterns: ["Tirón", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Espalda", "Core", "Bíceps"], priorityPatterns: ["Tirón", "Core"], extraExercises: 1, stimulus: "Fuerza", skillTag: "front_lever" };
   }
   if (g.includes("back lever")) {
-    return { priorityMuscles: ["Espalda", "Hombros", "Core"], priorityPatterns: ["Tirón", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Espalda", "Hombros", "Core"], priorityPatterns: ["Tirón", "Core"], extraExercises: 1, stimulus: "Fuerza", skillTag: "back_lever" };
   }
   if (g.includes("human flag") || g.includes("bandera")) {
-    return { priorityMuscles: ["Core", "Hombros", "Espalda"], priorityPatterns: ["Core", "Tirón"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Core", "Hombros", "Espalda"], priorityPatterns: ["Core", "Tirón"], extraExercises: 1, stimulus: "Fuerza", skillTag: "human_flag" };
   }
   if (g.includes("pistol squat") || g.includes("sentadilla a una pierna")) {
-    return { priorityMuscles: ["Piernas", "Glúteos", "Core"], priorityPatterns: ["Sentadilla", "Core"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Piernas", "Glúteos", "Core"], priorityPatterns: ["Sentadilla", "Core"], extraExercises: 1, stimulus: "Fuerza", skillTag: "pistol_squat" };
   }
   if (g.includes("press banca") || g.includes("bench press")) {
-    return { priorityMuscles: ["Pecho", "Tríceps", "Hombros"], priorityPatterns: ["Empuje"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Pecho", "Tríceps", "Hombros"], priorityPatterns: ["Empuje"], extraExercises: 1, stimulus: "Fuerza", skillTag: "press_banca" };
   }
   if (g.includes("sentadilla") || g.includes("squat")) {
-    return { priorityMuscles: ["Piernas", "Glúteos", "Core"], priorityPatterns: ["Sentadilla", "Bisagra"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Piernas", "Glúteos", "Core"], priorityPatterns: ["Sentadilla", "Bisagra"], extraExercises: 1, stimulus: "Fuerza", skillTag: "sentadilla" };
   }
   if (g.includes("peso muerto") || g.includes("deadlift")) {
-    return { priorityMuscles: ["Espalda", "Piernas", "Glúteos"], priorityPatterns: ["Bisagra", "Tirón"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Espalda", "Piernas", "Glúteos"], priorityPatterns: ["Bisagra", "Tirón"], extraExercises: 1, stimulus: "Fuerza", skillTag: "peso_muerto" };
   }
   if (g.includes("press militar") || g.includes("overhead press")) {
-    return { priorityMuscles: ["Hombros", "Tríceps", "Core"], priorityPatterns: ["Empuje"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Hombros", "Tríceps", "Core"], priorityPatterns: ["Empuje"], extraExercises: 1, stimulus: "Fuerza", skillTag: "press_militar" };
   }
   if (g.includes("dominadas") || g.includes("pull up") || g.includes("pull-up")) {
-    return { priorityMuscles: ["Espalda", "Bíceps", "Core"], priorityPatterns: ["Tirón"], extraExercises: 1, stimulus: "Fuerza" };
+    return { priorityMuscles: ["Espalda", "Bíceps", "Core"], priorityPatterns: ["Tirón"], extraExercises: 1, stimulus: "Fuerza", skillTag: "dominadas" };
+  }
+  if (g.includes("l-sit") || g.includes("l sit")) {
+    return { priorityMuscles: ["Core", "Hombros", "Tríceps"], priorityPatterns: ["Core", "Empuje"], extraExercises: 1, stimulus: "Fuerza", skillTag: "l_sit" };
   }
 
   return null;
@@ -646,7 +651,7 @@ serve(async (req) => {
 
     const { data: allExercises } = await supabase
       .from("exercises")
-      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order");
+      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order, skill_tag, progression_order");
 
     const exerciseLib: Record<string, ExerciseRow[]> = {};
     for (const ex of (allExercises || []) as ExerciseRow[]) {
@@ -656,10 +661,56 @@ serve(async (req) => {
     }
 
     console.log(`[GENERATE-PLAN] Exercise library: ${Object.entries(exerciseLib).map(([k, v]) => `${k}:${v.length}`).join(", ")}`);
+
+    // ─── Find skill progressions ───
+    let skillProgressions: ExerciseRow[] = [];
+    if (skillProfile) {
+      skillProgressions = ((allExercises || []) as ExerciseRow[])
+        .filter(ex => ex.skill_tag === skillProfile.skillTag && ex.progression_order !== null)
+        .sort((a, b) => (a.progression_order ?? 0) - (b.progression_order ?? 0));
+      
+      // Filter by user level: include exercises up to userLevel+1 in progression order
+      // This gives the user their current progression step + the next one to work towards
+      if (skillProgressions.length > 0) {
+        const maxProgression = Math.min(userLevel + 1, skillProgressions.length);
+        skillProgressions = skillProgressions.slice(0, maxProgression);
+        console.log(`[GENERATE-PLAN] Skill progressions for "${skillProfile.skillTag}": ${skillProgressions.map(e => `${e.name}(#${e.progression_order})`).join(" → ")}`);
+      }
+    }
+
     console.log(`[GENERATE-PLAN] User: level=${userLevel}, intensity=${intensityLevel}, goal=${goal}, equipment=${equipmentType}, specificGoal="${specificGoal}"`);
 
     const gymSplit = getGymSplit(Math.min(daysAvailable, 6), skillProfile);
     const weeklyPlan = buildWeeklyPlan(gymSplit, sports, Math.min(daysAvailable, 7), config, exerciseLib, rules, skillProfile);
+
+    // ─── Inject skill progressions into gym days ───
+    if (skillProgressions.length > 0 && skillProfile) {
+      const progressionExercises = skillProgressions.map(ex => ({
+        exercise_id: ex.id,
+        name: ex.name,
+        series: rules.series_p1_max,
+        reps: rules.reps_fuerza,
+        weight: "",
+        rest: rules.rest_fuerza,
+        image_url: ex.image_url || undefined,
+        is_progression: true,
+      }));
+
+      // Distribute progressions across gym days that train relevant muscles
+      let progIdx = 0;
+      for (const day of weeklyPlan) {
+        if (day.type !== "gimnasio" || !day.exercises) continue;
+        const muscles = (day.muscle_focus || "").split(" · ");
+        const isRelevant = muscles.some((m: string) => skillProfile.priorityMuscles.includes(m));
+        if (isRelevant && progIdx < progressionExercises.length) {
+          // Insert progression exercises at the beginning of the session
+          day.exercises.unshift(progressionExercises[progIdx]);
+          progIdx++;
+          if (progIdx >= progressionExercises.length) progIdx = 0; // cycle
+        }
+      }
+      console.log(`[GENERATE-PLAN] Injected ${progressionExercises.length} progression exercises across gym days`);
+    }
 
     for (const day of weeklyPlan) {
       if (day.type === "gimnasio") {

@@ -10,7 +10,7 @@ import { Plus, Trash2, Dumbbell, Edit2, Search, X, ArrowLeftRight } from "lucide
 import type { Exercise } from "@/types/training";
 import {
   MUSCLE_GROUPS, EXERCISE_TYPES, MOVEMENT_PATTERNS, LEVELS,
-  PRIORITIES, STIMULUS_TYPES, LOAD_LEVELS, FATIGUE_LEVELS, RECOMMENDED_ORDERS,
+  PRIORITIES, STIMULUS_TYPES, LOAD_LEVELS, FATIGUE_LEVELS, RECOMMENDED_ORDERS, SKILL_TAGS,
 } from "@/types/training";
 
 const ALL_MUSCLE_GROUPS = [...MUSCLE_GROUPS, "Otro"] as const;
@@ -93,7 +93,7 @@ const ExerciseFormDialog = ({
       setForm(initial ? { ...initial } : {
         name: "", muscle_group: "", exercise_type: "", movement_pattern: "",
         level: 1, priority: 2, stimulus_type: "", load_level: "", fatigue_level: "", recommended_order: 2,
-        alternative_id: null,
+        alternative_id: null, skill_tag: null, progression_order: null,
       });
       setAltSearch("");
     }
@@ -195,6 +195,28 @@ const ExerciseFormDialog = ({
             </div>
           </div>
 
+          {/* Skill Progression */}
+          <div className="space-y-3">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Progresión de Skill</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Skill</Label>
+                <SmallSelect value={form.skill_tag || ""} onChange={(v) => set("skill_tag", v || null)} options={SKILL_TAGS} placeholder="Ninguno" />
+              </div>
+              <div>
+                <Label className="text-xs">Orden progresión</Label>
+                <Input
+                  type="number" min={1} max={20}
+                  className="h-9"
+                  value={form.progression_order ?? ""}
+                  onChange={(e) => set("progression_order", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="1=básico"
+                />
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground">Asigna un skill y orden para crear cadenas de progresión (1=más fácil → mayor=más difícil)</p>
+          </div>
+
           {/* Alternative exercise */}
           <div className="space-y-3">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
@@ -263,7 +285,7 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
 
   const fetchExercises = async () => {
     const { data } = await supabase.from("exercises")
-      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order, alternative_id")
+      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order, alternative_id, skill_tag, progression_order")
       .order("muscle_group").order("recommended_order").order("name");
     if (data) setExercises(data as Exercise[]);
   };
@@ -304,6 +326,8 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
       fatigue_level: form.fatigue_level || null,
       recommended_order: form.recommended_order ?? 2,
       alternative_id: form.alternative_id || null,
+      skill_tag: form.skill_tag || null,
+      progression_order: form.progression_order ?? null,
     };
 
     if (editingExercise) {
@@ -472,6 +496,15 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
                       </span>
                     )}
                   </div>
+
+                  {/* Skill tag */}
+                  {ex.skill_tag && (
+                    <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-violet-500/10 border border-violet-500/20">
+                      <span className="text-[10px] text-violet-400 font-medium">
+                        🎯 {ex.skill_tag} {ex.progression_order ? `#${ex.progression_order}` : ""}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Alternative */}
                   {ex.alternative_id && (() => {

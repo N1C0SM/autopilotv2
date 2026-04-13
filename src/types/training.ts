@@ -12,6 +12,8 @@ export interface Exercise {
   fatigue_level?: string | null;
   recommended_order?: number | null;
   alternative_id?: string | null;
+  skill_tag?: string | null;
+  progression_order?: number | null;
 }
 
 export interface GymExerciseEntry {
@@ -64,4 +66,10 @@ export const RECOMMENDED_ORDERS = [
   { value: 1, label: "Inicio" },
   { value: 2, label: "Medio" },
   { value: 3, label: "Final" },
+] as const;
+
+export const SKILL_TAGS = [
+  "handstand", "muscle_up", "planche", "front_lever", "back_lever",
+  "human_flag", "pistol_squat", "press_banca", "sentadilla", "peso_muerto",
+  "press_militar", "dominadas", "l_sit", "ring_dips",
 ] as const;
