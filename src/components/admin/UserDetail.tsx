@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2, Camera, Image } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,17 +77,21 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
   const [roleLoading, setRoleLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [progressPhotos, setProgressPhotos] = useState<{ id: string; photo_url: string; note: string | null; taken_at: string }[]>([]);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: onb }, { data: roleData }, { data: tp }, { data: np }] = await Promise.all([
+      const [{ data: onb }, { data: roleData }, { data: tp }, { data: np }, { data: photos }] = await Promise.all([
         supabase.from("onboarding").select("*").eq("user_id", profile.user_id).single(),
         supabase.from("user_roles").select("role").eq("user_id", profile.user_id).eq("role", "admin").maybeSingle(),
         supabase.from("training_plan").select("workouts_json").eq("user_id", profile.user_id).single(),
         supabase.from("nutrition_plan").select("macros_json, meals_json").eq("user_id", profile.user_id).single(),
+        supabase.from("progress_photos").select("id, photo_url, note, taken_at").eq("user_id", profile.user_id).order("taken_at", { ascending: false }),
       ]);
       setOnboarding(onb as OnboardingData | null);
       setIsUserAdmin(!!roleData);
+      if (photos) setProgressPhotos(photos);
 
       if (tp?.workouts_json) {
         const existing = tp.workouts_json as unknown as DayPlan[];
@@ -290,7 +294,7 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
         </div>
       )}
       <Tabs defaultValue="info" className="space-y-6">
-        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-4" : "grid-cols-1"}`}>
+        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-5" : "grid-cols-1"}`}>
           <TabsTrigger value="info" className="text-xs gap-1.5">
             <User2 className="w-3.5 h-3.5" /> Info
           </TabsTrigger>
@@ -301,6 +305,9 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
               </TabsTrigger>
               <TabsTrigger value="nutrition" className="text-xs gap-1.5">
                 <Apple className="w-3.5 h-3.5" /> Nutrición
+              </TabsTrigger>
+              <TabsTrigger value="progress" className="text-xs gap-1.5">
+                <Camera className="w-3.5 h-3.5" /> Progreso
               </TabsTrigger>
               <TabsTrigger value="chat" className="text-xs gap-1.5">
                 <MessageCircle className="w-3.5 h-3.5" /> Chat
@@ -464,6 +471,68 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
                 💡 Cada línea se convierte en una comida. El texto antes de ":" es el nombre.
               </p>
             </div>
+          </div>
+        </TabsContent>
+
+        {/* Tab: Progress Photos */}
+        <TabsContent value="progress" className="space-y-6">
+          <div className="bg-card rounded-xl p-6 border border-border">
+            <h2 className="font-bold font-display mb-4 flex items-center gap-2">
+              <Camera className="w-5 h-5 text-primary" />
+              Fotos de progreso ({progressPhotos.length})
+            </h2>
+            {progressPhotos.length === 0 ? (
+              <div className="text-center py-12">
+                <Image className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-40" />
+                <p className="text-sm text-muted-foreground">El usuario aún no ha subido fotos de progreso.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {progressPhotos.map((photo) => (
+                    <button
+                      key={photo.id}
+                      onClick={() => setSelectedPhoto(selectedPhoto === photo.id ? null : photo.id)}
+                      className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-[1.02] ${
+                        selectedPhoto === photo.id ? "border-primary ring-2 ring-primary/30" : "border-border"
+                      }`}
+                    >
+                      <img
+                        src={photo.photo_url}
+                        alt={`Progreso ${photo.taken_at}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                        <span className="text-[10px] font-medium text-white">
+                          {new Date(photo.taken_at).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "2-digit" })}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Expanded photo view */}
+                {selectedPhoto && (() => {
+                  const photo = progressPhotos.find(p => p.id === selectedPhoto);
+                  if (!photo) return null;
+                  return (
+                    <div className="mt-4 bg-secondary/30 rounded-xl p-4">
+                      <img
+                        src={photo.photo_url}
+                        alt={`Progreso ${photo.taken_at}`}
+                        className="max-h-[500px] mx-auto rounded-lg object-contain"
+                      />
+                      <div className="text-center mt-3">
+                        <p className="text-sm font-medium">
+                          {new Date(photo.taken_at).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
+                        </p>
+                        {photo.note && <p className="text-xs text-muted-foreground mt-1">{photo.note}</p>}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
           </div>
         </TabsContent>
 
