@@ -10,7 +10,7 @@ import { Plus, Trash2, Dumbbell, Edit2, Search, X, ArrowLeftRight } from "lucide
 import type { Exercise } from "@/types/training";
 import {
   MUSCLE_GROUPS, EXERCISE_TYPES, MOVEMENT_PATTERNS, LEVELS,
-  PRIORITIES, STIMULUS_TYPES, LOAD_LEVELS, FATIGUE_LEVELS, RECOMMENDED_ORDERS,
+  PRIORITIES, STIMULUS_TYPES, LOAD_LEVELS, FATIGUE_LEVELS, RECOMMENDED_ORDERS, SKILL_TAGS,
 } from "@/types/training";
 
 const ALL_MUSCLE_GROUPS = [...MUSCLE_GROUPS, "Otro"] as const;
@@ -93,7 +93,7 @@ const ExerciseFormDialog = ({
       setForm(initial ? { ...initial } : {
         name: "", muscle_group: "", exercise_type: "", movement_pattern: "",
         level: 1, priority: 2, stimulus_type: "", load_level: "", fatigue_level: "", recommended_order: 2,
-        alternative_id: null,
+        alternative_id: null, skill_tag: null, progression_order: null,
       });
       setAltSearch("");
     }
