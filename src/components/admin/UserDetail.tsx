@@ -37,6 +37,8 @@ interface OnboardingData {
   availability: Json | null;
   nutrition_preferences: string | null;
   allergies: string | null;
+  equipment_type: string | null;
+  specific_goal: string | null;
 }
 
 // ─── Macro Templates ───
