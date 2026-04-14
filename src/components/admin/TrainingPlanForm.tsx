@@ -19,7 +19,7 @@ const emptyGymExercise = (): GymExerciseEntry => ({
 });
 
 // ─── Training Templates ───
-const TEMPLATES: Record<string, { label: string; days: DayPlan[] }> = {
+const STRUCTURE_TEMPLATES: Record<string, { label: string; days: DayPlan[] }> = {
   ppl: {
     label: "PPL (Push/Pull/Legs)",
     days: [
@@ -55,6 +55,112 @@ const TEMPLATES: Record<string, { label: string; days: DayPlan[] }> = {
       { day: "Martes", type: "gimnasio", routine_name: "Pierna A", muscle_focus: "Piernas · Glúteos", exercises: [] },
       { day: "Jueves", type: "gimnasio", routine_name: "Torso B", muscle_focus: "Pecho · Espalda · Bíceps · Tríceps", exercises: [] },
       { day: "Viernes", type: "gimnasio", routine_name: "Pierna B", muscle_focus: "Piernas · Glúteos · Core", exercises: [] },
+    ],
+  },
+};
+
+// ─── Goal-Specific Skill Templates ───
+interface SkillTemplate {
+  label: string;
+  emoji: string;
+  skillTag: string;
+  supportMuscles: string[];
+  days: { name: string; focus: string; muscles: string[] }[];
+}
+
+const SKILL_TEMPLATES: Record<string, SkillTemplate> = {
+  handstand: {
+    label: "Pino / Handstand",
+    emoji: "🤸",
+    skillTag: "handstand",
+    supportMuscles: ["Hombros", "Core", "Tríceps"],
+    days: [
+      { name: "Skill + Empuje", focus: "Progresión de pino + Hombros · Tríceps", muscles: ["Hombros", "Tríceps"] },
+      { name: "Core + Estabilidad", focus: "Core · Equilibrio · Hombros", muscles: ["Core", "Hombros"] },
+      { name: "Pull + Compensación", focus: "Espalda · Bíceps · Movilidad", muscles: ["Espalda", "Bíceps"] },
+      { name: "Skill + Full", focus: "Progresión de pino + Cuerpo completo", muscles: ["Hombros", "Piernas", "Core"] },
+    ],
+  },
+  muscle_up: {
+    label: "Muscle Up",
+    emoji: "💪",
+    skillTag: "muscle_up",
+    supportMuscles: ["Espalda", "Pecho", "Bíceps", "Tríceps"],
+    days: [
+      { name: "Pull Pesado", focus: "Progresión muscle up + Espalda · Bíceps", muscles: ["Espalda", "Bíceps"] },
+      { name: "Push + Transición", focus: "Pecho · Tríceps · Fondos", muscles: ["Pecho", "Tríceps"] },
+      { name: "Piernas + Core", focus: "Piernas · Glúteos · Core", muscles: ["Piernas", "Core"] },
+      { name: "Pull Explosivo", focus: "Progresión muscle up + Espalda", muscles: ["Espalda", "Pecho"] },
+    ],
+  },
+  planche: {
+    label: "Planche",
+    emoji: "🏋️",
+    skillTag: "planche",
+    supportMuscles: ["Hombros", "Pecho", "Core", "Tríceps"],
+    days: [
+      { name: "Skill + Push", focus: "Progresión planche + Hombros · Pecho", muscles: ["Hombros", "Pecho"] },
+      { name: "Core + Recto abdominal", focus: "Core intenso · Hollow · Protracción", muscles: ["Core", "Hombros"] },
+      { name: "Pull + Compensación", focus: "Espalda · Bíceps", muscles: ["Espalda", "Bíceps"] },
+      { name: "Skill + Pierna", focus: "Progresión planche + Piernas", muscles: ["Hombros", "Piernas"] },
+    ],
+  },
+  front_lever: {
+    label: "Front Lever",
+    emoji: "🔥",
+    skillTag: "front_lever",
+    supportMuscles: ["Espalda", "Core", "Bíceps"],
+    days: [
+      { name: "Skill + Pull", focus: "Progresión front lever + Espalda", muscles: ["Espalda", "Bíceps"] },
+      { name: "Core + Retracción", focus: "Core · Hollow · Espalda", muscles: ["Core", "Espalda"] },
+      { name: "Push + Compensación", focus: "Pecho · Hombros · Tríceps", muscles: ["Pecho", "Hombros"] },
+      { name: "Skill + Pierna", focus: "Progresión front lever + Piernas", muscles: ["Espalda", "Piernas"] },
+    ],
+  },
+  back_lever: {
+    label: "Back Lever",
+    emoji: "⚡",
+    skillTag: "back_lever",
+    supportMuscles: ["Espalda", "Hombros", "Bíceps"],
+    days: [
+      { name: "Skill + Pull", focus: "Progresión back lever + Espalda", muscles: ["Espalda", "Hombros"] },
+      { name: "Push + Hombros", focus: "Pecho · Hombros · Tríceps", muscles: ["Pecho", "Hombros"] },
+      { name: "Core + Movilidad", focus: "Core · Movilidad de hombro", muscles: ["Core", "Hombros"] },
+      { name: "Pull + Pierna", focus: "Espalda · Piernas", muscles: ["Espalda", "Piernas"] },
+    ],
+  },
+  human_flag: {
+    label: "Bandera Humana",
+    emoji: "🚩",
+    skillTag: "human_flag",
+    supportMuscles: ["Hombros", "Core", "Espalda"],
+    days: [
+      { name: "Skill + Lateral", focus: "Progresión bandera + Oblicuos · Hombros", muscles: ["Hombros", "Core"] },
+      { name: "Push + Pull", focus: "Espalda · Pecho · Hombros", muscles: ["Espalda", "Pecho"] },
+      { name: "Core + Pierna", focus: "Core intenso · Piernas", muscles: ["Core", "Piernas"] },
+    ],
+  },
+  pistol_squat: {
+    label: "Pistol Squat",
+    emoji: "🦵",
+    skillTag: "pistol_squat",
+    supportMuscles: ["Piernas", "Glúteos", "Core"],
+    days: [
+      { name: "Skill + Pierna", focus: "Progresión pistol + Piernas · Glúteos", muscles: ["Piernas", "Glúteos"] },
+      { name: "Upper Push", focus: "Pecho · Hombros · Tríceps", muscles: ["Pecho", "Hombros"] },
+      { name: "Upper Pull", focus: "Espalda · Bíceps · Core", muscles: ["Espalda", "Core"] },
+      { name: "Skill + Movilidad", focus: "Progresión pistol + Movilidad · Core", muscles: ["Piernas", "Core"] },
+    ],
+  },
+  l_sit: {
+    label: "L-Sit",
+    emoji: "🧘",
+    skillTag: "l_sit",
+    supportMuscles: ["Core", "Hombros", "Tríceps"],
+    days: [
+      { name: "Skill + Core", focus: "Progresión L-sit + Core · Compresión", muscles: ["Core", "Hombros"] },
+      { name: "Push", focus: "Pecho · Hombros · Tríceps", muscles: ["Pecho", "Tríceps"] },
+      { name: "Pull + Pierna", focus: "Espalda · Bíceps · Piernas", muscles: ["Espalda", "Piernas"] },
     ],
   },
 };
@@ -101,7 +207,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
   };
 
   const loadTemplate = (key: string) => {
-    const tpl = TEMPLATES[key];
+    const tpl = STRUCTURE_TEMPLATES[key];
     if (!tpl) return;
     const days = tpl.days.map((d) => ({
       ...d,
@@ -110,6 +216,67 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
     onChange(days);
     setExpandedDays(new Set([0]));
     toast.success(`Plantilla "${tpl.label}" cargada con ejercicios`);
+  };
+
+  const loadSkillTemplate = (key: string) => {
+    const tpl = SKILL_TEMPLATES[key];
+    if (!tpl) return;
+
+    // Get skill progression exercises
+    const skillExercises = exercises
+      .filter(e => e.skill_tag === tpl.skillTag)
+      .sort((a, b) => (a.progression_order || 0) - (b.progression_order || 0));
+
+    const days: DayPlan[] = tpl.days.map((d, i) => {
+      const dayName = DAYS[i] || DAYS[0];
+      const gymExercises: GymExerciseEntry[] = [];
+
+      // Add skill progression exercises first (on skill days)
+      if (d.focus.toLowerCase().includes("progresión")) {
+        for (const se of skillExercises) {
+          gymExercises.push({
+            exercise_id: se.id,
+            name: se.name,
+            series: 3,
+            reps: 10,
+            weight: "",
+            rest: "90s",
+            image_url: se.image_url || undefined,
+          });
+        }
+      }
+
+      // Fill with support exercises from the specified muscles
+      for (const muscle of d.muscles) {
+        const available = exercises
+          .filter(e => e.muscle_group === muscle && !gymExercises.find(g => g.exercise_id === e.id))
+          .sort(() => Math.random() - 0.5);
+        const take = Math.max(1, Math.floor(3 / d.muscles.length));
+        for (const ex of available.slice(0, take)) {
+          gymExercises.push({
+            exercise_id: ex.id,
+            name: ex.name,
+            series: 3,
+            reps: 10,
+            weight: "",
+            rest: "60s",
+            image_url: ex.image_url || undefined,
+          });
+        }
+      }
+
+      return {
+        day: dayName,
+        type: "gimnasio" as const,
+        routine_name: d.name,
+        muscle_focus: d.focus,
+        exercises: gymExercises,
+      };
+    });
+
+    onChange(days);
+    setExpandedDays(new Set([0]));
+    toast.success(`🎯 Plantilla "${tpl.emoji} ${tpl.label}" cargada con ${skillExercises.length} ejercicios de progresión`);
   };
 
   const exportRoutine = () => {
@@ -215,16 +382,31 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
         </div>
       </div>
 
-      {/* Template buttons */}
+      {/* Structure template buttons */}
       <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
           <FileDown className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cargar plantilla</span>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plantillas de estructura</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {Object.entries(TEMPLATES).map(([key, tpl]) => (
+          {Object.entries(STRUCTURE_TEMPLATES).map(([key, tpl]) => (
             <Button key={key} variant="outline" size="sm" className="text-xs h-7" onClick={() => loadTemplate(key)}>
               {tpl.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Skill/Goal template buttons */}
+      <div className="mb-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs">🎯</span>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plantillas por objetivo (con progresiones)</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(SKILL_TEMPLATES).map(([key, tpl]) => (
+            <Button key={key} variant="outline" size="sm" className="text-xs h-7 border-primary/20 hover:bg-primary/10" onClick={() => loadSkillTemplate(key)}>
+              {tpl.emoji} {tpl.label}
             </Button>
           ))}
         </div>
