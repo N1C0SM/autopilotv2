@@ -246,8 +246,9 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
       const perMuscle = Math.max(1, Math.floor(count / muscles.length));
       for (const ex of shuffled.slice(0, perMuscle)) {
         result.push({
-          exercise_id: ex.id, name: ex.name, series: 3, reps: 10,
-          weight: "", rest: "60s", image_url: ex.image_url || undefined,
+          exercise_id: ex.id, name: ex.name,
+          series: params.series, reps: params.reps,
+          weight: "", rest: params.rest, image_url: ex.image_url || undefined,
         });
       }
     }
@@ -281,14 +282,19 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
 
       // Add skill progression exercises first (on skill days)
       if (d.focus.toLowerCase().includes("progresión")) {
-        for (const se of skillExercises) {
+        // Filter by user level: only include exercises at or below their level
+        const levelCap = intensityLevel <= 3 ? 1 : intensityLevel <= 6 ? 2 : 3;
+        const levelFiltered = skillExercises.filter(se => !se.level || se.level <= levelCap);
+        // If too few, include all
+        const toUse = levelFiltered.length >= 2 ? levelFiltered : skillExercises;
+        for (const se of toUse) {
           gymExercises.push({
             exercise_id: se.id,
             name: se.name,
-            series: 3,
-            reps: 10,
+            series: params.skillSeries,
+            reps: params.skillReps,
             weight: "",
-            rest: "90s",
+            rest: params.skillRest,
             image_url: se.image_url || undefined,
           });
         }
@@ -304,10 +310,10 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
           gymExercises.push({
             exercise_id: ex.id,
             name: ex.name,
-            series: 3,
-            reps: 10,
+            series: params.series,
+            reps: params.reps,
             weight: "",
-            rest: "60s",
+            rest: params.rest,
             image_url: ex.image_url || undefined,
           });
         }
