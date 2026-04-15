@@ -202,7 +202,7 @@ const SKILL_TEMPLATES: Record<string, SkillTemplate> = {
   },
 };
 
-const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mixto", specificGoal }: Props) => {
+const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mixto", specificGoal, intensityLevel = 5, userGoal, userInjuries, userAge }: Props) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0]));
 
