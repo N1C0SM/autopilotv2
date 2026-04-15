@@ -232,7 +232,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
     const tpl = SKILL_TEMPLATES[key];
     if (!tpl) return;
 
-    // Get skill progression exercises
+    // Get skill progression exercises (skill exercises bypass equipment filter)
     const skillExercises = exercises
       .filter(e => e.skill_tag === tpl.skillTag)
       .sort((a, b) => (a.progression_order || 0) - (b.progression_order || 0));
@@ -256,9 +256,9 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
         }
       }
 
-      // Fill with support exercises from the specified muscles
+      // Fill with support exercises from the specified muscles (respecting equipment filter)
       for (const muscle of d.muscles) {
-        const available = exercises
+        const available = filteredExercises
           .filter(e => e.muscle_group === muscle && !gymExercises.find(g => g.exercise_id === e.id))
           .sort(() => Math.random() - 0.5);
         const take = Math.max(1, Math.floor(3 / d.muscles.length));
