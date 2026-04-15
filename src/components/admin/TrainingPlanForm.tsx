@@ -14,7 +14,42 @@ interface Props {
   userSports?: string | null;
   equipmentType?: string;
   specificGoal?: string;
+  intensityLevel?: number;
+  userGoal?: string;
+  userInjuries?: string;
+  userAge?: number;
 }
+
+// ─── Level-based auto-adjustment ───
+// Maps intensity_level (1-10) to training parameters
+const getTrainingParams = (intensity: number, goal?: string) => {
+  // Determine user tier: 1-3 = beginner, 4-6 = intermediate, 7-10 = advanced
+  const tier = intensity <= 3 ? "beginner" : intensity <= 6 ? "intermediate" : "advanced";
+
+  const baseParams = {
+    beginner: { series: 2, reps: 12, rest: "90s", skillSeries: 3, skillReps: 5, skillRest: "120s" },
+    intermediate: { series: 3, reps: 10, rest: "75s", skillSeries: 4, skillReps: 6, skillRest: "90s" },
+    advanced: { series: 4, reps: 8, rest: "60s", skillSeries: 5, skillReps: 8, skillRest: "90s" },
+  };
+
+  const params = { ...baseParams[tier] };
+
+  // Goal-based adjustments
+  if (goal === "lose_weight") {
+    params.reps = Math.min(params.reps + 3, 20);
+    params.rest = tier === "advanced" ? "45s" : "60s";
+  } else if (goal === "gain_muscle") {
+    params.series = Math.min(params.series + 1, 5);
+    params.reps = Math.max(params.reps - 1, 6);
+    params.rest = "90s";
+  } else if (goal === "improve_endurance") {
+    params.reps = Math.min(params.reps + 5, 25);
+    params.rest = "30s";
+    params.series = Math.max(params.series - 1, 2);
+  }
+
+  return params;
+};
 
 const emptyGymExercise = (): GymExerciseEntry => ({
   exercise_id: "", name: "", series: 3, reps: 10, weight: "", rest: "60s",
