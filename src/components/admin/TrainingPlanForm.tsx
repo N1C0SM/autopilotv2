@@ -203,7 +203,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
     const muscles = muscleFocus.split("·").map(m => m.trim()).filter(Boolean);
     const result: GymExerciseEntry[] = [];
     for (const muscle of muscles) {
-      const available = exercises.filter(e => e.muscle_group === muscle);
+      const available = filteredExercises.filter(e => e.muscle_group === muscle);
       const shuffled = [...available].sort(() => Math.random() - 0.5);
       const perMuscle = Math.max(1, Math.floor(count / muscles.length));
       for (const ex of shuffled.slice(0, perMuscle)) {
