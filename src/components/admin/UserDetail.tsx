@@ -413,7 +413,7 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
 
         {/* Tab: Training */}
         <TabsContent value="training" className="space-y-6">
-          <TrainingPlanForm dayPlans={dayPlans} onChange={setDayPlans} userSports={onboarding?.sports} />
+          <TrainingPlanForm dayPlans={dayPlans} onChange={setDayPlans} userSports={onboarding?.sports} equipmentType={onboarding?.equipment_type || "Mixto"} specificGoal={onboarding?.specific_goal || undefined} />
         </TabsContent>
 
         {/* Tab: Nutrition */}

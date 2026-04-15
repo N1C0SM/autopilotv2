@@ -12,6 +12,8 @@ interface Props {
   dayPlans: DayPlan[];
   onChange: (plans: DayPlan[]) => void;
   userSports?: string | null;
+  equipmentType?: string;
+  specificGoal?: string;
 }
 
 const emptyGymExercise = (): GymExerciseEntry => ({
@@ -165,16 +167,24 @@ const SKILL_TEMPLATES: Record<string, SkillTemplate> = {
   },
 };
 
-const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
+const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mixto", specificGoal }: Props) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0]));
 
+  // Determine equipment filter
+  const eqFilter = equipmentType === "Calistenia" ? "Calistenia" : equipmentType === "Gimnasio" ? "Gimnasio" : null;
+
   useEffect(() => {
     supabase.from("exercises")
-      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order")
+      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order, skill_tag, progression_order")
       .order("muscle_group").order("recommended_order").order("name")
       .then(({ data }) => { if (data) setExercises(data as Exercise[]); });
   }, []);
+
+  // Filtered exercises based on equipment preference
+  const filteredExercises = eqFilter
+    ? exercises.filter(e => e.exercise_type === eqFilter || e.exercise_type === "Mixto" || !e.exercise_type)
+    : exercises;
 
   const sportOptions = userSports
     ? userSports.split(",").map((s) => s.trim()).filter(Boolean)
@@ -193,7 +203,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
     const muscles = muscleFocus.split("·").map(m => m.trim()).filter(Boolean);
     const result: GymExerciseEntry[] = [];
     for (const muscle of muscles) {
-      const available = exercises.filter(e => e.muscle_group === muscle);
+      const available = filteredExercises.filter(e => e.muscle_group === muscle);
       const shuffled = [...available].sort(() => Math.random() - 0.5);
       const perMuscle = Math.max(1, Math.floor(count / muscles.length));
       for (const ex of shuffled.slice(0, perMuscle)) {
@@ -222,7 +232,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
     const tpl = SKILL_TEMPLATES[key];
     if (!tpl) return;
 
-    // Get skill progression exercises
+    // Get skill progression exercises (skill exercises bypass equipment filter)
     const skillExercises = exercises
       .filter(e => e.skill_tag === tpl.skillTag)
       .sort((a, b) => (a.progression_order || 0) - (b.progression_order || 0));
@@ -246,9 +256,9 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
         }
       }
 
-      // Fill with support exercises from the specified muscles
+      // Fill with support exercises from the specified muscles (respecting equipment filter)
       for (const muscle of d.muscles) {
-        const available = exercises
+        const available = filteredExercises
           .filter(e => e.muscle_group === muscle && !gymExercises.find(g => g.exercise_id === e.id))
           .sort(() => Math.random() - 0.5);
         const take = Math.max(1, Math.floor(3 / d.muscles.length));
@@ -355,12 +365,19 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
     }
   };
 
-  const groupedExercises = exercises.reduce<Record<string, Exercise[]>>((acc, ex) => {
+  const groupedExercises = filteredExercises.reduce<Record<string, Exercise[]>>((acc, ex) => {
     const g = ex.muscle_group || "Otro";
     if (!acc[g]) acc[g] = [];
     acc[g].push(ex);
     return acc;
   }, {});
+
+  // Determine which skill template matches the user's specific goal
+  const recommendedSkill = specificGoal
+    ? Object.keys(SKILL_TEMPLATES).find(k => SKILL_TEMPLATES[k].skillTag === specificGoal)
+    : null;
+
+  const eqLabel = eqFilter ? `(${eqFilter})` : "(Mixto)";
 
   return (
     <div className="bg-card rounded-xl p-6 border border-border">
@@ -368,6 +385,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
         <h2 className="font-bold font-display flex items-center gap-2">
           <Dumbbell className="w-5 h-5 text-primary" />
           Plan de Entrenamiento
+          <span className="text-xs font-normal text-muted-foreground">{eqLabel}</span>
         </h2>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">{dayPlans.length}/7 días</span>
@@ -382,11 +400,24 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
         </div>
       </div>
 
+      {/* Recommended template banner */}
+      {recommendedSkill && dayPlans.length === 0 && (
+        <div className="mb-4 p-3 bg-primary/10 rounded-lg border border-primary/30 flex items-center justify-between">
+          <div>
+            <span className="text-sm font-medium">⭐ Recomendado para este usuario:</span>
+            <span className="ml-2 text-sm font-bold">{SKILL_TEMPLATES[recommendedSkill].emoji} {SKILL_TEMPLATES[recommendedSkill].label}</span>
+          </div>
+          <Button size="sm" onClick={() => loadSkillTemplate(recommendedSkill)} className="text-xs">
+            Cargar plantilla
+          </Button>
+        </div>
+      )}
+
       {/* Structure template buttons */}
       <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
           <FileDown className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plantillas de estructura</span>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plantillas de estructura {eqLabel}</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {Object.entries(STRUCTURE_TEMPLATES).map(([key, tpl]) => (
@@ -405,7 +436,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
         </div>
         <div className="flex flex-wrap gap-2">
           {Object.entries(SKILL_TEMPLATES).map(([key, tpl]) => (
-            <Button key={key} variant="outline" size="sm" className="text-xs h-7 border-primary/20 hover:bg-primary/10" onClick={() => loadSkillTemplate(key)}>
+            <Button key={key} variant={recommendedSkill === key ? "default" : "outline"} size="sm" className={`text-xs h-7 ${recommendedSkill !== key ? "border-primary/20 hover:bg-primary/10" : ""}`} onClick={() => loadSkillTemplate(key)}>
               {tpl.emoji} {tpl.label}
             </Button>
           ))}
