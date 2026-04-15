@@ -365,12 +365,19 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
     }
   };
 
-  const groupedExercises = exercises.reduce<Record<string, Exercise[]>>((acc, ex) => {
+  const groupedExercises = filteredExercises.reduce<Record<string, Exercise[]>>((acc, ex) => {
     const g = ex.muscle_group || "Otro";
     if (!acc[g]) acc[g] = [];
     acc[g].push(ex);
     return acc;
   }, {});
+
+  // Determine which skill template matches the user's specific goal
+  const recommendedSkill = specificGoal
+    ? Object.keys(SKILL_TEMPLATES).find(k => SKILL_TEMPLATES[k].skillTag === specificGoal)
+    : null;
+
+  const eqLabel = eqFilter ? `(${eqFilter})` : "(Mixto)";
 
   return (
     <div className="bg-card rounded-xl p-6 border border-border">
@@ -378,6 +385,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
         <h2 className="font-bold font-display flex items-center gap-2">
           <Dumbbell className="w-5 h-5 text-primary" />
           Plan de Entrenamiento
+          <span className="text-xs font-normal text-muted-foreground">{eqLabel}</span>
         </h2>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">{dayPlans.length}/7 días</span>
@@ -392,11 +400,24 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
         </div>
       </div>
 
+      {/* Recommended template banner */}
+      {recommendedSkill && dayPlans.length === 0 && (
+        <div className="mb-4 p-3 bg-primary/10 rounded-lg border border-primary/30 flex items-center justify-between">
+          <div>
+            <span className="text-sm font-medium">⭐ Recomendado para este usuario:</span>
+            <span className="ml-2 text-sm font-bold">{SKILL_TEMPLATES[recommendedSkill].emoji} {SKILL_TEMPLATES[recommendedSkill].label}</span>
+          </div>
+          <Button size="sm" onClick={() => loadSkillTemplate(recommendedSkill)} className="text-xs">
+            Cargar plantilla
+          </Button>
+        </div>
+      )}
+
       {/* Structure template buttons */}
       <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
           <FileDown className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plantillas de estructura</span>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plantillas de estructura {eqLabel}</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {Object.entries(STRUCTURE_TEMPLATES).map(([key, tpl]) => (
@@ -415,7 +436,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
         </div>
         <div className="flex flex-wrap gap-2">
           {Object.entries(SKILL_TEMPLATES).map(([key, tpl]) => (
-            <Button key={key} variant="outline" size="sm" className="text-xs h-7 border-primary/20 hover:bg-primary/10" onClick={() => loadSkillTemplate(key)}>
+            <Button key={key} variant={recommendedSkill === key ? "default" : "outline"} size="sm" className={`text-xs h-7 ${recommendedSkill !== key ? "border-primary/20 hover:bg-primary/10" : ""}`} onClick={() => loadSkillTemplate(key)}>
               {tpl.emoji} {tpl.label}
             </Button>
           ))}
