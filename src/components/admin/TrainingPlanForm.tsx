@@ -14,7 +14,42 @@ interface Props {
   userSports?: string | null;
   equipmentType?: string;
   specificGoal?: string;
+  intensityLevel?: number;
+  userGoal?: string;
+  userInjuries?: string;
+  userAge?: number;
 }
+
+// ─── Level-based auto-adjustment ───
+// Maps intensity_level (1-10) to training parameters
+const getTrainingParams = (intensity: number, goal?: string) => {
+  // Determine user tier: 1-3 = beginner, 4-6 = intermediate, 7-10 = advanced
+  const tier = intensity <= 3 ? "beginner" : intensity <= 6 ? "intermediate" : "advanced";
+
+  const baseParams = {
+    beginner: { series: 2, reps: 12, rest: "90s", skillSeries: 3, skillReps: 5, skillRest: "120s" },
+    intermediate: { series: 3, reps: 10, rest: "75s", skillSeries: 4, skillReps: 6, skillRest: "90s" },
+    advanced: { series: 4, reps: 8, rest: "60s", skillSeries: 5, skillReps: 8, skillRest: "90s" },
+  };
+
+  const params = { ...baseParams[tier] };
+
+  // Goal-based adjustments
+  if (goal === "lose_weight") {
+    params.reps = Math.min(params.reps + 3, 20);
+    params.rest = tier === "advanced" ? "45s" : "60s";
+  } else if (goal === "gain_muscle") {
+    params.series = Math.min(params.series + 1, 5);
+    params.reps = Math.max(params.reps - 1, 6);
+    params.rest = "90s";
+  } else if (goal === "improve_endurance") {
+    params.reps = Math.min(params.reps + 5, 25);
+    params.rest = "30s";
+    params.series = Math.max(params.series - 1, 2);
+  }
+
+  return params;
+};
 
 const emptyGymExercise = (): GymExerciseEntry => ({
   exercise_id: "", name: "", series: 3, reps: 10, weight: "", rest: "60s",
@@ -167,9 +202,12 @@ const SKILL_TEMPLATES: Record<string, SkillTemplate> = {
   },
 };
 
-const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mixto", specificGoal }: Props) => {
+const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mixto", specificGoal, intensityLevel = 5, userGoal, userInjuries, userAge }: Props) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0]));
+
+  // Auto-calculated training params based on user profile
+  const params = getTrainingParams(intensityLevel, userGoal);
 
   // Determine equipment filter
   const eqFilter = equipmentType === "Calistenia" ? "Calistenia" : equipmentType === "Gimnasio" ? "Gimnasio" : null;
@@ -208,8 +246,9 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
       const perMuscle = Math.max(1, Math.floor(count / muscles.length));
       for (const ex of shuffled.slice(0, perMuscle)) {
         result.push({
-          exercise_id: ex.id, name: ex.name, series: 3, reps: 10,
-          weight: "", rest: "60s", image_url: ex.image_url || undefined,
+          exercise_id: ex.id, name: ex.name,
+          series: params.series, reps: params.reps,
+          weight: "", rest: params.rest, image_url: ex.image_url || undefined,
         });
       }
     }
@@ -243,14 +282,19 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
 
       // Add skill progression exercises first (on skill days)
       if (d.focus.toLowerCase().includes("progresión")) {
-        for (const se of skillExercises) {
+        // Filter by user level: only include exercises at or below their level
+        const levelCap = intensityLevel <= 3 ? 1 : intensityLevel <= 6 ? 2 : 3;
+        const levelFiltered = skillExercises.filter(se => !se.level || se.level <= levelCap);
+        // If too few, include all
+        const toUse = levelFiltered.length >= 2 ? levelFiltered : skillExercises;
+        for (const se of toUse) {
           gymExercises.push({
             exercise_id: se.id,
             name: se.name,
-            series: 3,
-            reps: 10,
+            series: params.skillSeries,
+            reps: params.skillReps,
             weight: "",
-            rest: "90s",
+            rest: params.skillRest,
             image_url: se.image_url || undefined,
           });
         }
@@ -266,10 +310,10 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
           gymExercises.push({
             exercise_id: ex.id,
             name: ex.name,
-            series: 3,
-            reps: 10,
+            series: params.series,
+            reps: params.reps,
             weight: "",
-            rest: "60s",
+            rest: params.rest,
             image_url: ex.image_url || undefined,
           });
         }
@@ -378,6 +422,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
     : null;
 
   const eqLabel = eqFilter ? `(${eqFilter})` : "(Mixto)";
+  const tierLabel = intensityLevel <= 3 ? "Principiante" : intensityLevel <= 6 ? "Intermedio" : "Avanzado";
 
   return (
     <div className="bg-card rounded-xl p-6 border border-border">
@@ -412,6 +457,18 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
           </Button>
         </div>
       )}
+
+      {/* Auto-adjustment info */}
+      <div className="mb-4 p-3 bg-accent/20 rounded-lg border border-accent/30 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">🧠 Auto-ajuste:</span>
+        <span>Nivel: <strong className="text-foreground">{tierLabel}</strong> (intensidad {intensityLevel}/10)</span>
+        <span>Series: <strong className="text-foreground">{params.series}</strong></span>
+        <span>Reps: <strong className="text-foreground">{params.reps}</strong></span>
+        <span>Descanso: <strong className="text-foreground">{params.rest}</strong></span>
+        {userGoal && <span>Objetivo: <strong className="text-foreground">{userGoal}</strong></span>}
+        {userInjuries && <span className="text-destructive">⚠️ Lesiones: {userInjuries}</span>}
+        {userAge && userAge > 45 && <span className="text-amber-500">👴 +45 años — considerar volumen reducido</span>}
+      </div>
 
       {/* Structure template buttons */}
       <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
