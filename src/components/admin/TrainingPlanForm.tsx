@@ -458,6 +458,18 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
         </div>
       )}
 
+      {/* Auto-adjustment info */}
+      <div className="mb-4 p-3 bg-accent/20 rounded-lg border border-accent/30 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">🧠 Auto-ajuste:</span>
+        <span>Nivel: <strong className="text-foreground">{tierLabel}</strong> (intensidad {intensityLevel}/10)</span>
+        <span>Series: <strong className="text-foreground">{params.series}</strong></span>
+        <span>Reps: <strong className="text-foreground">{params.reps}</strong></span>
+        <span>Descanso: <strong className="text-foreground">{params.rest}</strong></span>
+        {userGoal && <span>Objetivo: <strong className="text-foreground">{userGoal}</strong></span>}
+        {userInjuries && <span className="text-destructive">⚠️ Lesiones: {userInjuries}</span>}
+        {userAge && userAge > 45 && <span className="text-amber-500">👴 +45 años — considerar volumen reducido</span>}
+      </div>
+
       {/* Structure template buttons */}
       <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
