@@ -422,6 +422,7 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
     : null;
 
   const eqLabel = eqFilter ? `(${eqFilter})` : "(Mixto)";
+  const tierLabel = intensityLevel <= 3 ? "Principiante" : intensityLevel <= 6 ? "Intermedio" : "Avanzado";
 
   return (
     <div className="bg-card rounded-xl p-6 border border-border">
