@@ -167,16 +167,24 @@ const SKILL_TEMPLATES: Record<string, SkillTemplate> = {
   },
 };
 
-const TrainingPlanForm = ({ dayPlans, onChange, userSports }: Props) => {
+const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mixto", specificGoal }: Props) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0]));
 
+  // Determine equipment filter
+  const eqFilter = equipmentType === "Calistenia" ? "Calistenia" : equipmentType === "Gimnasio" ? "Gimnasio" : null;
+
   useEffect(() => {
     supabase.from("exercises")
-      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order")
+      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order, skill_tag, progression_order")
       .order("muscle_group").order("recommended_order").order("name")
       .then(({ data }) => { if (data) setExercises(data as Exercise[]); });
   }, []);
+
+  // Filtered exercises based on equipment preference
+  const filteredExercises = eqFilter
+    ? exercises.filter(e => e.exercise_type === eqFilter || e.exercise_type === "Mixto" || !e.exercise_type)
+    : exercises;
 
   const sportOptions = userSports
     ? userSports.split(",").map((s) => s.trim()).filter(Boolean)
