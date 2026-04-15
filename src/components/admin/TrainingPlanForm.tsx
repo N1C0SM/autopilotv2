@@ -12,6 +12,8 @@ interface Props {
   dayPlans: DayPlan[];
   onChange: (plans: DayPlan[]) => void;
   userSports?: string | null;
+  equipmentType?: string;
+  specificGoal?: string;
 }
 
 const emptyGymExercise = (): GymExerciseEntry => ({
