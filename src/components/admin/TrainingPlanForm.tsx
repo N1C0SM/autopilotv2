@@ -206,6 +206,9 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0]));
 
+  // Auto-calculated training params based on user profile
+  const params = getTrainingParams(intensityLevel, userGoal);
+
   // Determine equipment filter
   const eqFilter = equipmentType === "Calistenia" ? "Calistenia" : equipmentType === "Gimnasio" ? "Gimnasio" : null;
 
