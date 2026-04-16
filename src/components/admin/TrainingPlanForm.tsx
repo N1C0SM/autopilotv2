@@ -18,7 +18,52 @@ interface Props {
   userGoal?: string;
   userInjuries?: string;
   userAge?: number;
+  userAvailability?: Record<string, boolean> | null;
 }
+
+// ─── Injury → muscle group mapping ───
+const INJURY_MUSCLE_MAP: Record<string, string[]> = {
+  hombro: ["Hombros"],
+  shoulder: ["Hombros"],
+  espalda: ["Espalda"],
+  back: ["Espalda"],
+  rodilla: ["Piernas", "Glúteos"],
+  knee: ["Piernas", "Glúteos"],
+  muñeca: ["Pecho", "Tríceps", "Hombros"],
+  wrist: ["Pecho", "Tríceps", "Hombros"],
+  codo: ["Bíceps", "Tríceps"],
+  elbow: ["Bíceps", "Tríceps"],
+  cadera: ["Piernas", "Glúteos"],
+  hip: ["Piernas", "Glúteos"],
+  lumbar: ["Espalda", "Core"],
+  lower_back: ["Espalda", "Core"],
+  cervical: ["Hombros", "Espalda"],
+  tobillo: ["Piernas"],
+  ankle: ["Piernas"],
+};
+
+const getInjuredMuscles = (injuries?: string): Set<string> => {
+  if (!injuries) return new Set();
+  const lower = injuries.toLowerCase();
+  const injured = new Set<string>();
+  for (const [keyword, muscles] of Object.entries(INJURY_MUSCLE_MAP)) {
+    if (lower.includes(keyword)) {
+      muscles.forEach(m => injured.add(m));
+    }
+  }
+  return injured;
+};
+
+// ─── Availability → recommended template ───
+const getRecommendedStructure = (availability?: Record<string, boolean> | null): string | null => {
+  if (!availability) return null;
+  const activeDays = Object.values(availability).filter(Boolean).length;
+  if (activeDays <= 2) return "fullbody";
+  if (activeDays === 3) return "fullbody";
+  if (activeDays === 4) return "upper_lower";
+  if (activeDays >= 5) return "ppl";
+  return null;
+};
 
 // ─── Level-based auto-adjustment ───
 // Maps intensity_level (1-10) to training parameters
