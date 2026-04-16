@@ -284,14 +284,16 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
     });
   };
 
-  // Helper: pick exercises from library for given muscles
+  // Helper: pick exercises from library for given muscles (excluding injured)
   const pickExercisesForMuscles = (muscleFocus: string, count = 4): GymExerciseEntry[] => {
     const muscles = muscleFocus.split("·").map(m => m.trim()).filter(Boolean);
+    const safeMuscles = muscles.filter(m => !injuredMuscles.has(m));
+    if (safeMuscles.length === 0) return [];
     const result: GymExerciseEntry[] = [];
-    for (const muscle of muscles) {
+    for (const muscle of safeMuscles) {
       const available = filteredExercises.filter(e => e.muscle_group === muscle);
       const shuffled = [...available].sort(() => Math.random() - 0.5);
-      const perMuscle = Math.max(1, Math.floor(count / muscles.length));
+      const perMuscle = Math.max(1, Math.floor(count / safeMuscles.length));
       for (const ex of shuffled.slice(0, perMuscle)) {
         result.push({
           exercise_id: ex.id, name: ex.name,
@@ -348,8 +350,8 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
         }
       }
 
-      // Fill with support exercises from the specified muscles (respecting equipment filter)
-      for (const muscle of d.muscles) {
+      // Fill with support exercises from the specified muscles (respecting equipment filter + injuries)
+      for (const muscle of d.muscles.filter(m => !injuredMuscles.has(m))) {
         const available = filteredExercises
           .filter(e => e.muscle_group === muscle && !gymExercises.find(g => g.exercise_id === e.id))
           .sort(() => Math.random() - 0.5);
