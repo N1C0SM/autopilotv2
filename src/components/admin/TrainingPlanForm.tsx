@@ -247,8 +247,11 @@ const SKILL_TEMPLATES: Record<string, SkillTemplate> = {
   },
 };
 
-const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mixto", specificGoal, intensityLevel = 5, userGoal, userInjuries, userAge }: Props) => {
+const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mixto", specificGoal, intensityLevel = 5, userGoal, userInjuries, userAge, userAvailability }: Props) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const injuredMuscles = getInjuredMuscles(userInjuries);
+  const recommendedStructure = getRecommendedStructure(userAvailability);
+  const activeDays = userAvailability ? Object.values(userAvailability).filter(Boolean).length : null;
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0]));
 
   // Auto-calculated training params based on user profile
