@@ -516,9 +516,33 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
         <span>Reps: <strong className="text-foreground">{params.reps}</strong></span>
         <span>Descanso: <strong className="text-foreground">{params.rest}</strong></span>
         {userGoal && <span>Objetivo: <strong className="text-foreground">{userGoal}</strong></span>}
-        {userInjuries && <span className="text-destructive">⚠️ Lesiones: {userInjuries}</span>}
+        {activeDays && <span>Días disponibles: <strong className="text-foreground">{activeDays}</strong></span>}
         {userAge && userAge > 45 && <span className="text-amber-500">👴 +45 años — considerar volumen reducido</span>}
       </div>
+
+      {/* Injury warning */}
+      {injuredMuscles.size > 0 && (
+        <div className="mb-4 p-3 bg-destructive/10 rounded-lg border border-destructive/30 text-xs">
+          <span className="font-medium text-destructive">⚠️ Lesiones detectadas:</span>
+          <span className="ml-2 text-foreground">{userInjuries}</span>
+          <div className="mt-1 text-muted-foreground">
+            Grupos excluidos automáticamente: <strong className="text-destructive">{Array.from(injuredMuscles).join(", ")}</strong>
+          </div>
+        </div>
+      )}
+
+      {/* Availability-based recommendation */}
+      {recommendedStructure && dayPlans.length === 0 && !recommendedSkill && (
+        <div className="mb-4 p-3 bg-primary/10 rounded-lg border border-primary/30 flex items-center justify-between">
+          <div>
+            <span className="text-sm font-medium">📅 Recomendado ({activeDays} días disponibles):</span>
+            <span className="ml-2 text-sm font-bold">{STRUCTURE_TEMPLATES[recommendedStructure]?.label}</span>
+          </div>
+          <Button size="sm" onClick={() => loadTemplate(recommendedStructure)} className="text-xs">
+            Cargar plantilla
+          </Button>
+        </div>
+      )}
 
       {/* Structure template buttons */}
       <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
