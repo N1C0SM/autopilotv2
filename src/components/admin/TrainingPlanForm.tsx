@@ -18,7 +18,52 @@ interface Props {
   userGoal?: string;
   userInjuries?: string;
   userAge?: number;
+  userAvailability?: Record<string, boolean> | null;
 }
+
+// ─── Injury → muscle group mapping ───
+const INJURY_MUSCLE_MAP: Record<string, string[]> = {
+  hombro: ["Hombros"],
+  shoulder: ["Hombros"],
+  espalda: ["Espalda"],
+  back: ["Espalda"],
+  rodilla: ["Piernas", "Glúteos"],
+  knee: ["Piernas", "Glúteos"],
+  muñeca: ["Pecho", "Tríceps", "Hombros"],
+  wrist: ["Pecho", "Tríceps", "Hombros"],
+  codo: ["Bíceps", "Tríceps"],
+  elbow: ["Bíceps", "Tríceps"],
+  cadera: ["Piernas", "Glúteos"],
+  hip: ["Piernas", "Glúteos"],
+  lumbar: ["Espalda", "Core"],
+  lower_back: ["Espalda", "Core"],
+  cervical: ["Hombros", "Espalda"],
+  tobillo: ["Piernas"],
+  ankle: ["Piernas"],
+};
+
+const getInjuredMuscles = (injuries?: string): Set<string> => {
+  if (!injuries) return new Set();
+  const lower = injuries.toLowerCase();
+  const injured = new Set<string>();
+  for (const [keyword, muscles] of Object.entries(INJURY_MUSCLE_MAP)) {
+    if (lower.includes(keyword)) {
+      muscles.forEach(m => injured.add(m));
+    }
+  }
+  return injured;
+};
+
+// ─── Availability → recommended template ───
+const getRecommendedStructure = (availability?: Record<string, boolean> | null): string | null => {
+  if (!availability) return null;
+  const activeDays = Object.values(availability).filter(Boolean).length;
+  if (activeDays <= 2) return "fullbody";
+  if (activeDays === 3) return "fullbody";
+  if (activeDays === 4) return "upper_lower";
+  if (activeDays >= 5) return "ppl";
+  return null;
+};
 
 // ─── Level-based auto-adjustment ───
 // Maps intensity_level (1-10) to training parameters
@@ -202,8 +247,11 @@ const SKILL_TEMPLATES: Record<string, SkillTemplate> = {
   },
 };
 
-const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mixto", specificGoal, intensityLevel = 5, userGoal, userInjuries, userAge }: Props) => {
+const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mixto", specificGoal, intensityLevel = 5, userGoal, userInjuries, userAge, userAvailability }: Props) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const injuredMuscles = getInjuredMuscles(userInjuries);
+  const recommendedStructure = getRecommendedStructure(userAvailability);
+  const activeDays = userAvailability ? Object.values(userAvailability).filter(Boolean).length : null;
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0]));
 
   // Auto-calculated training params based on user profile
@@ -236,14 +284,16 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
     });
   };
 
-  // Helper: pick exercises from library for given muscles
+  // Helper: pick exercises from library for given muscles (excluding injured)
   const pickExercisesForMuscles = (muscleFocus: string, count = 4): GymExerciseEntry[] => {
     const muscles = muscleFocus.split("·").map(m => m.trim()).filter(Boolean);
+    const safeMuscles = muscles.filter(m => !injuredMuscles.has(m));
+    if (safeMuscles.length === 0) return [];
     const result: GymExerciseEntry[] = [];
-    for (const muscle of muscles) {
+    for (const muscle of safeMuscles) {
       const available = filteredExercises.filter(e => e.muscle_group === muscle);
       const shuffled = [...available].sort(() => Math.random() - 0.5);
-      const perMuscle = Math.max(1, Math.floor(count / muscles.length));
+      const perMuscle = Math.max(1, Math.floor(count / safeMuscles.length));
       for (const ex of shuffled.slice(0, perMuscle)) {
         result.push({
           exercise_id: ex.id, name: ex.name,
@@ -300,8 +350,8 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
         }
       }
 
-      // Fill with support exercises from the specified muscles (respecting equipment filter)
-      for (const muscle of d.muscles) {
+      // Fill with support exercises from the specified muscles (respecting equipment filter + injuries)
+      for (const muscle of d.muscles.filter(m => !injuredMuscles.has(m))) {
         const available = filteredExercises
           .filter(e => e.muscle_group === muscle && !gymExercises.find(g => g.exercise_id === e.id))
           .sort(() => Math.random() - 0.5);
@@ -466,9 +516,33 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
         <span>Reps: <strong className="text-foreground">{params.reps}</strong></span>
         <span>Descanso: <strong className="text-foreground">{params.rest}</strong></span>
         {userGoal && <span>Objetivo: <strong className="text-foreground">{userGoal}</strong></span>}
-        {userInjuries && <span className="text-destructive">⚠️ Lesiones: {userInjuries}</span>}
+        {activeDays && <span>Días disponibles: <strong className="text-foreground">{activeDays}</strong></span>}
         {userAge && userAge > 45 && <span className="text-amber-500">👴 +45 años — considerar volumen reducido</span>}
       </div>
+
+      {/* Injury warning */}
+      {injuredMuscles.size > 0 && (
+        <div className="mb-4 p-3 bg-destructive/10 rounded-lg border border-destructive/30 text-xs">
+          <span className="font-medium text-destructive">⚠️ Lesiones detectadas:</span>
+          <span className="ml-2 text-foreground">{userInjuries}</span>
+          <div className="mt-1 text-muted-foreground">
+            Grupos excluidos automáticamente: <strong className="text-destructive">{Array.from(injuredMuscles).join(", ")}</strong>
+          </div>
+        </div>
+      )}
+
+      {/* Availability-based recommendation */}
+      {recommendedStructure && dayPlans.length === 0 && !recommendedSkill && (
+        <div className="mb-4 p-3 bg-primary/10 rounded-lg border border-primary/30 flex items-center justify-between">
+          <div>
+            <span className="text-sm font-medium">📅 Recomendado ({activeDays} días disponibles):</span>
+            <span className="ml-2 text-sm font-bold">{STRUCTURE_TEMPLATES[recommendedStructure]?.label}</span>
+          </div>
+          <Button size="sm" onClick={() => loadTemplate(recommendedStructure)} className="text-xs">
+            Cargar plantilla
+          </Button>
+        </div>
+      )}
 
       {/* Structure template buttons */}
       <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
