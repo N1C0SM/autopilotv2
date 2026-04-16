@@ -79,21 +79,20 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
   const [roleLoading, setRoleLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
-  const [progressPhotos, setProgressPhotos] = useState<{ id: string; photo_url: string; note: string | null; taken_at: string }[]>([]);
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+
+
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: onb }, { data: roleData }, { data: tp }, { data: np }, { data: photos }] = await Promise.all([
+      const [{ data: onb }, { data: roleData }, { data: tp }, { data: np }] = await Promise.all([
         supabase.from("onboarding").select("*").eq("user_id", profile.user_id).single(),
         supabase.from("user_roles").select("role").eq("user_id", profile.user_id).eq("role", "admin").maybeSingle(),
         supabase.from("training_plan").select("workouts_json").eq("user_id", profile.user_id).single(),
-        supabase.from("nutrition_plan").select("macros_json, meals_json").eq("user_id", profile.user_id).single(),
-        supabase.from("progress_photos").select("id, photo_url, note, taken_at").eq("user_id", profile.user_id).order("taken_at", { ascending: false }),
+      supabase.from("nutrition_plan").select("macros_json, meals_json").eq("user_id", profile.user_id).single(),
       ]);
       setOnboarding(onb as OnboardingData | null);
       setIsUserAdmin(!!roleData);
-      if (photos) setProgressPhotos(photos);
+      
 
       if (tp?.workouts_json) {
         const existing = tp.workouts_json as unknown as DayPlan[];
