@@ -295,7 +295,7 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
         </div>
       )}
       <Tabs defaultValue="info" className="space-y-6">
-        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-5" : "grid-cols-1"}`}>
+        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-4" : "grid-cols-1"}`}>
           <TabsTrigger value="info" className="text-xs gap-1.5">
             <User2 className="w-3.5 h-3.5" /> Info
           </TabsTrigger>
@@ -306,9 +306,6 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
               </TabsTrigger>
               <TabsTrigger value="nutrition" className="text-xs gap-1.5">
                 <Apple className="w-3.5 h-3.5" /> Nutrición
-              </TabsTrigger>
-              <TabsTrigger value="progress" className="text-xs gap-1.5">
-                <Camera className="w-3.5 h-3.5" /> Progreso
               </TabsTrigger>
               <TabsTrigger value="chat" className="text-xs gap-1.5">
                 <MessageCircle className="w-3.5 h-3.5" /> Chat
@@ -477,67 +474,6 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
           </div>
         </TabsContent>
 
-        {/* Tab: Progress Photos */}
-        <TabsContent value="progress" className="space-y-6">
-          <div className="bg-card rounded-xl p-6 border border-border">
-            <h2 className="font-bold font-display mb-4 flex items-center gap-2">
-              <Camera className="w-5 h-5 text-primary" />
-              Fotos de progreso ({progressPhotos.length})
-            </h2>
-            {progressPhotos.length === 0 ? (
-              <div className="text-center py-12">
-                <Image className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-40" />
-                <p className="text-sm text-muted-foreground">El usuario aún no ha subido fotos de progreso.</p>
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {progressPhotos.map((photo) => (
-                    <button
-                      key={photo.id}
-                      onClick={() => setSelectedPhoto(selectedPhoto === photo.id ? null : photo.id)}
-                      className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-[1.02] ${
-                        selectedPhoto === photo.id ? "border-primary ring-2 ring-primary/30" : "border-border"
-                      }`}
-                    >
-                      <img
-                        src={photo.photo_url}
-                        alt={`Progreso ${photo.taken_at}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                        <span className="text-[10px] font-medium text-white">
-                          {new Date(photo.taken_at).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "2-digit" })}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Expanded photo view */}
-                {selectedPhoto && (() => {
-                  const photo = progressPhotos.find(p => p.id === selectedPhoto);
-                  if (!photo) return null;
-                  return (
-                    <div className="mt-4 bg-secondary/30 rounded-xl p-4">
-                      <img
-                        src={photo.photo_url}
-                        alt={`Progreso ${photo.taken_at}`}
-                        className="max-h-[500px] mx-auto rounded-lg object-contain"
-                      />
-                      <div className="text-center mt-3">
-                        <p className="text-sm font-medium">
-                          {new Date(photo.taken_at).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
-                        </p>
-                        {photo.note && <p className="text-xs text-muted-foreground mt-1">{photo.note}</p>}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </>
-            )}
-          </div>
-        </TabsContent>
 
         {/* Tab: Chat */}
         <TabsContent value="chat">
