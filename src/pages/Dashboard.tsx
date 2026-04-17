@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Apple, Clock, Loader2, Crown, Camera, Dumbbell, UtensilsCrossed, MessageCircle } from "lucide-react";
+import { Apple, Clock, Loader2, Crown, Dumbbell, UtensilsCrossed, MessageCircle } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -13,7 +13,6 @@ import Chat from "@/components/Chat";
 import Greeting from "@/components/Greeting";
 import HomeOverview from "@/components/dashboard/HomeOverview";
 import TrainingPlanView from "@/components/dashboard/TrainingPlanView";
-import ProgressPhotos from "@/components/dashboard/ProgressPhotos";
 import UserSidebar from "@/components/UserSidebar";
 import type { UserSection } from "@/components/UserSidebar";
 import SettingsPanel from "@/components/SettingsPanel";
@@ -149,7 +148,6 @@ const Dashboard = () => {
     home: "Inicio",
     training: "Entrenamiento",
     nutrition: "Nutrición",
-    progress: "Progreso",
     chat: "Chat",
     settings: "Ajustes",
   };
@@ -178,7 +176,7 @@ const Dashboard = () => {
           <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
             {/* Unpaid state — shown on all sections EXCEPT settings */}
             {paymentStatus === "unpaid" && section !== "settings" && (() => {
-              const paywallContent: Record<string, { icon: React.ReactNode; title: string; description: string; cta: string }> = {
+              const paywallContent: Record<UserSection, { icon: React.ReactNode; title: string; description: string; cta: string }> = {
                 home: {
                   icon: <Crown className="w-8 h-8 text-primary" />,
                   title: "Obtén tu plan personalizado",
@@ -203,11 +201,11 @@ const Dashboard = () => {
                   description: "Resuelve dudas, ajusta tu plan y recibe feedback directo. Siempre disponible.",
                   cta: "Activar chat con entrenador",
                 },
-                photos: {
-                  icon: <Camera className="w-8 h-8 text-primary" />,
-                  title: "Documenta tu progreso",
-                  description: "Sube fotos semanales y compara tu evolución. Tu entrenador las revisa para ajustar tu plan.",
-                  cta: "Empezar a trackear",
+                settings: {
+                  icon: <Crown className="w-8 h-8 text-primary" />,
+                  title: "Obtén tu plan personalizado",
+                  description: "Entrenamiento y nutrición 100% adaptados a ti.",
+                  cta: "Empezar 7 días gratis — €19/mes",
                 },
               };
               const content = paywallContent[section] || paywallContent.home;
@@ -269,11 +267,6 @@ const Dashboard = () => {
             {/* Training section — clean plan view */}
             {hasPlan && section === "training" && user && (
               <TrainingPlanView dayPlans={dayPlans} />
-            )}
-
-            {/* Progress photos */}
-            {hasPlan && section === "progress" && user && (
-              <ProgressPhotos userId={user.id} />
             )}
 
             {/* Nutrition section */}
