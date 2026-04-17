@@ -28,6 +28,7 @@ const Admin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<Profile[]>([]);
+  const [adminIds, setAdminIds] = useState<Set<string>>(new Set());
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [section, setSection] = useState<AdminSection>("dashboard");
 
@@ -40,8 +41,12 @@ const Admin = () => {
         return;
       }
       setIsAdmin(true);
-      const { data: profiles } = await supabase.from("profiles").select("*");
+      const [{ data: profiles }, { data: roles }] = await Promise.all([
+        supabase.from("profiles").select("*"),
+        supabase.from("user_roles").select("user_id").eq("role", "admin"),
+      ]);
       if (profiles) setUsers(profiles as unknown as Profile[]);
+      if (roles) setAdminIds(new Set(roles.map((r) => r.user_id)));
       setLoading(false);
     };
     checkAdmin();
@@ -159,7 +164,7 @@ const Admin = () => {
             {section === "users" && (
               <div className="max-w-5xl">
                 {!selectedUser ? (
-                  <UserList users={users} onSelectUser={handleSelectUser} />
+                  <UserList users={users} adminIds={adminIds} onSelectUser={handleSelectUser} />
                 ) : (
                   <UserDetail
                     profile={selectedUser}
