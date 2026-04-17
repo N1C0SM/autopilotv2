@@ -164,7 +164,7 @@ const Admin = () => {
             {section === "users" && (
               <div className="max-w-5xl">
                 {!selectedUser ? (
-                  <UserList users={users} onSelectUser={handleSelectUser} />
+                  <UserList users={users} adminIds={adminIds} onSelectUser={handleSelectUser} />
                 ) : (
                   <UserDetail
                     profile={selectedUser}
