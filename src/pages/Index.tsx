@@ -13,6 +13,9 @@ import {
   ArrowRight,
   Clock,
   Sparkles,
+  Target,
+  Calendar,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -26,28 +29,58 @@ import {
 } from "@/components/ui/accordion";
 
 const problems = [
-  "No sé qué hacer cuando llego al gym",
-  "Sigo dietas que no funcionan o no puedo mantener",
-  "Los planes genéricos no se adaptan a mi vida",
-  "Me falta constancia porque nadie me guía",
+  {
+    icon: AlertCircle,
+    title: "Vas al gym sin saber qué tocar hoy",
+    desc: "Cambias de rutina cada semana porque ninguna te convence.",
+  },
+  {
+    icon: Apple,
+    title: "Empiezas dietas que duran 4 días",
+    desc: "Demasiado estrictas, nada realistas con tu vida.",
+  },
+  {
+    icon: X,
+    title: "Planes genéricos que no encajan contigo",
+    desc: "Mismo PDF para todos. Tu lesión, tus horarios o tu nivel dan igual.",
+  },
+  {
+    icon: HeartPulse,
+    title: "Lesiones, fatiga o falta de constancia",
+    desc: "Sin nadie que te guíe, abandonas a las 3 semanas.",
+  },
+];
+
+const personalization = [
+  { icon: Target, title: "Tu objetivo real", desc: "Perder grasa, ganar músculo, rendimiento o salud." },
+  { icon: Calendar, title: "Tu tiempo disponible", desc: "Días que entrenas y minutos por sesión." },
+  { icon: Sparkles, title: "Tus preferencias", desc: "Equipamiento, deportes, comidas que te gustan." },
+  { icon: HeartPulse, title: "Tus lesiones y limitaciones", desc: "Adaptamos cada ejercicio a lo que tu cuerpo permite." },
+];
+
+const liveFeatures = [
+  { title: "Si no progresas", desc: "Ajustamos volumen, intensidad o nutrición hasta que avances." },
+  { title: "Si cambian tus horarios", desc: "Reescribimos la semana en minutos." },
+  { title: "Si aparece una molestia", desc: "Sustituimos ejercicios y bajamos carga al instante." },
+  { title: "Si tienes una duda", desc: "Me escribes y te respondo. Sin tickets, sin chatbots." },
 ];
 
 const testimonials = [
   {
     name: "María G.",
     result: "−8 kg en 3 meses",
-    text: "Lo que marcó la diferencia fue poder escribir a mi entrenador cuando algo no iba. Ajustó la dieta dos veces hasta que encajó con mi trabajo.",
+    text: "Lo que marcó la diferencia fue poder escribir cuando algo no iba. Ajustó la dieta dos veces hasta que encajó con mi trabajo.",
     avatar: "MG",
   },
   {
     name: "Carlos R.",
     result: "+5 kg de músculo",
-    text: "No es un PDF que olvidas. Cada semana revisamos cómo va, cambiamos lo que no funciona. Por fin un plan vivo.",
+    text: "No es un PDF que olvidas. Cada semana revisamos cómo va y cambiamos lo que no funciona. Por fin un plan vivo.",
     avatar: "CR",
   },
   {
     name: "Laura M.",
-    result: "Mejoró su maratón",
+    result: "−12% grasa corporal",
     text: "Tuve una molestia en la rodilla y al día siguiente ya tenía el plan reajustado. Eso no te lo da ninguna app.",
     avatar: "LM",
   },
@@ -55,24 +88,28 @@ const testimonials = [
 
 const faqs = [
   {
-    q: "¿Y si soy principiante total?",
-    a: "Perfecto. El plan se calibra a tu nivel desde cero y, lo más importante, tienes el chat para preguntar cualquier duda — desde cómo hacer un ejercicio hasta qué comer antes de entrenar.",
+    q: "Soy principiante total. ¿Esto es para mí?",
+    a: "Sí, especialmente. El plan se calibra desde tu nivel actual y tienes el chat para preguntarme cualquier cosa: cómo se hace un ejercicio, qué comer antes de entrenar, si te duele algo. Aprendes acompañado, no solo.",
   },
   {
     q: "¿Y si entreno en casa o sin material?",
-    a: "Sin problema. Indicas tu equipamiento en el cuestionario (gym, casa, calistenia, mancuernas, etc.) y el plan se construye sobre lo que tienes.",
+    a: "Sin problema. En el cuestionario indicas qué equipamiento tienes (gym, casa, calistenia, mancuernas, gomas, lo que sea) y el plan se construye sobre eso. Cero ejercicios imposibles.",
   },
   {
-    q: "¿Y si no me funciona o no veo resultados?",
-    a: "Por eso existe el chat. Si en 2-3 semanas no progresas, lo detectamos juntos y ajustamos volumen, intensidad o nutrición. Y si aun así no estás contento, cancelas dentro de los 7 días gratis sin pagar nada.",
+    q: "¿Qué pasa si no me funciona?",
+    a: "Por eso existe el chat: si no ves progreso en 2-3 semanas, lo detectamos y ajustamos. Y si aún así no estás contento, cancelas dentro de los 7 días gratis y no pagas nada.",
   },
   {
-    q: "¿Puedo cambiar el plan cuando quiera?",
-    a: "Sí. Cambios en tu rutina, lesiones, viajes, nuevas metas… me escribes y lo ajusto. No hay límites de cambios.",
+    q: "Tengo una lesión o limitación. ¿Lo tienes en cuenta?",
+    a: "Es lo primero que pregunto. El plan se diseña respetando lo que tu cuerpo puede y no puede hacer. Si aparece algo nuevo durante el camino, me lo cuentas y lo modifico al momento.",
   },
   {
-    q: "¿Qué diferencia hay con una app de fitness?",
-    a: "Las apps te dan un plan automático y te dejan solo. Aquí hay una persona detrás (yo) revisando tu progreso y respondiéndote. Es entrenamiento personal real, a precio de app.",
+    q: "¿Cuánto tardas en responder en el chat?",
+    a: "Normalmente en menos de 24h en días laborables. No es soporte automático: soy yo (humano) leyendo y respondiendo a tu situación concreta.",
+  },
+  {
+    q: "¿Puedo cambiar de objetivo a mitad de camino?",
+    a: "Claro. Si quieres pasar de perder grasa a ganar músculo, o cambiar deporte, me escribes y reescribimos el plan. No hay límite de cambios.",
   },
 ];
 
@@ -107,7 +144,7 @@ const Index = () => {
           >
             <MessageCircle className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-primary">
-              Plan + chat directo con tu entrenador
+              Plan + entrenador real por chat
             </span>
           </motion.div>
 
@@ -115,10 +152,10 @@ const Index = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-tight mb-6"
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-[1.05] mb-6"
           >
-            Tu entrenamiento y nutrición,{" "}
-            <span className="text-gradient">ajustados contigo en tiempo real</span>
+            Deja de improvisar:{" "}
+            <span className="text-gradient">ajusto tu entrenamiento y tu dieta contigo.</span>
           </motion.h1>
 
           <motion.p
@@ -127,9 +164,8 @@ const Index = () => {
             transition={{ duration: 0.6, delay: 0.25 }}
             className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto"
           >
-            No es una app automática ni un PDF. Recibes tu plan personalizado y un chat
-            directo conmigo para ajustarlo cada vez que tu cuerpo, rutina o sensaciones
-            cambien.
+            Recibes un plan personalizado de entrenamiento y nutrición, me escribes
+            cuando lo necesites y lo adaptamos a tu progreso, horarios y sensaciones.
           </motion.p>
 
           <motion.div
@@ -143,7 +179,7 @@ const Index = () => {
               onClick={() => navigate("/signup")}
               className="hover-scale"
             >
-              Quiero mi plan personalizado
+              Quiero mi plan + acompañamiento
             </Button>
             <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1.5">
               <ShieldCheck className="w-3 h-3" /> Solo 2 minutos · 7 días gratis · Cancela
@@ -155,24 +191,27 @@ const Index = () => {
 
       {/* PROBLEMA */}
       <section className="py-20 px-4 border-y border-border bg-card/30">
-        <div className="container mx-auto max-w-3xl">
+        <div className="container mx-auto max-w-4xl">
           <ScrollReveal>
             <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-4">
-              ¿Te suena alguno de estos?
+              Si llevas tiempo intentándolo solo, esto te suena
             </h2>
             <p className="text-muted-foreground text-center mb-12 max-w-xl mx-auto">
-              La mayoría no falla por falta de ganas. Falla porque nadie le dice qué
-              hacer hoy, mañana y la semana que viene.
+              No fallas por falta de ganas. Fallas porque nadie te dice qué hacer hoy,
+              mañana y la semana que viene.
             </p>
           </ScrollReveal>
           <div className="grid sm:grid-cols-2 gap-4">
             {problems.map((p, i) => (
-              <ScrollReveal key={p} delay={i * 0.08}>
-                <div className="flex items-start gap-3 bg-card border border-border rounded-xl p-5">
-                  <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                    <X className="w-4 h-4 text-destructive" />
+              <ScrollReveal key={p.title} delay={i * 0.08}>
+                <div className="flex items-start gap-3 bg-card border border-border rounded-xl p-5 h-full">
+                  <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                    <p.icon className="w-4 h-4 text-destructive" />
                   </div>
-                  <p className="text-sm sm:text-base text-foreground/90 pt-1">{p}</p>
+                  <div>
+                    <h3 className="font-semibold text-foreground/90 text-sm mb-1">{p.title}</h3>
+                    <p className="text-sm text-muted-foreground">{p.desc}</p>
+                  </div>
                 </div>
               </ScrollReveal>
             ))}
@@ -186,41 +225,24 @@ const Index = () => {
           <ScrollReveal>
             <div className="text-center mb-14">
               <span className="inline-block text-xs uppercase tracking-widest text-primary font-semibold mb-3">
-                La solución
+                Por qué Autopilot
               </span>
               <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4">
-                Un plan que <span className="text-gradient">vive contigo</span>
+                Plan personalizado <span className="text-gradient">+ ajustes continuos por chat</span>
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto">
-                Empezamos con un plan diseñado para ti. Y lo más importante: lo seguimos
-                ajustando cada semana según cómo respondas.
+                "Personalizado" no es una palabra de marketing. Significa esto:
               </p>
             </div>
           </ScrollReveal>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: Sparkles,
-                title: "Plan inicial personalizado",
-                desc: "Construido a partir de tu nivel, objetivos, lesiones, equipamiento y horarios reales.",
-              },
-              {
-                icon: MessageCircle,
-                title: "Chat directo conmigo",
-                desc: "Cuando tengas dudas, una molestia o cambie tu semana, me escribes. Te respondo personalmente.",
-              },
-              {
-                icon: RefreshCw,
-                title: "Ajustes continuos",
-                desc: "Reviso tu progreso y modifico volumen, intensidad o comidas para que avances de verdad.",
-              },
-            ].map((item, i) => (
-              <ScrollReveal key={item.title} delay={i * 0.1}>
-                <div className="bg-card rounded-2xl p-6 border border-border card-shadow h-full hover-scale transition-all duration-300">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                    <item.icon className="w-6 h-6 text-primary" />
+          <div className="grid sm:grid-cols-2 gap-4">
+            {personalization.map((item, i) => (
+              <ScrollReveal key={item.title} delay={i * 0.08}>
+                <div className="bg-card rounded-2xl p-6 border border-border h-full hover-scale transition-all duration-300">
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                    <item.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-lg font-bold font-display mb-2">{item.title}</h3>
+                  <h3 className="text-base font-bold font-display mb-1">{item.title}</h3>
                   <p className="text-sm text-muted-foreground">{item.desc}</p>
                 </div>
               </ScrollReveal>
@@ -233,27 +255,49 @@ const Index = () => {
       <section className="py-20 px-4 bg-card/50">
         <div className="container mx-auto max-w-4xl">
           <ScrollReveal>
-            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-4">
-              Esto <span className="text-gradient">no es otro plan más</span>
-            </h2>
-            <p className="text-muted-foreground text-center mb-14 max-w-xl mx-auto">
-              Comparado con lo que sueles encontrar por ahí.
-            </p>
+            <div className="text-center mb-14">
+              <span className="inline-block text-xs uppercase tracking-widest text-primary font-semibold mb-3">
+                El diferenciador
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-bold font-display mb-4 leading-tight">
+                No es una app. No es un PDF.{" "}
+                <span className="text-gradient">Es un plan vivo.</span>
+              </h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                La diferencia entre cumplir tus objetivos y abandonarlos en 3 semanas
+                es tener a alguien al otro lado.
+              </p>
+            </div>
           </ScrollReveal>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <ScrollReveal direction="left">
-              <div className="bg-background/50 rounded-2xl p-6 border border-border h-full">
+          <div className="grid sm:grid-cols-2 gap-4 mb-12">
+            {liveFeatures.map((item, i) => (
+              <ScrollReveal key={item.title} delay={i * 0.08}>
+                <div className="bg-card rounded-2xl p-6 border border-primary/30 card-shadow h-full">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-bold font-display mb-1">{item.title}</h3>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+
+          <ScrollReveal>
+            <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+              <div className="bg-background/50 rounded-2xl p-6 border border-border">
                 <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-4">
                   Lo de siempre
                 </div>
-                <ul className="space-y-3 text-sm text-muted-foreground">
+                <ul className="space-y-2.5 text-sm text-muted-foreground">
                   {[
-                    "PDF fijo que no cambia nunca",
+                    "PDF estático que no cambia",
                     "App automática sin nadie detrás",
-                    "Plantillas genéricas para todos",
-                    "Sin nadie que responda tus dudas",
-                    "Te dejan solo a la primera duda",
+                    "Plantilla genérica para todos",
+                    "Soporte por tickets o bots",
                   ].map((t) => (
                     <li key={t} className="flex items-start gap-2">
                       <X className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
@@ -262,19 +306,16 @@ const Index = () => {
                   ))}
                 </ul>
               </div>
-            </ScrollReveal>
-            <ScrollReveal direction="right">
-              <div className="bg-card rounded-2xl p-6 border border-primary/40 card-shadow glow-shadow h-full">
+              <div className="bg-card rounded-2xl p-6 border border-primary/40 card-shadow glow-shadow">
                 <div className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">
                   Autopilot
                 </div>
-                <ul className="space-y-3 text-sm">
+                <ul className="space-y-2.5 text-sm">
                   {[
-                    "Plan que se reescribe contigo cada semana",
-                    "Una persona real (yo) detrás del chat",
-                    "Diseñado a tu nivel, lesiones y rutina",
-                    "Respuesta directa cuando lo necesites",
-                    "Acompañamiento continuo sin extras",
+                    "Plan que se reescribe contigo",
+                    "Una persona real (yo) en el chat",
+                    "Diseñado a tu nivel, lesiones, vida",
+                    "Respuesta humana cuando la necesites",
                   ].map((t) => (
                     <li key={t} className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
@@ -283,8 +324,8 @@ const Index = () => {
                   ))}
                 </ul>
               </div>
-            </ScrollReveal>
-          </div>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -292,33 +333,37 @@ const Index = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl">
           <ScrollReveal>
-            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-14">
-              Así de fácil empezar
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-4">
+              Cómo funciona
             </h2>
+            <p className="text-muted-foreground text-center mb-14 max-w-lg mx-auto">
+              Tres pasos. El tercero es donde está el verdadero valor.
+            </p>
           </ScrollReveal>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {[
               {
                 step: "01",
                 title: "Te registras",
-                desc: "2 minutos. Cuéntame tus objetivos, nivel, lesiones y disponibilidad.",
+                desc: "Cuestionario corto: objetivo, nivel, lesiones, equipamiento, horarios.",
                 time: "2 min",
               },
               {
                 step: "02",
-                title: "Recibes tu plan",
-                desc: "En menos de 48h tienes tu plan completo de entrenamiento y nutrición.",
-                time: "48 h",
+                title: "Recibes tu plan inicial",
+                desc: "Entrenamiento y nutrición listos para empezar esta misma semana.",
+                time: "< 48 h",
               },
               {
                 step: "03",
-                title: "Lo ajustamos juntos",
-                desc: "Por chat. Cada semana, cada cambio, cada duda. Tu plan evoluciona contigo.",
+                title: "Lo ajustamos por chat",
+                desc: "Aquí está el oro. Cada cambio, duda o molestia. Tu plan evoluciona contigo.",
                 time: "Continuo",
+                highlight: true,
               },
             ].map((item, i) => (
               <ScrollReveal key={item.step} delay={i * 0.12}>
-                <div className="bg-card rounded-2xl p-6 card-shadow border border-border h-full hover-scale transition-all duration-300">
+                <div className={`bg-card rounded-2xl p-6 card-shadow border h-full hover-scale transition-all duration-300 ${item.highlight ? "border-primary/40 glow-shadow" : "border-border"}`}>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-4xl font-bold font-display text-gradient">
                       {item.step}
@@ -336,12 +381,12 @@ const Index = () => {
         </div>
       </section>
 
-      {/* FEATURES */}
+      {/* QUÉ INCLUYE */}
       <section className="py-20 px-4 bg-card/50">
         <div className="container mx-auto max-w-5xl">
           <ScrollReveal>
             <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-14">
-              Todo lo que incluye
+              Qué incluye exactamente
             </h2>
           </ScrollReveal>
           <div className="grid md:grid-cols-3 gap-6">
@@ -350,18 +395,17 @@ const Index = () => {
                 <Dumbbell className="w-9 h-9 text-primary mb-4" />
                 <h3 className="text-lg font-bold font-display mb-3">Entrenamiento</h3>
                 <ul className="space-y-2 text-muted-foreground text-sm">
-                  <li className="flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{" "}
-                    Rutinas semanales adaptadas
-                  </li>
-                  <li className="flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{" "}
-                    Adaptado a tu nivel y lesiones
-                  </li>
-                  <li className="flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{" "}
-                    Series, reps, descansos y técnica
-                  </li>
+                  {[
+                    "Rutinas semanales adaptadas",
+                    "Series, reps, descansos e intensidades",
+                    "Adaptado a tu nivel y deporte",
+                    "Vídeos y técnica de cada ejercicio",
+                  ].map((t) => (
+                    <li key={t} className="flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                      <span>{t}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </ScrollReveal>
@@ -370,18 +414,17 @@ const Index = () => {
                 <Apple className="w-9 h-9 text-primary mb-4" />
                 <h3 className="text-lg font-bold font-display mb-3">Nutrición</h3>
                 <ul className="space-y-2 text-muted-foreground text-sm">
-                  <li className="flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{" "}
-                    Macros calculados para ti
-                  </li>
-                  <li className="flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{" "}
-                    Ideas de comidas reales
-                  </li>
-                  <li className="flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{" "}
-                    Adaptado a alergias y gustos
-                  </li>
+                  {[
+                    "Macros diarios calculados",
+                    "Ideas de comidas reales",
+                    "Adaptado a alergias y preferencias",
+                    "Sin dietas imposibles de mantener",
+                  ].map((t) => (
+                    <li key={t} className="flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                      <span>{t}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </ScrollReveal>
@@ -393,18 +436,17 @@ const Index = () => {
                 <MessageCircle className="w-9 h-9 text-primary mb-4" />
                 <h3 className="text-lg font-bold font-display mb-3">Acompañamiento</h3>
                 <ul className="space-y-2 text-foreground/90 text-sm">
-                  <li className="flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{" "}
-                    Chat directo conmigo
-                  </li>
-                  <li className="flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{" "}
-                    Ajustes continuos del plan
-                  </li>
-                  <li className="flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{" "}
-                    Resolución de dudas reales
-                  </li>
+                  {[
+                    "Chat directo conmigo (humano)",
+                    "Ajustes constantes del plan",
+                    "Resolución real de dudas",
+                    "Sin tickets, sin chatbots",
+                  ].map((t) => (
+                    <li key={t} className="flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                      <span>{t}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </ScrollReveal>
@@ -412,61 +454,15 @@ const Index = () => {
         </div>
       </section>
 
-      {/* BENEFICIO CLAVE */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <ScrollReveal>
-            <div className="text-center mb-14">
-              <span className="inline-block text-xs uppercase tracking-widest text-primary font-semibold mb-3">
-                Por qué funciona
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4">
-                El plan <span className="text-gradient">evoluciona contigo</span>
-              </h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">
-                Tu cuerpo cambia, tu vida cambia, tus sensaciones cambian. Tu plan también.
-              </p>
-            </div>
-          </ScrollReveal>
-          <div className="grid sm:grid-cols-3 gap-6">
-            {[
-              {
-                icon: TrendingUp,
-                title: "Si no progresas",
-                desc: "Subimos volumen, bajamos volumen, cambiamos el estímulo.",
-              },
-              {
-                icon: RefreshCw,
-                title: "Si cambia tu rutina",
-                desc: "Viajas, cambias horarios o equipamiento. Lo adaptamos.",
-              },
-              {
-                icon: HeartPulse,
-                title: "Si aparece fatiga o lesión",
-                desc: "Reescribimos sobre la marcha para que sigas avanzando seguro.",
-              },
-            ].map((item, i) => (
-              <ScrollReveal key={item.title} delay={i * 0.1}>
-                <div className="bg-card rounded-2xl p-6 border border-border h-full">
-                  <item.icon className="w-7 h-7 text-primary mb-3" />
-                  <h3 className="font-bold font-display mb-1">{item.title}</h3>
-                  <p className="text-muted-foreground text-sm">{item.desc}</p>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* TESTIMONIOS */}
-      <section className="py-20 px-4 bg-card/50">
+      <section className="py-20 px-4">
         <div className="container mx-auto max-w-5xl">
           <ScrollReveal>
             <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-4">
               Resultados reales
             </h2>
             <p className="text-muted-foreground text-center mb-14 max-w-lg mx-auto">
-              Personas que dejaron de improvisar.
+              Personas que dejaron de improvisar y empezaron a progresar.
             </p>
           </ScrollReveal>
           <div className="grid md:grid-cols-3 gap-6">
@@ -496,7 +492,7 @@ const Index = () => {
       </section>
 
       {/* PRECIO */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-card/50">
         <div className="container mx-auto max-w-md">
           <ScrollReveal>
             <div className="text-center mb-10">
@@ -504,7 +500,8 @@ const Index = () => {
                 Un precio. Todo incluido.
               </h2>
               <p className="text-muted-foreground">
-                Más barato que un entrenador personal. Con acompañamiento real.
+                Más barato que <span className="text-foreground font-semibold">una sola sesión</span> con un entrenador.
+                Con acompañamiento continuo.
               </p>
             </div>
           </ScrollReveal>
@@ -517,7 +514,7 @@ const Index = () => {
                 <span className="text-5xl font-bold font-display">€19</span>
                 <span className="text-muted-foreground">/mes</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-8">Sin permanencia</p>
+              <p className="text-xs text-muted-foreground mb-8">Sin permanencia · Cancela cuando quieras</p>
 
               <ul className="space-y-3 text-left text-sm mb-8">
                 {[
@@ -525,7 +522,7 @@ const Index = () => {
                   "Plan de nutrición personalizado",
                   "Chat directo conmigo (lo más importante)",
                   "Ajustes continuos del plan",
-                  "Soporte para dudas reales",
+                  "Soporte humano para dudas reales",
                 ].map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
@@ -543,7 +540,7 @@ const Index = () => {
                 Empezar mis 7 días gratis <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
               <p className="text-xs text-muted-foreground mt-3">
-                Cancela cuando quieras. Sin coste si cancelas en 7 días.
+                Si cancelas en los primeros 7 días no pagas nada.
               </p>
             </div>
           </ScrollReveal>
@@ -551,7 +548,7 @@ const Index = () => {
       </section>
 
       {/* FAQ */}
-      <section className="py-20 px-4 bg-card/50">
+      <section className="py-20 px-4">
         <div className="container mx-auto max-w-2xl">
           <ScrollReveal>
             <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-4">
@@ -583,15 +580,15 @@ const Index = () => {
       </section>
 
       {/* CTA FINAL */}
-      <section className="py-24 px-4">
+      <section className="py-24 px-4 bg-card/30 border-t border-border">
         <div className="container mx-auto max-w-2xl text-center">
           <ScrollReveal>
-            <h2 className="text-3xl sm:text-5xl font-bold font-display mb-6 leading-tight">
-              Deja de improvisar.{" "}
-              <span className="text-gradient">Empieza con un plan que se adapta a ti.</span>
+            <h2 className="text-3xl sm:text-5xl font-bold font-display mb-6 leading-[1.1]">
+              Empieza hoy.{" "}
+              <span className="text-gradient">Cada día sin plan es un día sin progreso.</span>
             </h2>
             <p className="text-muted-foreground mb-10 max-w-md mx-auto">
-              7 días gratis. Sin permanencia. Y un entrenador real al otro lado.
+              7 días gratis. Sin permanencia. Y un entrenador real al otro lado del chat.
             </p>
             <Button
               variant="hero"
@@ -599,11 +596,11 @@ const Index = () => {
               onClick={() => navigate("/signup")}
               className="hover-scale"
             >
-              Quiero mi plan personalizado
+              Quiero mi plan + acompañamiento
             </Button>
             <p className="text-xs text-muted-foreground mt-4 flex items-center justify-center gap-1.5">
-              <ShieldCheck className="w-3 h-3" /> 2 minutos · 7 días gratis · Cancela cuando
-              quieras
+              <ShieldCheck className="w-3 h-3" /> 2 minutos · 7 días gratis · Cancela
+              cuando quieras
             </p>
           </ScrollReveal>
         </div>
