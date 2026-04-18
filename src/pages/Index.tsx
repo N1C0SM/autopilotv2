@@ -7,8 +7,6 @@ import {
   Dumbbell,
   Apple,
   HeartPulse,
-  RefreshCw,
-  TrendingUp,
   X,
   ArrowRight,
   Clock,
@@ -16,6 +14,9 @@ import {
   Target,
   Calendar,
   AlertCircle,
+  Award,
+  Users,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +28,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import coachImage from "@/assets/coach-nicolas.jpg";
 
 const problems = [
   {
@@ -287,7 +289,7 @@ const Index = () => {
           </div>
 
           <ScrollReveal>
-            <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-16">
               <div className="bg-background/50 rounded-2xl p-6 border border-border">
                 <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-4">
                   Lo de siempre
@@ -326,6 +328,128 @@ const Index = () => {
               </div>
             </div>
           </ScrollReveal>
+
+          {/* MOCKUP CHAT */}
+          <ScrollReveal delay={0.1}>
+            <div className="max-w-2xl mx-auto">
+              <p className="text-center text-xs uppercase tracking-widest text-primary font-semibold mb-4">
+                Así es el chat por dentro
+              </p>
+              <div className="bg-card border border-border rounded-3xl card-shadow overflow-hidden">
+                <div className="flex items-center gap-3 px-5 py-4 border-b border-border bg-card/80">
+                  <div className="relative">
+                    <img
+                      src={coachImage}
+                      alt="Nicolás, tu entrenador"
+                      width={40}
+                      height={40}
+                      loading="lazy"
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success border-2 border-card" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold">Nicolás · Entrenador</div>
+                    <div className="text-xs text-success">en línea</div>
+                  </div>
+                  <MessageCircle className="w-5 h-5 text-primary" />
+                </div>
+                <div className="p-5 space-y-3 bg-background/30">
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5 text-sm">
+                      Hoy me dolía un poco el hombro al hacer press banca 😕
+                    </div>
+                  </div>
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] bg-secondary rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm">
+                      Sin problema. Te cambio el press banca por press inclinado con mancuernas y bajamos a 3 series. ¿Cómo va el resto?
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5 text-sm">
+                      Lo demás bien, esta semana solo puedo entrenar lunes, martes y viernes
+                    </div>
+                  </div>
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] bg-secondary rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm">
+                      Hecho ✅ Te he reorganizado la semana en 3 días para no perder volumen. Tu plan ya está actualizado.
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:0.2s]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:0.4s]" />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Nicolás está escribiendo...</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-center text-xs text-muted-foreground mt-4">
+                Conversación real. No es un bot. No hay tickets. Soy yo.
+              </p>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* SOBRE MÍ */}
+      <section className="py-20 px-4 border-y border-border">
+        <div className="container mx-auto max-w-5xl">
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <ScrollReveal direction="left">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 to-transparent rounded-3xl blur-2xl" />
+                <img
+                  src={coachImage}
+                  alt="Nicolás, entrenador personal de Autopilot"
+                  width={600}
+                  height={750}
+                  loading="lazy"
+                  className="relative rounded-3xl w-full h-auto object-cover card-shadow"
+                />
+              </div>
+            </ScrollReveal>
+            <ScrollReveal direction="right">
+              <span className="inline-block text-xs uppercase tracking-widest text-primary font-semibold mb-3">
+                Quién está al otro lado del chat
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold font-display mb-6 leading-tight">
+                Hola, soy <span className="text-gradient">Nicolás</span>.
+              </h2>
+              <p className="text-muted-foreground mb-4 leading-relaxed">
+                Llevo años ayudando a personas a mejorar su físico y rendimiento con
+                planes claros y fáciles de seguir. Mi especialidad es{" "}
+                <span className="text-foreground font-semibold">
+                  simplificar el entrenamiento y la progresión
+                </span>{" "}
+                para que consigas resultados reales sin complicarte.
+              </p>
+              <p className="text-muted-foreground mb-8 leading-relaxed">
+                He trabajado con perfiles muy distintos, desde principiantes que nunca
+                pisaron un gym hasta niveles avanzados de calistenia y fuerza. Por eso
+                Autopilot funciona igual de bien tanto si tu objetivo es el gimnasio,
+                la calistenia o un mix de los dos.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-card border border-border rounded-xl p-4 text-center">
+                  <Users className="w-5 h-5 text-primary mx-auto mb-2" />
+                  <div className="text-xs text-muted-foreground">Alumnos</div>
+                  <div className="font-bold font-display">+200</div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-4 text-center">
+                  <Award className="w-5 h-5 text-primary mx-auto mb-2" />
+                  <div className="text-xs text-muted-foreground">Experiencia</div>
+                  <div className="font-bold font-display">+8 años</div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-4 text-center">
+                  <TrendingUp className="w-5 h-5 text-primary mx-auto mb-2" />
+                  <div className="text-xs text-muted-foreground">Enfoque</div>
+                  <div className="font-bold font-display">Real</div>
+                </div>
+              </div>
+            </ScrollReveal>
+          </div>
         </div>
       </section>
 
@@ -493,55 +617,102 @@ const Index = () => {
 
       {/* PRECIO */}
       <section className="py-20 px-4 bg-card/50">
-        <div className="container mx-auto max-w-md">
+        <div className="container mx-auto max-w-5xl">
           <ScrollReveal>
-            <div className="text-center mb-10">
+            <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4">
                 Un precio. Todo incluido.
               </h2>
-              <p className="text-muted-foreground">
-                Más barato que <span className="text-foreground font-semibold">una sola sesión</span> con un entrenador.
-                Con acompañamiento continuo.
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Compara lo que pagarías por el mismo nivel de acompañamiento.
               </p>
             </div>
           </ScrollReveal>
-          <ScrollReveal delay={0.15}>
-            <div className="bg-card rounded-3xl p-8 border border-primary/40 card-shadow glow-shadow text-center">
-              <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-6">
-                <Zap className="w-3 h-3" /> 7 DÍAS GRATIS
-              </div>
-              <div className="flex items-baseline justify-center gap-1 mb-1">
-                <span className="text-5xl font-bold font-display">€19</span>
-                <span className="text-muted-foreground">/mes</span>
-              </div>
-              <p className="text-xs text-muted-foreground mb-8">Sin permanencia · Cancela cuando quieras</p>
 
-              <ul className="space-y-3 text-left text-sm mb-8">
-                {[
-                  "Plan de entrenamiento personalizado",
-                  "Plan de nutrición personalizado",
-                  "Chat directo conmigo (lo más importante)",
-                  "Ajustes continuos del plan",
-                  "Soporte humano para dudas reales",
-                ].map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
+          {/* COMPARATIVA */}
+          <ScrollReveal delay={0.1}>
+            <div className="grid md:grid-cols-3 gap-4 mb-12 max-w-4xl mx-auto">
+              <div className="bg-background/50 rounded-2xl p-5 border border-border opacity-70">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">
+                  Entrenador presencial
+                </div>
+                <div className="text-2xl font-bold font-display mb-1">€60+<span className="text-sm text-muted-foreground font-normal">/sesión</span></div>
+                <p className="text-xs text-muted-foreground mb-3">Ves al entrenador 1-2 veces por semana. Fuera de ahí, te apañas.</p>
+                <div className="text-xs text-muted-foreground">≈ €240-480/mes</div>
+              </div>
+              <div className="bg-background/50 rounded-2xl p-5 border border-border opacity-70">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">
+                  App genérica
+                </div>
+                <div className="text-2xl font-bold font-display mb-1">€10-15<span className="text-sm text-muted-foreground font-normal">/mes</span></div>
+                <p className="text-xs text-muted-foreground mb-3">Plan automático. Sin humano detrás. No se adapta a ti.</p>
+                <div className="text-xs text-muted-foreground">Soporte: chatbot</div>
+              </div>
+              <div className="bg-card rounded-2xl p-5 border border-primary/40 card-shadow glow-shadow relative">
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full whitespace-nowrap">
+                  Punto medio justo
+                </span>
+                <div className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">
+                  Autopilot
+                </div>
+                <div className="text-2xl font-bold font-display mb-1">€19<span className="text-sm text-muted-foreground font-normal">/mes</span></div>
+                <p className="text-xs text-foreground/80 mb-3">Plan personalizado + entrenador real (yo) ajustando contigo.</p>
+                <div className="text-xs text-primary font-semibold">Soporte: humano</div>
+              </div>
+            </div>
+          </ScrollReveal>
 
-              <Button
-                variant="hero"
-                size="lg"
-                className="w-full hover-scale"
-                onClick={() => navigate("/signup")}
-              >
-                Empezar mis 7 días gratis <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-              <p className="text-xs text-muted-foreground mt-3">
-                Si cancelas en los primeros 7 días no pagas nada.
-              </p>
+          {/* CARD PRINCIPAL */}
+          <ScrollReveal delay={0.2}>
+            <div className="max-w-md mx-auto">
+              <div className="bg-card rounded-3xl p-8 border border-primary/40 card-shadow glow-shadow text-center">
+                <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-6">
+                  <Zap className="w-3 h-3" /> 7 DÍAS GRATIS
+                </div>
+                <div className="flex items-baseline justify-center gap-1 mb-1">
+                  <span className="text-5xl font-bold font-display">€19</span>
+                  <span className="text-muted-foreground">/mes</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-8">Sin permanencia · Cancela cuando quieras</p>
+
+                <ul className="space-y-3 text-left text-sm mb-6">
+                  {[
+                    "Plan de entrenamiento personalizado",
+                    "Plan de nutrición personalizado",
+                    "Chat directo conmigo (lo más importante)",
+                    "Ajustes continuos del plan",
+                    "Adaptado a gym, calistenia o mixto",
+                  ].map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* GARANTÍA */}
+                <div className="bg-success/10 border border-success/30 rounded-xl p-4 mb-6 text-left flex items-start gap-3">
+                  <ShieldCheck className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-sm font-bold text-foreground mb-0.5">Garantía 14 días</div>
+                    <p className="text-xs text-muted-foreground">
+                      Si no notas la diferencia en 2 semanas, te devuelvo el dinero. Sin preguntas.
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full hover-scale"
+                  onClick={() => navigate("/signup")}
+                >
+                  Empezar mis 7 días gratis <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Si cancelas en los primeros 7 días no pagas nada.
+                </p>
+              </div>
             </div>
           </ScrollReveal>
         </div>
