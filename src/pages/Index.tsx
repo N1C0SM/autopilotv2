@@ -346,11 +346,11 @@ const Index = () => {
                       loading="lazy"
                       className="w-10 h-10 rounded-full object-cover"
                     />
-                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-card" />
+                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success border-2 border-card" />
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-semibold">Nicolás · Entrenador</div>
-                    <div className="text-xs text-green-500">en línea</div>
+                    <div className="text-xs text-success">en línea</div>
                   </div>
                   <MessageCircle className="w-5 h-5 text-primary" />
                 </div>
