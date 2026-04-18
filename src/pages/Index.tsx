@@ -617,55 +617,102 @@ const Index = () => {
 
       {/* PRECIO */}
       <section className="py-20 px-4 bg-card/50">
-        <div className="container mx-auto max-w-md">
+        <div className="container mx-auto max-w-5xl">
           <ScrollReveal>
-            <div className="text-center mb-10">
+            <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4">
                 Un precio. Todo incluido.
               </h2>
-              <p className="text-muted-foreground">
-                Más barato que <span className="text-foreground font-semibold">una sola sesión</span> con un entrenador.
-                Con acompañamiento continuo.
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Compara lo que pagarías por el mismo nivel de acompañamiento.
               </p>
             </div>
           </ScrollReveal>
-          <ScrollReveal delay={0.15}>
-            <div className="bg-card rounded-3xl p-8 border border-primary/40 card-shadow glow-shadow text-center">
-              <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-6">
-                <Zap className="w-3 h-3" /> 7 DÍAS GRATIS
-              </div>
-              <div className="flex items-baseline justify-center gap-1 mb-1">
-                <span className="text-5xl font-bold font-display">€19</span>
-                <span className="text-muted-foreground">/mes</span>
-              </div>
-              <p className="text-xs text-muted-foreground mb-8">Sin permanencia · Cancela cuando quieras</p>
 
-              <ul className="space-y-3 text-left text-sm mb-8">
-                {[
-                  "Plan de entrenamiento personalizado",
-                  "Plan de nutrición personalizado",
-                  "Chat directo conmigo (lo más importante)",
-                  "Ajustes continuos del plan",
-                  "Soporte humano para dudas reales",
-                ].map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
+          {/* COMPARATIVA */}
+          <ScrollReveal delay={0.1}>
+            <div className="grid md:grid-cols-3 gap-4 mb-12 max-w-4xl mx-auto">
+              <div className="bg-background/50 rounded-2xl p-5 border border-border opacity-70">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">
+                  Entrenador presencial
+                </div>
+                <div className="text-2xl font-bold font-display mb-1">€60+<span className="text-sm text-muted-foreground font-normal">/sesión</span></div>
+                <p className="text-xs text-muted-foreground mb-3">Ves al entrenador 1-2 veces por semana. Fuera de ahí, te apañas.</p>
+                <div className="text-xs text-muted-foreground">≈ €240-480/mes</div>
+              </div>
+              <div className="bg-background/50 rounded-2xl p-5 border border-border opacity-70">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">
+                  App genérica
+                </div>
+                <div className="text-2xl font-bold font-display mb-1">€10-15<span className="text-sm text-muted-foreground font-normal">/mes</span></div>
+                <p className="text-xs text-muted-foreground mb-3">Plan automático. Sin humano detrás. No se adapta a ti.</p>
+                <div className="text-xs text-muted-foreground">Soporte: chatbot</div>
+              </div>
+              <div className="bg-card rounded-2xl p-5 border border-primary/40 card-shadow glow-shadow relative">
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full whitespace-nowrap">
+                  Punto medio justo
+                </span>
+                <div className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">
+                  Autopilot
+                </div>
+                <div className="text-2xl font-bold font-display mb-1">€19<span className="text-sm text-muted-foreground font-normal">/mes</span></div>
+                <p className="text-xs text-foreground/80 mb-3">Plan personalizado + entrenador real (yo) ajustando contigo.</p>
+                <div className="text-xs text-primary font-semibold">Soporte: humano</div>
+              </div>
+            </div>
+          </ScrollReveal>
 
-              <Button
-                variant="hero"
-                size="lg"
-                className="w-full hover-scale"
-                onClick={() => navigate("/signup")}
-              >
-                Empezar mis 7 días gratis <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-              <p className="text-xs text-muted-foreground mt-3">
-                Si cancelas en los primeros 7 días no pagas nada.
-              </p>
+          {/* CARD PRINCIPAL */}
+          <ScrollReveal delay={0.2}>
+            <div className="max-w-md mx-auto">
+              <div className="bg-card rounded-3xl p-8 border border-primary/40 card-shadow glow-shadow text-center">
+                <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-6">
+                  <Zap className="w-3 h-3" /> 7 DÍAS GRATIS
+                </div>
+                <div className="flex items-baseline justify-center gap-1 mb-1">
+                  <span className="text-5xl font-bold font-display">€19</span>
+                  <span className="text-muted-foreground">/mes</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-8">Sin permanencia · Cancela cuando quieras</p>
+
+                <ul className="space-y-3 text-left text-sm mb-6">
+                  {[
+                    "Plan de entrenamiento personalizado",
+                    "Plan de nutrición personalizado",
+                    "Chat directo conmigo (lo más importante)",
+                    "Ajustes continuos del plan",
+                    "Adaptado a gym, calistenia o mixto",
+                  ].map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* GARANTÍA */}
+                <div className="bg-success/10 border border-success/30 rounded-xl p-4 mb-6 text-left flex items-start gap-3">
+                  <ShieldCheck className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-sm font-bold text-foreground mb-0.5">Garantía 14 días</div>
+                    <p className="text-xs text-muted-foreground">
+                      Si no notas la diferencia en 2 semanas, te devuelvo el dinero. Sin preguntas.
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full hover-scale"
+                  onClick={() => navigate("/signup")}
+                >
+                  Empezar mis 7 días gratis <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Si cancelas en los primeros 7 días no pagas nada.
+                </p>
+              </div>
             </div>
           </ScrollReveal>
         </div>
