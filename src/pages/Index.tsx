@@ -17,6 +17,8 @@ import {
   Award,
   Users,
   TrendingUp,
+  Image as ImageIcon,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -329,64 +331,87 @@ const Index = () => {
             </div>
           </ScrollReveal>
 
-          {/* MOCKUP CHAT */}
+          {/* MOCKUP CHAT — réplica visual del chat real de la app */}
           <ScrollReveal delay={0.1}>
             <div className="max-w-2xl mx-auto">
               <p className="text-center text-xs uppercase tracking-widest text-primary font-semibold mb-4">
                 Así es el chat por dentro
               </p>
-              <div className="bg-card border border-border rounded-3xl card-shadow overflow-hidden">
-                <div className="flex items-center gap-3 px-5 py-4 border-b border-border bg-card/80">
-                  <div className="relative">
-                    <img
-                      src={coachImage}
-                      alt="Nicolás, tu entrenador"
-                      width={40}
-                      height={40}
-                      loading="lazy"
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success border-2 border-card" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold">Nicolás · Entrenador</div>
-                    <div className="text-xs text-success">en línea</div>
-                  </div>
-                  <MessageCircle className="w-5 h-5 text-primary" />
+              <div className="bg-card rounded-2xl border border-border card-shadow flex flex-col h-[500px] overflow-hidden">
+                {/* Header con tabs (igual al chat real) */}
+                <div className="flex items-center gap-2 p-3 border-b border-border">
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 text-primary">
+                    <MessageCircle className="w-4 h-4" />
+                    Chat con tu entrenador
+                  </button>
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground">
+                    <ImageIcon className="w-4 h-4" />
+                    Media
+                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-bold">3</span>
+                  </button>
                 </div>
-                <div className="p-5 space-y-3 bg-background/30">
+
+                {/* Mensajes (mismas burbujas que ChatMessages.tsx) */}
+                <div className="flex-1 overflow-hidden p-4 space-y-3 bg-background/20">
                   <div className="flex justify-end">
-                    <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5 text-sm">
-                      Hoy me dolía un poco el hombro al hacer press banca 😕
+                    <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2.5 text-sm">
+                      <span>Hoy me dolía un poco el hombro al hacer press banca 😕</span>
+                      <div className="text-[10px] mt-1 text-primary-foreground/60">10:24</div>
                     </div>
                   </div>
                   <div className="flex justify-start">
-                    <div className="max-w-[80%] bg-secondary rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm">
-                      Sin problema. Te cambio el press banca por press inclinado con mancuernas y bajamos a 3 series. ¿Cómo va el resto?
+                    <div className="max-w-[80%] bg-secondary text-foreground rounded-2xl rounded-bl-md px-4 py-2.5 text-sm">
+                      <span>Sin problema. Te cambio el press banca por press inclinado con mancuernas y bajamos a 3 series. ¿Cómo va el resto?</span>
+                      <div className="text-[10px] mt-1 text-muted-foreground">10:31</div>
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5 text-sm">
-                      Lo demás bien, esta semana solo puedo entrenar lunes, martes y viernes
+                    <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2.5 text-sm">
+                      <span>Esta semana solo puedo entrenar L, M y V</span>
+                      <div className="text-[10px] mt-1 text-primary-foreground/60">10:33</div>
                     </div>
                   </div>
                   <div className="flex justify-start">
-                    <div className="max-w-[80%] bg-secondary rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm">
-                      Hecho ✅ Te he reorganizado la semana en 3 días para no perder volumen. Tu plan ya está actualizado.
+                    <div className="max-w-[80%] bg-secondary text-foreground rounded-2xl rounded-bl-md px-4 py-2.5 text-sm">
+                      <span>Hecho ✅ Te he reorganizado la semana en 3 días sin perder volumen. Tu plan ya está actualizado.</span>
+                      <div className="text-[10px] mt-1 text-muted-foreground">10:35</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 pt-2">
+                  <div className="flex items-center gap-2 pt-1">
                     <div className="flex gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse" />
                       <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:0.2s]" />
                       <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:0.4s]" />
                     </div>
-                    <span className="text-xs text-muted-foreground">Nicolás está escribiendo...</span>
+                    <span className="text-xs text-muted-foreground">Nicolás está escribiendo…</span>
+                  </div>
+                </div>
+
+                {/* Input (mismo formato que el real) */}
+                <div className="p-3 border-t border-border">
+                  <div className="flex gap-2 items-center">
+                    <button
+                      type="button"
+                      className="shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:bg-secondary transition-colors"
+                      aria-label="Adjuntar imagen"
+                    >
+                      <ImageIcon className="w-5 h-5" />
+                    </button>
+                    <div className="flex-1 h-10 px-3 flex items-center rounded-md border border-input bg-background text-sm text-muted-foreground">
+                      Escribe un mensaje...
+                    </div>
+                    <button
+                      type="button"
+                      className="shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md bg-primary text-primary-foreground"
+                      aria-label="Enviar"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
               <p className="text-center text-xs text-muted-foreground mt-4">
-                Conversación real. No es un bot. No hay tickets. Soy yo.
+                Mismo chat que verás dentro de la app. Soy yo respondiendo, no un bot.
               </p>
             </div>
           </ScrollReveal>
