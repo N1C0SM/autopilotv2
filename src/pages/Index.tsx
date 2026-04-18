@@ -289,7 +289,7 @@ const Index = () => {
           </div>
 
           <ScrollReveal>
-            <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-16">
               <div className="bg-background/50 rounded-2xl p-6 border border-border">
                 <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-4">
                   Lo de siempre
@@ -328,6 +328,128 @@ const Index = () => {
               </div>
             </div>
           </ScrollReveal>
+
+          {/* MOCKUP CHAT */}
+          <ScrollReveal delay={0.1}>
+            <div className="max-w-2xl mx-auto">
+              <p className="text-center text-xs uppercase tracking-widest text-primary font-semibold mb-4">
+                Así es el chat por dentro
+              </p>
+              <div className="bg-card border border-border rounded-3xl card-shadow overflow-hidden">
+                <div className="flex items-center gap-3 px-5 py-4 border-b border-border bg-card/80">
+                  <div className="relative">
+                    <img
+                      src={coachImage}
+                      alt="Nicolás, tu entrenador"
+                      width={40}
+                      height={40}
+                      loading="lazy"
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-card" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold">Nicolás · Entrenador</div>
+                    <div className="text-xs text-green-500">en línea</div>
+                  </div>
+                  <MessageCircle className="w-5 h-5 text-primary" />
+                </div>
+                <div className="p-5 space-y-3 bg-background/30">
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5 text-sm">
+                      Hoy me dolía un poco el hombro al hacer press banca 😕
+                    </div>
+                  </div>
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] bg-secondary rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm">
+                      Sin problema. Te cambio el press banca por press inclinado con mancuernas y bajamos a 3 series. ¿Cómo va el resto?
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5 text-sm">
+                      Lo demás bien, esta semana solo puedo entrenar lunes, martes y viernes
+                    </div>
+                  </div>
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] bg-secondary rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm">
+                      Hecho ✅ Te he reorganizado la semana en 3 días para no perder volumen. Tu plan ya está actualizado.
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:0.2s]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:0.4s]" />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Nicolás está escribiendo...</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-center text-xs text-muted-foreground mt-4">
+                Conversación real. No es un bot. No hay tickets. Soy yo.
+              </p>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* SOBRE MÍ */}
+      <section className="py-20 px-4 border-y border-border">
+        <div className="container mx-auto max-w-5xl">
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <ScrollReveal direction="left">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 to-transparent rounded-3xl blur-2xl" />
+                <img
+                  src={coachImage}
+                  alt="Nicolás, entrenador personal de Autopilot"
+                  width={600}
+                  height={750}
+                  loading="lazy"
+                  className="relative rounded-3xl w-full h-auto object-cover card-shadow"
+                />
+              </div>
+            </ScrollReveal>
+            <ScrollReveal direction="right">
+              <span className="inline-block text-xs uppercase tracking-widest text-primary font-semibold mb-3">
+                Quién está al otro lado del chat
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold font-display mb-6 leading-tight">
+                Hola, soy <span className="text-gradient">Nicolás</span>.
+              </h2>
+              <p className="text-muted-foreground mb-4 leading-relaxed">
+                Llevo años ayudando a personas a mejorar su físico y rendimiento con
+                planes claros y fáciles de seguir. Mi especialidad es{" "}
+                <span className="text-foreground font-semibold">
+                  simplificar el entrenamiento y la progresión
+                </span>{" "}
+                para que consigas resultados reales sin complicarte.
+              </p>
+              <p className="text-muted-foreground mb-8 leading-relaxed">
+                He trabajado con perfiles muy distintos, desde principiantes que nunca
+                pisaron un gym hasta niveles avanzados de calistenia y fuerza. Por eso
+                Autopilot funciona igual de bien tanto si tu objetivo es el gimnasio,
+                la calistenia o un mix de los dos.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-card border border-border rounded-xl p-4 text-center">
+                  <Users className="w-5 h-5 text-primary mx-auto mb-2" />
+                  <div className="text-xs text-muted-foreground">Alumnos</div>
+                  <div className="font-bold font-display">+200</div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-4 text-center">
+                  <Award className="w-5 h-5 text-primary mx-auto mb-2" />
+                  <div className="text-xs text-muted-foreground">Experiencia</div>
+                  <div className="font-bold font-display">+8 años</div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-4 text-center">
+                  <TrendingUp className="w-5 h-5 text-primary mx-auto mb-2" />
+                  <div className="text-xs text-muted-foreground">Enfoque</div>
+                  <div className="font-bold font-display">Real</div>
+                </div>
+              </div>
+            </ScrollReveal>
+          </div>
         </div>
       </section>
 
