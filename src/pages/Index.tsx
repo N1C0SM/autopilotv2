@@ -7,8 +7,6 @@ import {
   Dumbbell,
   Apple,
   HeartPulse,
-  RefreshCw,
-  TrendingUp,
   X,
   ArrowRight,
   Clock,
@@ -16,6 +14,9 @@ import {
   Target,
   Calendar,
   AlertCircle,
+  Award,
+  Users,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +28,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import coachImage from "@/assets/coach-nicolas.jpg";
 
 const problems = [
   {
