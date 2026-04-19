@@ -16,6 +16,7 @@ const STATUS_FILTERS = [
   { label: "Sin pagar", value: "unpaid" },
   { label: "Plan pendiente", value: "plan_pending" },
   { label: "Plan listo", value: "plan_ready" },
+  { label: "✈️ En viaje", value: "traveling" },
 ] as const;
 
 const UserList = ({ users, adminIds, onSelectUser }: Props) => {
@@ -27,8 +28,13 @@ const UserList = ({ users, adminIds, onSelectUser }: Props) => {
     if (filter === "all") return matchesSearch;
     if (filter === "paid") return matchesSearch && u.payment_status === "paid";
     if (filter === "unpaid") return matchesSearch && u.payment_status === "unpaid";
+    if (filter === "traveling") {
+      return matchesSearch && !!u.travel_mode_until && new Date(u.travel_mode_until) >= new Date();
+    }
     return matchesSearch && u.plan_status === filter;
   };
+
+  const isTraveling = (u: Profile) => !!u.travel_mode_until && new Date(u.travel_mode_until) >= new Date();
 
   const regularUsers = users.filter((u) => !adminIds.has(u.user_id) && matchesFilters(u));
   const adminUsers = users.filter((u) => adminIds.has(u.user_id) && matchesFilters(u));
@@ -61,7 +67,12 @@ const UserList = ({ users, adminIds, onSelectUser }: Props) => {
           Admin
         </Badge>
       ) : (
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+          {isTraveling(u) && (
+            <Badge className="text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/20">
+              ✈️ Viaje
+            </Badge>
+          )}
           <Badge variant={u.payment_status === "paid" ? "default" : "destructive"} className="text-[10px]">
             {u.payment_status === "paid" ? "💳 Pagado" : "⏳ Sin pagar"}
           </Badge>
