@@ -32,6 +32,7 @@ const WorkoutTracker = ({ userId, dayPlans }: Props) => {
   const [saving, setSaving] = useState(false);
   const [restTimer, setRestTimer] = useState<number | null>(null);
   const [restTarget, setRestTarget] = useState(0);
+  const [rpeOpen, setRpeOpen] = useState(false);
 
   const todayStr = new Date().toISOString().split("T")[0];
   const currentPlan = dayPlans.find((p) => p.day === selectedDay);
