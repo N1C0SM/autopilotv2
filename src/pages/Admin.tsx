@@ -18,6 +18,8 @@ export interface Profile {
   plan_status: string;
   payment_status: string;
   created_at: string;
+  travel_mode_until?: string | null;
+  travel_equipment?: string | null;
 }
 
 export type AdminSection = "dashboard" | "users" | "exercises" | "rules" | "settings";
