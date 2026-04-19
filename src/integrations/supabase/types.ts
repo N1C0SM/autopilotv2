@@ -50,6 +50,7 @@ export type Database = {
           created_at: string
           day_label: string
           id: string
+          rpe: number | null
           user_id: string
         }
         Insert: {
@@ -57,6 +58,7 @@ export type Database = {
           created_at?: string
           day_label: string
           id?: string
+          rpe?: number | null
           user_id: string
         }
         Update: {
@@ -64,6 +66,7 @@ export type Database = {
           created_at?: string
           day_label?: string
           id?: string
+          rpe?: number | null
           user_id?: string
         }
         Relationships: []
@@ -200,9 +203,11 @@ export type Database = {
           goal: string | null
           height: number | null
           id: string
+          initial_tests: Json | null
           injuries: string | null
           intensity_level: number | null
           nutrition_preferences: string | null
+          primary_focus: string | null
           sex: string | null
           specific_goal: string | null
           sports: string | null
@@ -218,9 +223,11 @@ export type Database = {
           goal?: string | null
           height?: number | null
           id?: string
+          initial_tests?: Json | null
           injuries?: string | null
           intensity_level?: number | null
           nutrition_preferences?: string | null
+          primary_focus?: string | null
           sex?: string | null
           specific_goal?: string | null
           sports?: string | null
@@ -236,14 +243,49 @@ export type Database = {
           goal?: string | null
           height?: number | null
           id?: string
+          initial_tests?: Json | null
           injuries?: string | null
           intensity_level?: number | null
           nutrition_preferences?: string | null
+          primary_focus?: string | null
           sex?: string | null
           specific_goal?: string | null
           sports?: string | null
           user_id?: string
           weight?: number | null
+        }
+        Relationships: []
+      }
+      personal_records: {
+        Row: {
+          achieved_at: string
+          created_at: string
+          estimated_1rm: number | null
+          exercise_name: string
+          id: string
+          reps: number
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          achieved_at?: string
+          created_at?: string
+          estimated_1rm?: number | null
+          exercise_name: string
+          id?: string
+          reps: number
+          user_id: string
+          weight: number
+        }
+        Update: {
+          achieved_at?: string
+          created_at?: string
+          estimated_1rm?: number | null
+          exercise_name?: string
+          id?: string
+          reps?: number
+          user_id?: string
+          weight?: number
         }
         Relationships: []
       }
@@ -263,6 +305,8 @@ export type Database = {
           subscription_end: string | null
           subscription_status: string | null
           subscription_tier: string | null
+          travel_equipment: string | null
+          travel_mode_until: string | null
           updated_at: string
           user_id: string
         }
@@ -281,6 +325,8 @@ export type Database = {
           subscription_end?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          travel_equipment?: string | null
+          travel_mode_until?: string | null
           updated_at?: string
           user_id: string
         }
@@ -299,6 +345,8 @@ export type Database = {
           subscription_end?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          travel_equipment?: string | null
+          travel_mode_until?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -569,6 +617,7 @@ export type Database = {
           exercise_name: string
           id: string
           logged_at: string
+          rpe: number | null
           sets_completed: Json
           user_id: string
         }
@@ -578,6 +627,7 @@ export type Database = {
           exercise_name: string
           id?: string
           logged_at?: string
+          rpe?: number | null
           sets_completed?: Json
           user_id: string
         }
@@ -587,6 +637,7 @@ export type Database = {
           exercise_name?: string
           id?: string
           logged_at?: string
+          rpe?: number | null
           sets_completed?: Json
           user_id?: string
         }
