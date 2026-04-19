@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2, TrendingUp } from "lucide-react";
+import UserProgressPanel from "./UserProgressPanel";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -295,12 +296,15 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
         </div>
       )}
       <Tabs defaultValue="info" className="space-y-6">
-        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-4" : "grid-cols-1"}`}>
+        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-5" : "grid-cols-1"}`}>
           <TabsTrigger value="info" className="text-xs gap-1.5">
             <User2 className="w-3.5 h-3.5" /> Info
           </TabsTrigger>
           {profile.payment_status === "paid" && (
             <>
+              <TabsTrigger value="progress" className="text-xs gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5" /> Progreso
+              </TabsTrigger>
               <TabsTrigger value="training" className="text-xs gap-1.5">
                 <Dumbbell className="w-3.5 h-3.5" /> Entreno
               </TabsTrigger>
@@ -405,6 +409,11 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
               <p className="text-sm text-muted-foreground">El usuario aún no ha completado el onboarding.</p>
             </div>
           )}
+        </TabsContent>
+
+        {/* Tab: Progress */}
+        <TabsContent value="progress">
+          <UserProgressPanel userId={profile.user_id} travelModeUntil={profile.travel_mode_until} travelEquipment={profile.travel_equipment} />
         </TabsContent>
 
         {/* Tab: Training */}

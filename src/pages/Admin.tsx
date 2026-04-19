@@ -18,6 +18,8 @@ export interface Profile {
   plan_status: string;
   payment_status: string;
   created_at: string;
+  travel_mode_until?: string | null;
+  travel_equipment?: string | null;
 }
 
 export type AdminSection = "dashboard" | "users" | "exercises" | "rules" | "settings";
@@ -106,7 +108,7 @@ const Admin = () => {
                 <AdminStats users={users} />
 
                 {/* Quick actions */}
-                <div className="grid sm:grid-cols-3 gap-4">
+                <div className="grid sm:grid-cols-4 gap-4">
                   <QuickAction
                     label="Planes pendientes"
                     value={users.filter(u => u.plan_status === "plan_pending").length}
@@ -117,6 +119,12 @@ const Admin = () => {
                     label="Sin pagar"
                     value={users.filter(u => u.payment_status === "unpaid").length}
                     color="text-destructive"
+                    onClick={() => { setSection("users"); }}
+                  />
+                  <QuickAction
+                    label="✈️ En viaje"
+                    value={users.filter(u => u.travel_mode_until && new Date(u.travel_mode_until) >= new Date()).length}
+                    color="text-amber-400"
                     onClick={() => { setSection("users"); }}
                   />
                   <QuickAction
