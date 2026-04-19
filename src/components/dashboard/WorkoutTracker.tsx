@@ -552,6 +552,8 @@ const WorkoutTracker = ({ userId, dayPlans }: Props) => {
           </div>
         </div>
       )}
+
+      <RPEDialog open={rpeOpen} onConfirm={handleRPEConfirm} />
     </div>
   );
 };
