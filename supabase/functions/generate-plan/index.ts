@@ -634,7 +634,25 @@ serve(async (req) => {
     );
     const intensityLevel = onb.intensity_level || 5;
     const userLevel = intensityToLevel(intensityLevel);
-    const equipmentType = onb.equipment_type || "Mixto";
+    let equipmentType = onb.equipment_type || "Mixto";
+
+    // ── Primary focus override (gimnasio | calistenia | mixto) ──
+    const primaryFocus = (onb as any).primary_focus || "mixto";
+    if (primaryFocus === "gimnasio") equipmentType = "Gimnasio";
+    else if (primaryFocus === "calistenia") equipmentType = "Calistenia";
+
+    // ── Travel mode: override equipment if active ──
+    const { data: profileForTravel } = await supabase
+      .from("profiles")
+      .select("travel_mode_until, travel_equipment")
+      .eq("user_id", targetUserId)
+      .single();
+    const travelActive = profileForTravel?.travel_mode_until
+      && new Date(profileForTravel.travel_mode_until) >= new Date(new Date().toDateString());
+    if (travelActive) {
+      equipmentType = "Calistenia"; // bodyweight-friendly fallback
+      console.log(`[GENERATE-PLAN] Travel mode active until ${profileForTravel?.travel_mode_until}, equipment: ${profileForTravel?.travel_equipment}`);
+    }
 
     const skillProfile = getSkillProfile(specificGoal);
     if (skillProfile) {

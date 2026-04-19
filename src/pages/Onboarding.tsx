@@ -8,14 +8,49 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 
-const STEPS = ["Datos Físicos", "Sexo", "Equipamiento", "Objetivo", "Meta Específica", "Deportes", "Intensidad", "Lesiones", "Disponibilidad", "Nutrición", "Resumen"];
+const STEPS = [
+  "Datos Físicos",
+  "Sexo",
+  "Equipamiento",
+  "Enfoque Principal",
+  "Objetivo",
+  "Meta Específica",
+  "Deportes",
+  "Intensidad",
+  "Tests de Nivel",
+  "Lesiones",
+  "Disponibilidad",
+  "Nutrición",
+  "Resumen",
+];
 
 const EQUIPMENT_TYPES = [
   { value: "Gimnasio", label: "Gimnasio", emoji: "🏋️", desc: "Máquinas, barras, mancuernas" },
   { value: "Calistenia", label: "Calistenia", emoji: "🤸", desc: "Solo peso corporal" },
   { value: "Mixto", label: "Mixto", emoji: "⚡", desc: "Combina ambos" },
+];
+
+const PRIMARY_FOCUS_OPTIONS = [
+  {
+    value: "gimnasio",
+    label: "Foco gimnasio",
+    emoji: "💪",
+    desc: "Hipertrofia y fuerza con cargas. Banca, sentadilla, peso muerto.",
+  },
+  {
+    value: "calistenia",
+    label: "Foco calistenia",
+    emoji: "🤸",
+    desc: "Skills y control corporal. Pino, muscle up, planche, lever.",
+  },
+  {
+    value: "mixto",
+    label: "Mixto / híbrido",
+    emoji: "⚡",
+    desc: "Lo mejor de los dos mundos. Fuerza con cargas + skills.",
+  },
 ];
 
 const GOALS = [
@@ -55,10 +90,12 @@ const Onboarding = () => {
     weight: "",
     sex: "",
     equipment_type: "",
+    primary_focus: "",
     goal: "",
     specific_goal: "",
     sports: [] as string[],
     intensity_level: 5,
+    initial_tests: { pullups: "", pushups: "", squat: "", plank: "" },
     injuries: "",
     availability: { days: "", hours: "" },
     nutrition_preferences: "",
@@ -79,27 +116,36 @@ const Onboarding = () => {
   const handleSubmit = async () => {
     if (!user) return;
     setLoading(true);
-    const { error } = await supabase.from("onboarding").upsert({
-      user_id: user.id,
-      age: parseInt(data.age) || null,
-      height: parseFloat(data.height) || null,
-      weight: parseFloat(data.weight) || null,
-      sex: data.sex || null,
-      equipment_type: data.equipment_type || "Mixto",
-      goal: data.goal,
-      specific_goal: data.specific_goal || null,
-      sports: data.sports.join(", "),
-      intensity_level: data.intensity_level,
-      injuries: data.injuries || null,
-      availability: data.availability,
-      nutrition_preferences: data.nutrition_preferences,
-      allergies: data.allergies,
-    }, { onConflict: "user_id" });
+    const { error } = await supabase.from("onboarding").upsert(
+      {
+        user_id: user.id,
+        age: parseInt(data.age) || null,
+        height: parseFloat(data.height) || null,
+        weight: parseFloat(data.weight) || null,
+        sex: data.sex || null,
+        equipment_type: data.equipment_type || "Mixto",
+        primary_focus: data.primary_focus || "mixto",
+        goal: data.goal,
+        specific_goal: data.specific_goal || null,
+        sports: data.sports.join(", "),
+        intensity_level: data.intensity_level,
+        initial_tests: data.initial_tests,
+        injuries: data.injuries || null,
+        availability: data.availability,
+        nutrition_preferences: data.nutrition_preferences,
+        allergies: data.allergies,
+      },
+      { onConflict: "user_id" }
+    );
 
     if (!error) {
       await supabase.from("profiles").update({ plan_status: "plan_pending" }).eq("user_id", user.id);
 
-      const { data: profile } = await supabase.from("profiles").select("payment_status").eq("user_id", user.id).single();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("payment_status")
+        .eq("user_id", user.id)
+        .single();
 
       if (profile?.payment_status === "paid") {
         supabase.functions.invoke("generate-plan", { body: { user_id: user.id } });
@@ -107,9 +153,10 @@ const Onboarding = () => {
         navigate("/dashboard");
       } else {
         toast.success("¡Cuestionario completado! Redirigiendo al pago...");
-        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke("create-checkout", {
-          body: { referral_code: "" },
-        });
+        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+          "create-checkout",
+          { body: { referral_code: "" } }
+        );
         if (checkoutError || !checkoutData?.url) {
           toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
           navigate("/dashboard");
@@ -127,7 +174,8 @@ const Onboarding = () => {
     if (step === 0) return data.age && data.height && data.weight;
     if (step === 1) return data.sex;
     if (step === 2) return data.equipment_type;
-    if (step === 3) return data.goal;
+    if (step === 3) return data.primary_focus;
+    if (step === 4) return data.goal;
     return true;
   };
 
@@ -222,8 +270,38 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 3: Goal */}
+          {/* Step 3: Primary focus (gym vs calisthenics vs mixed) */}
           {step === 3 && (
+            <div>
+              <Label className="mb-1.5 block">¿En qué quieres centrarte?</Label>
+              <p className="text-xs text-muted-foreground mb-4">
+                Esto define la lógica de tu plan: cargas progresivas, skills, o un híbrido.
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                {PRIMARY_FOCUS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => update("primary_focus", opt.value)}
+                    className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                      data.primary_focus === opt.value
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <span className="text-2xl mt-0.5">{opt.emoji}</span>
+                    <div>
+                      <span className="font-medium block">{opt.label}</span>
+                      <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Goal */}
+          {step === 4 && (
             <div>
               <Label className="mb-3 block">¿Cuál es tu objetivo principal?</Label>
               <div className="grid grid-cols-1 gap-2">
@@ -246,8 +324,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 4: Specific Goal */}
-          {step === 4 && (
+          {/* Step 5: Specific Goal */}
+          {step === 5 && (
             <div>
               <Label className="mb-1.5 block">¿Tienes alguna meta específica?</Label>
               <p className="text-xs text-muted-foreground mb-4">
@@ -282,8 +360,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 5: Sports */}
-          {step === 5 && (
+          {/* Step 6: Sports */}
+          {step === 6 && (
             <div>
               <Label className="mb-3 block">¿Qué deportes practicas o te interesan?</Label>
               <p className="text-xs text-muted-foreground mb-4">Selecciona todos los que quieras</p>
@@ -307,8 +385,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 6: Intensity */}
-          {step === 6 && (
+          {/* Step 7: Intensity */}
+          {step === 7 && (
             <div>
               <Label className="mb-3 block">¿Qué nivel de intensidad buscas?</Label>
               <p className="text-xs text-muted-foreground mb-6">1 = suave y progresivo · 10 = máxima intensidad</p>
@@ -329,8 +407,72 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 7: Injuries */}
-          {step === 7 && (
+          {/* Step 8: Initial level tests */}
+          {step === 8 && (
+            <div>
+              <Label className="mb-1.5 block">¿Cuál es tu nivel ahora mismo?</Label>
+              <p className="text-xs text-muted-foreground mb-5">
+                Aproxima sin obsesionarte. Lo usaré para calibrar tu plan inicial. Déjalo en blanco si no lo sabes.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm">Dominadas máximas (reps)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    value={data.initial_tests.pullups}
+                    onChange={(e) =>
+                      setData((d) => ({ ...d, initial_tests: { ...d.initial_tests, pullups: e.target.value } }))
+                    }
+                    placeholder="0 si no haces ninguna"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Flexiones máximas (reps)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    value={data.initial_tests.pushups}
+                    onChange={(e) =>
+                      setData((d) => ({ ...d, initial_tests: { ...d.initial_tests, pushups: e.target.value } }))
+                    }
+                    placeholder="Ej: 15"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Sentadilla con tu peso (reps máximas)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    value={data.initial_tests.squat}
+                    onChange={(e) =>
+                      setData((d) => ({ ...d, initial_tests: { ...d.initial_tests, squat: e.target.value } }))
+                    }
+                    placeholder="Ej: 30"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Plancha frontal (segundos)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    value={data.initial_tests.plank}
+                    onChange={(e) =>
+                      setData((d) => ({ ...d, initial_tests: { ...d.initial_tests, plank: e.target.value } }))
+                    }
+                    placeholder="Ej: 60"
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 9: Injuries */}
+          {step === 9 && (
             <div>
               <Label className="mb-1.5 block">¿Tienes lesiones, molestias o condiciones físicas?</Label>
               <p className="text-xs text-muted-foreground mb-3">Déjalo vacío si no tienes ninguna</p>
@@ -343,8 +485,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 8: Availability */}
-          {step === 8 && (
+          {/* Step 10: Availability */}
+          {step === 10 && (
             <div className="space-y-4">
               <div>
                 <Label>Días por semana disponibles</Label>
@@ -372,8 +514,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 9: Nutrition */}
-          {step === 9 && (
+          {/* Step 11: Nutrition */}
+          {step === 11 && (
             <div className="space-y-4">
               <div>
                 <Label>Preferencias nutricionales</Label>
@@ -398,8 +540,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 10: Summary */}
-          {step === 10 && (
+          {/* Step 12: Summary */}
+          {step === 12 && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
@@ -411,10 +553,13 @@ const Onboarding = () => {
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
                   <span className="text-xl">🏋️</span>
                   <div>
-                    <p className="font-semibold text-sm">Rutina de {data.availability.days || "?"} días/semana · {data.equipment_type || "Mixto"}</p>
+                    <p className="font-semibold text-sm">
+                      Rutina de {data.availability.days || "?"} días/semana ·{" "}
+                      {PRIMARY_FOCUS_OPTIONS.find((p) => p.value === data.primary_focus)?.label || "Mixto"}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {data.sports.length > 0
-                        ? SPORTS.filter(s => data.sports.includes(s.value)).map(s => s.label).join(", ")
+                        ? SPORTS.filter((s) => data.sports.includes(s.value)).map((s) => s.label).join(", ")
                         : "Adaptada a tus deportes"}
                     </p>
                   </div>
@@ -458,7 +603,7 @@ const Onboarding = () => {
               </div>
 
               <p className="text-xs text-center text-muted-foreground mt-4">
-                Objetivo: <span className="font-medium text-foreground">{GOALS.find(g => g.value === data.goal)?.label || data.goal}</span>
+                Objetivo: <span className="font-medium text-foreground">{GOALS.find((g) => g.value === data.goal)?.label || data.goal}</span>
                 {data.weight && <> · <span className="font-medium text-foreground">{data.weight}kg</span></>}
                 {data.intensity_level && <> · Intensidad <span className="font-medium text-foreground">{data.intensity_level}/10</span></>}
               </p>
