@@ -13,6 +13,8 @@ import Chat from "@/components/Chat";
 import Greeting from "@/components/Greeting";
 import HomeOverview from "@/components/dashboard/HomeOverview";
 import TrainingPlanView from "@/components/dashboard/TrainingPlanView";
+import PRsList from "@/components/dashboard/PRsList";
+import TravelModeCard from "@/components/dashboard/TravelModeCard";
 import UserSidebar from "@/components/UserSidebar";
 import type { UserSection } from "@/components/UserSidebar";
 import SettingsPanel from "@/components/SettingsPanel";
@@ -261,6 +263,8 @@ const Dashboard = () => {
                   weeksActive={profileCreatedAt ? Math.floor((Date.now() - new Date(profileCreatedAt).getTime()) / (1000 * 60 * 60 * 24 * 7)) : 0}
                   completedDays={completedDays}
                 />
+                {user && <TravelModeCard userId={user.id} />}
+                {user && <PRsList userId={user.id} />}
               </div>
             )}
 
