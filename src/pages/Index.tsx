@@ -30,7 +30,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import coachImage from "@/assets/coach-nicolas.jpg";
+
 
 const problems = [
   {
@@ -420,61 +420,46 @@ const Index = () => {
 
       {/* SOBRE MÍ */}
       <section className="py-20 px-4 border-y border-border">
-        <div className="container mx-auto max-w-5xl">
-          <div className="grid md:grid-cols-2 gap-10 items-center">
-            <ScrollReveal direction="left">
-              <div className="relative">
-                <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 to-transparent rounded-3xl blur-2xl" />
-                <img
-                  src={coachImage}
-                  alt="Nicolás, entrenador personal de Autopilot"
-                  width={600}
-                  height={750}
-                  loading="lazy"
-                  className="relative rounded-3xl w-full h-auto object-cover card-shadow"
-                />
+        <div className="container mx-auto max-w-3xl text-center">
+          <ScrollReveal>
+            <span className="inline-block text-xs uppercase tracking-widest text-primary font-semibold mb-3">
+              Quién está al otro lado del chat
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-6 leading-tight">
+              Hola, soy <span className="text-gradient">Nicolás</span>.
+            </h2>
+            <p className="text-muted-foreground mb-4 leading-relaxed">
+              Llevo años ayudando a personas a mejorar su físico y rendimiento con
+              planes claros y fáciles de seguir. Mi especialidad es{" "}
+              <span className="text-foreground font-semibold">
+                simplificar el entrenamiento y la progresión
+              </span>{" "}
+              para que consigas resultados reales sin complicarte.
+            </p>
+            <p className="text-muted-foreground mb-10 leading-relaxed">
+              He trabajado con perfiles muy distintos, desde principiantes que nunca
+              pisaron un gym hasta niveles avanzados de calistenia y fuerza. Por eso
+              Autopilot funciona igual de bien tanto si tu objetivo es el gimnasio,
+              la calistenia o un mix de los dos.
+            </p>
+            <div className="grid grid-cols-3 gap-3 max-w-xl mx-auto">
+              <div className="bg-card border border-border rounded-xl p-4 text-center">
+                <Users className="w-5 h-5 text-primary mx-auto mb-2" />
+                <div className="text-xs text-muted-foreground">Alumnos</div>
+                <div className="font-bold font-display">+200</div>
               </div>
-            </ScrollReveal>
-            <ScrollReveal direction="right">
-              <span className="inline-block text-xs uppercase tracking-widest text-primary font-semibold mb-3">
-                Quién está al otro lado del chat
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-bold font-display mb-6 leading-tight">
-                Hola, soy <span className="text-gradient">Nicolás</span>.
-              </h2>
-              <p className="text-muted-foreground mb-4 leading-relaxed">
-                Llevo años ayudando a personas a mejorar su físico y rendimiento con
-                planes claros y fáciles de seguir. Mi especialidad es{" "}
-                <span className="text-foreground font-semibold">
-                  simplificar el entrenamiento y la progresión
-                </span>{" "}
-                para que consigas resultados reales sin complicarte.
-              </p>
-              <p className="text-muted-foreground mb-8 leading-relaxed">
-                He trabajado con perfiles muy distintos, desde principiantes que nunca
-                pisaron un gym hasta niveles avanzados de calistenia y fuerza. Por eso
-                Autopilot funciona igual de bien tanto si tu objetivo es el gimnasio,
-                la calistenia o un mix de los dos.
-              </p>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-card border border-border rounded-xl p-4 text-center">
-                  <Users className="w-5 h-5 text-primary mx-auto mb-2" />
-                  <div className="text-xs text-muted-foreground">Alumnos</div>
-                  <div className="font-bold font-display">+200</div>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-4 text-center">
-                  <Award className="w-5 h-5 text-primary mx-auto mb-2" />
-                  <div className="text-xs text-muted-foreground">Experiencia</div>
-                  <div className="font-bold font-display">+8 años</div>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-4 text-center">
-                  <TrendingUp className="w-5 h-5 text-primary mx-auto mb-2" />
-                  <div className="text-xs text-muted-foreground">Enfoque</div>
-                  <div className="font-bold font-display">Real</div>
-                </div>
+              <div className="bg-card border border-border rounded-xl p-4 text-center">
+                <Award className="w-5 h-5 text-primary mx-auto mb-2" />
+                <div className="text-xs text-muted-foreground">Experiencia</div>
+                <div className="font-bold font-display">+8 años</div>
               </div>
-            </ScrollReveal>
-          </div>
+              <div className="bg-card border border-border rounded-xl p-4 text-center">
+                <TrendingUp className="w-5 h-5 text-primary mx-auto mb-2" />
+                <div className="text-xs text-muted-foreground">Enfoque</div>
+                <div className="font-bold font-display">Real</div>
+              </div>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
