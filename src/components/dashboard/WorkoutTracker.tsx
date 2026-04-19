@@ -143,40 +143,116 @@ const WorkoutTracker = ({ userId, dayPlans }: Props) => {
     return match ? parseInt(match[1]) : 60;
   };
 
-  const saveWorkout = async () => {
-    setSaving(true);
-    try {
-      await supabase
-        .from("workout_logs")
-        .delete()
-        .eq("user_id", userId)
-        .eq("day_label", selectedDay)
-        .eq("logged_at", todayStr);
+  const persistLogs = async (rpe?: number) => {
+    await supabase
+      .from("workout_logs")
+      .delete()
+      .eq("user_id", userId)
+      .eq("day_label", selectedDay)
+      .eq("logged_at", todayStr);
 
-      const rows = Object.entries(exerciseLogs).map(([name, sets]) => ({
-        user_id: userId,
-        day_label: selectedDay,
-        exercise_name: name,
-        sets_completed: JSON.parse(JSON.stringify(sets)),
-        logged_at: todayStr,
-      }));
+    const rows = Object.entries(exerciseLogs).map(([name, sets]) => ({
+      user_id: userId,
+      day_label: selectedDay,
+      exercise_name: name,
+      sets_completed: JSON.parse(JSON.stringify(sets)),
+      logged_at: todayStr,
+      rpe: rpe ?? null,
+    }));
 
-      if (rows.length > 0) {
-        const { error } = await supabase.from("workout_logs").insert(rows);
-        if (error) throw error;
+    if (rows.length > 0) {
+      const { error } = await supabase.from("workout_logs").insert(rows);
+      if (error) throw error;
+    }
+  };
+
+  const detectAndSavePRs = async () => {
+    // For each exercise with weight > 0, find best (weight, reps) and upsert
+    const prsToInsert: Array<{
+      user_id: string;
+      exercise_name: string;
+      weight: number;
+      reps: number;
+      estimated_1rm: number;
+      achieved_at: string;
+    }> = [];
+
+    for (const [name, sets] of Object.entries(exerciseLogs)) {
+      const completed = sets.filter((s) => s.done && s.weight && parseFloat(s.weight) > 0 && s.reps > 0);
+      if (completed.length === 0) continue;
+
+      // Best by estimated 1RM (Epley)
+      let best = completed[0];
+      let bestE1RM = parseFloat(best.weight) * (1 + best.reps / 30);
+      for (const s of completed) {
+        const e1rm = parseFloat(s.weight) * (1 + s.reps / 30);
+        if (e1rm > bestE1RM) {
+          best = s;
+          bestE1RM = e1rm;
+        }
       }
 
-      // Also mark day as completed if all sets done
-      const allDone = Object.values(exerciseLogs).flat().every((s) => s.done);
-      if (allDone) {
-        await supabase.from("day_completions").upsert({
+      // Check if it beats existing PR
+      const { data: existing } = await supabase
+        .from("personal_records")
+        .select("estimated_1rm")
+        .eq("user_id", userId)
+        .eq("exercise_name", name)
+        .order("estimated_1rm", { ascending: false, nullsFirst: false })
+        .limit(1);
+
+      const currentBest = existing?.[0]?.estimated_1rm ?? 0;
+      if (bestE1RM > Number(currentBest)) {
+        prsToInsert.push({
           user_id: userId,
-          day_label: selectedDay,
-          completed_at: todayStr,
+          exercise_name: name,
+          weight: parseFloat(best.weight),
+          reps: best.reps,
+          estimated_1rm: Math.round(bestE1RM * 10) / 10,
+          achieved_at: todayStr,
         });
       }
+    }
 
-      toast.success("¡Entrenamiento guardado! 💪");
+    if (prsToInsert.length > 0) {
+      await supabase.from("personal_records").upsert(prsToInsert, {
+        onConflict: "user_id,exercise_name,weight,reps",
+      });
+      toast.success(`🏆 ¡Nuevo PR en ${prsToInsert.length} ejercicio${prsToInsert.length > 1 ? "s" : ""}!`, { duration: 4000 });
+    }
+  };
+
+  const saveWorkout = async () => {
+    const allDone = Object.values(exerciseLogs).flat().every((s) => s.done) && Object.keys(exerciseLogs).length > 0;
+    if (allDone) {
+      // Force RPE before completing day
+      setRpeOpen(true);
+      return;
+    }
+    // Partial save (no RPE yet)
+    setSaving(true);
+    try {
+      await persistLogs();
+      toast.success("Progreso guardado 💪");
+    } catch {
+      toast.error("Error al guardar");
+    }
+    setSaving(false);
+  };
+
+  const handleRPEConfirm = async (rpe: number) => {
+    setRpeOpen(false);
+    setSaving(true);
+    try {
+      await persistLogs(rpe);
+      await supabase.from("day_completions").upsert({
+        user_id: userId,
+        day_label: selectedDay,
+        completed_at: todayStr,
+        rpe,
+      });
+      await detectAndSavePRs();
+      toast.success("¡Entrenamiento completado! 💪");
     } catch {
       toast.error("Error al guardar");
     }
