@@ -30,7 +30,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import coachImage from "@/assets/coach-nicolas.jpg";
+
 
 const problems = [
   {
