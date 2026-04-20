@@ -15,6 +15,7 @@ import HomeOverview from "@/components/dashboard/HomeOverview";
 import TrainingPlanView from "@/components/dashboard/TrainingPlanView";
 import PRsList from "@/components/dashboard/PRsList";
 import TravelModeCard from "@/components/dashboard/TravelModeCard";
+import MealsList from "@/components/dashboard/MealsList";
 import UserSidebar from "@/components/UserSidebar";
 import type { UserSection } from "@/components/UserSidebar";
 import SettingsPanel from "@/components/SettingsPanel";
