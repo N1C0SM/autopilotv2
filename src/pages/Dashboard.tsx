@@ -301,15 +301,9 @@ const Dashboard = () => {
                 )}
 
                 <div className="bg-card rounded-xl p-6 border border-border">
-                  <h3 className="font-bold font-display mb-3">Comidas</h3>
-                  <div className="space-y-3">
-                    {meals.map((meal, i) => (
-                      <div key={i} className="border-b border-border pb-3 last:border-0 last:pb-0">
-                        <div className="font-medium">{meal.name}</div>
-                        <div className="text-sm text-muted-foreground">{meal.description}</div>
-                      </div>
-                    ))}
-                  </div>
+                  <h3 className="font-bold font-display mb-1">Comidas</h3>
+                  <p className="text-xs text-muted-foreground mb-3">Doble click en una comida para marcarla como hecha hoy ✓</p>
+                  <MealsList meals={meals} />
                 </div>
 
                 <div className="text-center pt-4">
