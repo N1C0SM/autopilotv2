@@ -338,6 +338,61 @@ function pickExercisesForSession(
     }
   }
 
+  // STEP 3.5: Garantizar mínimo de ejercicios (al menos 4 por sesión).
+  // Si las reglas estrictas dejaron pocos, rellenamos sin restricciones.
+  const MIN_EXERCISES = 4;
+  if (picked.length < MIN_EXERCISES) {
+    const remaining = allAvailable
+      .filter(ex => !usedIds.has(ex.id))
+      .sort((a, b) => (a.priority ?? 2) - (b.priority ?? 2));
+    for (const ex of remaining) {
+      if (picked.length >= MIN_EXERCISES) break;
+      const stimulus = getEffectiveStimulus(ex.stimulus_type, goal, skillProfile);
+      const scheme = getRepScheme(stimulus, ex.priority ?? 2, rules);
+      picked.push({
+        exercise_id: ex.id,
+        name: ex.name,
+        series: scheme.series,
+        reps: scheme.reps,
+        weight: "",
+        rest: scheme.rest,
+        image_url: ex.image_url || undefined,
+        movement_pattern: ex.movement_pattern || "Otro",
+        priority: ex.priority ?? 2,
+        fatigue_level: ex.fatigue_level || "Media",
+      });
+      usedIds.add(ex.id);
+    }
+  }
+
+  // STEP 3.6: Si AÚN no hay ejercicios (muscle library casi vacía),
+  // tomar cualquier cosa de la lib filtrada por equipamiento.
+  if (picked.length === 0) {
+    console.log(`[GENERATE-PLAN] FALLBACK: no exercises matched. Using any available.`);
+    const fallback = Object.values(exerciseLib).flat()
+      .filter(ex => {
+        if (exerciseType === "Gimnasio" && ex.exercise_type === "Calistenia") return false;
+        if (exerciseType === "Calistenia" && ex.exercise_type === "Gimnasio") return false;
+        return true;
+      })
+      .slice(0, MIN_EXERCISES);
+    for (const ex of fallback) {
+      const scheme = getRepScheme("Hipertrofia", 2, rules);
+      picked.push({
+        exercise_id: ex.id,
+        name: ex.name,
+        series: scheme.series,
+        reps: scheme.reps,
+        weight: "",
+        rest: scheme.rest,
+        image_url: ex.image_url || undefined,
+        movement_pattern: ex.movement_pattern || "Otro",
+        priority: 2,
+        fatigue_level: ex.fatigue_level || "Media",
+      });
+    }
+  }
+
   // STEP 4: Sort
   picked.sort((a, b) => {
     const orderA = getOrder(a, allAvailable);
