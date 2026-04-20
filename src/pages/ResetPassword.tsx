@@ -13,20 +13,75 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
-      setIsRecovery(true);
-    }
+    let mounted = true;
+
+    const init = async () => {
+      const hash = window.location.hash || "";
+      const search = window.location.search || "";
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      const errorDescription =
+        url.searchParams.get("error_description") ||
+        new URLSearchParams(hash.replace(/^#/, "")).get("error_description");
+
+      if (errorDescription) {
+        if (mounted) {
+          setErrorMsg(decodeURIComponent(errorDescription).replace(/\+/g, " "));
+          setChecking(false);
+        }
+        return;
+      }
+
+      // Modern PKCE flow: ?code=...
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+        if (mounted) {
+          if (error) {
+            setErrorMsg("El enlace ha caducado o ya se ha usado. Solicita uno nuevo.");
+          } else {
+            setIsRecovery(true);
+            // clean URL
+            window.history.replaceState({}, document.title, "/reset-password");
+          }
+          setChecking(false);
+        }
+        return;
+      }
+
+      // Legacy implicit flow: #access_token=...&type=recovery
+      if (hash.includes("type=recovery") || search.includes("type=recovery")) {
+        if (mounted) {
+          setIsRecovery(true);
+          setChecking(false);
+        }
+        return;
+      }
+
+      // Fallback: check active session (some providers redirect already authed)
+      const { data } = await supabase.auth.getSession();
+      if (mounted) {
+        if (data.session) setIsRecovery(true);
+        setChecking(false);
+      }
+    };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecovery(true);
+        setChecking(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    init();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,12 +105,24 @@ const ResetPassword = () => {
     }
   };
 
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!isRecovery) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="w-full max-w-md text-center">
-          <p className="text-muted-foreground mb-4">Enlace inválido o expirado.</p>
-          <Link to="/login" className="text-primary hover:underline">Volver al inicio de sesión</Link>
+          <p className="text-muted-foreground mb-2">{errorMsg || "Enlace inválido o expirado."}</p>
+          <p className="text-xs text-muted-foreground mb-4">Pide un nuevo enlace de recuperación.</p>
+          <div className="flex gap-3 justify-center">
+            <Link to="/forgot-password" className="text-primary hover:underline">Solicitar nuevo enlace</Link>
+            <Link to="/login" className="text-muted-foreground hover:underline">Iniciar sesión</Link>
+          </div>
         </div>
       </div>
     );
