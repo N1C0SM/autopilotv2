@@ -78,6 +78,13 @@ const Chat = ({ conversationUserId, isAdmin = false }: Props) => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const isVideo = file.type.startsWith("video");
+    const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024; // 50MB video, 10MB foto
+    if (file.size > maxSize) {
+      toast.error(isVideo ? "El vídeo supera los 50MB" : "La foto supera los 10MB");
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
     const type = file.type.startsWith("video") ? "video" : "image";
     const url = URL.createObjectURL(file);
     setPreviewFile({ file, url, type });
