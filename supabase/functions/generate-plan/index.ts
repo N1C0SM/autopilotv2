@@ -453,33 +453,162 @@ function getEffectiveStimulus(exerciseStimulus: string | null, goal: string, ski
 
 // ─── Nutrition helpers ───
 
-function calcMacros(weight: number, goal: string) {
-  switch (goal) {
-    case "gain_muscle": return { protein: Math.round(weight * 2.2), carbs: Math.round(weight * 4), fats: Math.round(weight * 1) };
-    case "lose_weight": return { protein: Math.round(weight * 2.4), carbs: Math.round(weight * 2), fats: Math.round(weight * 0.8) };
-    case "recomp": return { protein: Math.round(weight * 2.2), carbs: Math.round(weight * 3), fats: Math.round(weight * 0.9) };
-    case "improve_endurance": return { protein: Math.round(weight * 1.8), carbs: Math.round(weight * 4.5), fats: Math.round(weight * 0.9) };
-    case "skill_based": return { protein: Math.round(weight * 2.0), carbs: Math.round(weight * 3.5), fats: Math.round(weight * 1) };
-    default: return { protein: Math.round(weight * 1.8), carbs: Math.round(weight * 3.5), fats: Math.round(weight * 1) };
-  }
+type DietType = "estandar" | "paleo" | "keto" | "vegana" | "vegetariana" | "mediterranea" | "sin_gluten" | "sin_lactosa";
+
+function detectDiet(prefs: string | null | undefined): DietType {
+  if (!prefs) return "estandar";
+  const p = prefs.toLowerCase();
+  if (p.includes("keto") || p.includes("cetog")) return "keto";
+  if (p.includes("paleo")) return "paleo";
+  if (p.includes("vegan") && !p.includes("vegetar")) return "vegana";
+  if (p.includes("vegetar") || p.includes("ovolac")) return "vegetariana";
+  if (p.includes("mediterr")) return "mediterranea";
+  if (p.includes("sin gluten") || p.includes("celiac")) return "sin_gluten";
+  if (p.includes("sin lactosa") || p.includes("intoler")) return "sin_lactosa";
+  return "estandar";
 }
 
-function getMeals(goal: string) {
-  const base = [
-    { name: "Desayuno", description: "Avena con plátano, frutos rojos y batido de proteínas" },
-    { name: "Media mañana", description: "Yogur griego con nueces y miel" },
-    { name: "Almuerzo", description: "Pollo a la plancha con arroz integral y verduras salteadas" },
-    { name: "Merienda", description: "Tostada integral con aguacate y huevo duro" },
-    { name: "Cena", description: "Salmón al horno con patata y ensalada variada" },
-  ];
+// Macros adaptados a goal Y dieta (keto recorta carbs, vegana ajusta proteína, etc.)
+function calcMacros(weight: number, goal: string, diet: DietType) {
+  // Base por goal (gr/kg)
+  let p = 1.8, c = 3.5, f = 1.0;
+  switch (goal) {
+    case "gain_muscle":      p = 2.2; c = 4.0; f = 1.0; break;
+    case "lose_weight":      p = 2.4; c = 2.0; f = 0.8; break;
+    case "recomp":           p = 2.2; c = 3.0; f = 0.9; break;
+    case "improve_endurance":p = 1.8; c = 4.5; f = 0.9; break;
+    case "skill_based":      p = 2.0; c = 3.5; f = 1.0; break;
+  }
+  // Ajuste por dieta
+  switch (diet) {
+    case "keto":
+      // Muy bajo en carbs, grasa alta, proteína moderada
+      c = 0.5; f = Math.max(f * 2.2, 1.8); p = Math.max(p, 2.0); break;
+    case "paleo":
+      // Sin azúcares ni cereales: menos carbs, más grasas saludables
+      c = c * 0.7; f = f * 1.3; break;
+    case "vegana":
+      // Más proteína vegetal compensada y carbs ligeramente más altos
+      p = p * 1.1; c = c * 1.1; break;
+    case "mediterranea":
+      f = f * 1.15; break;
+    default: break;
+  }
+  return {
+    protein: Math.round(weight * p),
+    carbs:   Math.round(weight * c),
+    fats:    Math.round(weight * f),
+  };
+}
+
+// Banco de comidas por dieta + goal
+function getMeals(goal: string, diet: DietType, allergies?: string | null) {
+  const a = (allergies || "").toLowerCase();
+  const noNuts = a.includes("frutos secos") || a.includes("nuez") || a.includes("almendr");
+  const noEggs = a.includes("huevo");
+  const noFish = a.includes("pescado") || a.includes("marisco");
+
+  type Meal = { name: string; description: string };
+
+  const banks: Record<DietType, Meal[]> = {
+    estandar: [
+      { name: "Desayuno", description: "Avena con plátano, frutos rojos y batido de proteínas" },
+      { name: "Media mañana", description: "Yogur griego con nueces y miel" },
+      { name: "Almuerzo", description: "Pollo a la plancha con arroz integral y verduras salteadas" },
+      { name: "Merienda", description: "Tostada integral con aguacate y huevo duro" },
+      { name: "Cena", description: "Salmón al horno con patata y ensalada variada" },
+    ],
+    paleo: [
+      { name: "Desayuno", description: "Tortilla de 3 huevos con espinacas, aguacate y arándanos" },
+      { name: "Media mañana", description: "Puñado de almendras y manzana" },
+      { name: "Almuerzo", description: "Solomillo de ternera con boniato asado y brócoli salteado" },
+      { name: "Merienda", description: "Pechuga de pavo natural con zanahoria y nueces" },
+      { name: "Cena", description: "Salmón salvaje al horno con calabacín y espárragos" },
+    ],
+    keto: [
+      { name: "Desayuno", description: "Huevos revueltos con bacon, aguacate y queso curado" },
+      { name: "Media mañana", description: "Nueces de macadamia y queso brie" },
+      { name: "Almuerzo", description: "Entrecot con mantequilla, espinacas a la crema y aguacate" },
+      { name: "Merienda", description: "Yogur griego entero con semillas de chía y mantequilla de almendra" },
+      { name: "Cena", description: "Salmón con mantequilla de hierbas y ensalada de aguacate y aceitunas" },
+    ],
+    vegana: [
+      { name: "Desayuno", description: "Porridge de avena con leche de soja, plátano y mantequilla de cacahuete" },
+      { name: "Media mañana", description: "Hummus con palitos de zanahoria y tortitas de arroz" },
+      { name: "Almuerzo", description: "Bowl de quinoa, garbanzos, aguacate, kale y tahini" },
+      { name: "Merienda", description: "Batido de proteína vegetal con plátano, avena y frutos rojos" },
+      { name: "Cena", description: "Tofu marinado al wok con verduras y arroz integral" },
+    ],
+    vegetariana: [
+      { name: "Desayuno", description: "Tostadas integrales con huevo poché, aguacate y tomate" },
+      { name: "Media mañana", description: "Yogur griego con granola y miel" },
+      { name: "Almuerzo", description: "Pasta integral con lentejas, espinacas y queso parmesano" },
+      { name: "Merienda", description: "Requesón con frutos rojos y nueces" },
+      { name: "Cena", description: "Tortilla de patata con ensalada mixta y pan integral" },
+    ],
+    mediterranea: [
+      { name: "Desayuno", description: "Tostada de pan integral con tomate, AOVE y jamón ibérico" },
+      { name: "Media mañana", description: "Yogur natural con nueces y miel" },
+      { name: "Almuerzo", description: "Lentejas estofadas con verduras y aceite de oliva" },
+      { name: "Merienda", description: "Fruta de temporada y un puñado de almendras" },
+      { name: "Cena", description: "Pescado al horno con verduras asadas y ensalada" },
+    ],
+    sin_gluten: [
+      { name: "Desayuno", description: "Tortitas de avena sin gluten con plátano y proteína" },
+      { name: "Media mañana", description: "Yogur griego con frutos rojos y semillas" },
+      { name: "Almuerzo", description: "Pollo con quinoa, aguacate y verduras al vapor" },
+      { name: "Merienda", description: "Hummus con crudités y tortitas de arroz" },
+      { name: "Cena", description: "Salmón con boniato y ensalada verde" },
+    ],
+    sin_lactosa: [
+      { name: "Desayuno", description: "Avena con bebida de almendra, plátano y proteína vegetal" },
+      { name: "Media mañana", description: "Frutos secos y manzana" },
+      { name: "Almuerzo", description: "Pollo a la plancha con arroz integral y verduras salteadas" },
+      { name: "Merienda", description: "Tostada integral con aguacate y atún" },
+      { name: "Cena", description: "Pescado blanco al horno con patata y ensalada" },
+    ],
+  };
+
+  let meals: Meal[] = [...banks[diet]];
+
+  // Goal extras
   if (goal === "gain_muscle" || goal === "skill_based") {
-    base.push({ name: "Pre-entreno", description: "Plátano con mantequilla de cacahuete y pan integral" });
-    base.push({ name: "Post-entreno", description: "Batido de proteínas con avena y frutos rojos" });
+    const isVegan = diet === "vegana";
+    meals.push({
+      name: "Pre-entreno",
+      description: isVegan
+        ? "Plátano con mantequilla de cacahuete y pan integral"
+        : "Plátano con mantequilla de cacahuete y pan integral",
+    });
+    meals.push({
+      name: "Post-entreno",
+      description: isVegan
+        ? "Batido de proteína vegetal con avena, plátano y bebida de soja"
+        : "Batido de proteínas con avena y frutos rojos",
+    });
   }
   if (goal === "lose_weight") {
-    base[4] = { name: "Cena", description: "Pechuga de pavo con ensalada verde y vinagreta ligera" };
+    // Cena más ligera adaptada por dieta
+    const lighter: Record<DietType, string> = {
+      estandar: "Pechuga de pavo con ensalada verde y vinagreta ligera",
+      paleo: "Pollo asado con ensalada de hojas verdes, aguacate y AOVE",
+      keto: "Pollo con espinacas salteadas en mantequilla y aguacate",
+      vegana: "Tofu salteado con kale, brócoli y semillas de sésamo",
+      vegetariana: "Tortilla francesa con espinacas y ensalada verde",
+      mediterranea: "Pescado blanco a la plancha con verduras al horno",
+      sin_gluten: "Pavo con ensalada verde y aguacate",
+      sin_lactosa: "Pavo con ensalada verde y aguacate",
+    };
+    const cenaIdx = meals.findIndex(m => m.name === "Cena");
+    if (cenaIdx >= 0) meals[cenaIdx] = { name: "Cena", description: lighter[diet] };
   }
-  return base;
+
+  // Filtrado por alergias (simple heurística)
+  if (noNuts) meals = meals.map(m => ({ ...m, description: m.description.replace(/(nueces|almendras|cacahuete|frutos secos|macadamia)/gi, "semillas") }));
+  if (noEggs) meals = meals.map(m => ({ ...m, description: m.description.replace(/(huevo[s]?|tortilla|tortilla francesa)/gi, "tofu revuelto") }));
+  if (noFish) meals = meals.map(m => ({ ...m, description: m.description.replace(/(salmón|pescado blanco|atún|marisco)/gi, "pollo") }));
+
+  return meals;
 }
 
 // ─── Gym split ───
