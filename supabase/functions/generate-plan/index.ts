@@ -920,8 +920,10 @@ serve(async (req) => {
       }
     }
 
-    const macros = calcMacros(weight, goal);
-    const meals = getMeals(goal);
+    const diet = detectDiet((onb as any).nutrition_preferences);
+    const macros = calcMacros(weight, goal, diet);
+    const meals = getMeals(goal, diet, (onb as any).allergies);
+    console.log(`[GENERATE-PLAN] Nutrition: diet=${diet}, goal=${goal}, macros=${JSON.stringify(macros)}, meals=${meals.length}`);
 
     await supabase.from("training_plan").upsert({ user_id: targetUserId, workouts_json: weeklyPlan });
     await supabase.from("nutrition_plan").upsert({ user_id: targetUserId, macros_json: macros, meals_json: meals });
