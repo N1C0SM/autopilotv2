@@ -68,7 +68,11 @@ const Chat = ({ conversationUserId, isAdmin = false }: Props) => {
   const uploadMedia = async (file: File): Promise<{ url: string; type: "image" | "video" }> => {
     const ext = file.name.split(".").pop() || "jpg";
     const mediaType = file.type.startsWith("video") ? "video" : "image";
-    const path = `chat/${conversationUserId}/${Date.now()}.${ext}`;
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    if (!uid) throw new Error("No autenticado");
+    // El primer segmento debe ser el uid del que sube (RLS de storage)
+    const path = `${uid}/chat/${conversationUserId}/${Date.now()}.${ext}`;
     const { error: uploadError } = await supabase.storage.from("progress-photos").upload(path, file, { upsert: false });
     if (uploadError) throw uploadError;
     const { data: urlData } = supabase.storage.from("progress-photos").getPublicUrl(path);
