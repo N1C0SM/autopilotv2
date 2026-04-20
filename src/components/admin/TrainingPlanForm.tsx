@@ -560,19 +560,25 @@ const TrainingPlanForm = ({ dayPlans, onChange, userSports, equipmentType = "Mix
       </div>
 
       {/* Skill/Goal template buttons */}
-      <div className="mb-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs">🎯</span>
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plantillas por objetivo (con progresiones)</span>
+      {/* Skill/Goal template — SOLO el objetivo del usuario */}
+      {recommendedSkill && (
+        <div className="mb-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs">🎯</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Plantilla por objetivo del usuario
+            </span>
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            className="text-xs h-8"
+            onClick={() => loadSkillTemplate(recommendedSkill)}
+          >
+            {SKILL_TEMPLATES[recommendedSkill].emoji} {SKILL_TEMPLATES[recommendedSkill].label}
+          </Button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(SKILL_TEMPLATES).map(([key, tpl]) => (
-            <Button key={key} variant={recommendedSkill === key ? "default" : "outline"} size="sm" className={`text-xs h-7 ${recommendedSkill !== key ? "border-primary/20 hover:bg-primary/10" : ""}`} onClick={() => loadSkillTemplate(key)}>
-              {tpl.emoji} {tpl.label}
-            </Button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {dayPlans.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
