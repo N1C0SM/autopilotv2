@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import ScrollReveal from "@/components/ScrollReveal";
+import PricingTiers from "@/components/PricingTiers";
 import {
   Accordion,
   AccordionContent,
