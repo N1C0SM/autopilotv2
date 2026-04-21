@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Apple, Clock, Loader2, Crown, Dumbbell, UtensilsCrossed, MessageCircle } from "lucide-react";
+import { Download, Calendar as CalendarIcon } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -20,6 +21,8 @@ import UserSidebar from "@/components/UserSidebar";
 import type { UserSection } from "@/components/UserSidebar";
 import SettingsPanel from "@/components/SettingsPanel";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import ReferralShare from "@/components/ReferralShare";
+import { exportPlanPDF } from "@/lib/exportPlanPDF";
 
 export interface Profile {
   user_id: string;
@@ -106,10 +109,10 @@ const Dashboard = () => {
     fetchData();
   }, [user, navigate]);
 
-  const handleCompletePayment = async () => {
+  const handleCompletePayment = async (plan: "monthly" | "yearly" = "monthly") => {
     try {
       const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke("create-checkout", {
-        body: { referral_code: "" },
+        body: { referral_code: "", plan },
       });
       if (checkoutError || !checkoutData?.url) {
         toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
@@ -118,6 +121,15 @@ const Dashboard = () => {
       window.location.href = checkoutData.url;
     } catch {
       toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      exportPlanPDF({ userName: profileName, dayPlans, macros, meals });
+      toast.success("PDF descargado");
+    } catch (e) {
+      toast.error("No se pudo generar el PDF");
     }
   };
 
