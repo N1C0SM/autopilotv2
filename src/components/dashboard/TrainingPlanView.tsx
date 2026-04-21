@@ -57,19 +57,19 @@ const TrainingPlanView = ({ dayPlans }: Props) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4 px-1 sm:px-0">
       {/* Header + actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Dumbbell className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-bold font-display">Tu Plan</h2>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Dumbbell className="w-5 h-5 text-primary shrink-0" />
+          <h2 className="text-lg sm:text-xl font-bold font-display truncate">Tu Plan</h2>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleCopy}>
+        <div className="flex gap-1.5 sm:gap-2 shrink-0">
+          <Button variant="outline" size="sm" onClick={handleCopy} className="h-8 px-2 sm:px-3">
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             <span className="hidden sm:inline ml-1">{copied ? "Copiado" : "Copiar"}</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDownload}>
+          <Button variant="outline" size="sm" onClick={handleDownload} className="h-8 px-2 sm:px-3">
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline ml-1">Descargar</span>
           </Button>
@@ -93,9 +93,9 @@ const TrainingPlanView = ({ dayPlans }: Props) => {
           >
             <button
               onClick={() => setExpandedDay(isExpanded ? null : day)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-secondary/20 transition-colors"
+              className="w-full flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3 sm:py-3.5 hover:bg-secondary/20 transition-colors"
             >
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+              <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 ${
                 plan ? "bg-primary/15" : "bg-secondary/50"
               }`}>
                 {plan?.type === "gimnasio" ? (
@@ -103,13 +103,13 @@ const TrainingPlanView = ({ dayPlans }: Props) => {
                 ) : plan?.type === "actividad" ? (
                   <Flame className="w-4 h-4 text-primary" />
                 ) : (
-                  <span className="text-sm">😴</span>
+                  <span className="text-xs sm:text-sm">😴</span>
                 )}
               </div>
 
               <div className="flex-1 text-left min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className={`font-bold text-sm ${isToday ? "text-primary" : ""}`}>
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <span className={`font-bold text-[13px] sm:text-sm ${isToday ? "text-primary" : ""}`}>
                     {day}
                   </span>
                   {isToday && (
@@ -118,7 +118,7 @@ const TrainingPlanView = ({ dayPlans }: Props) => {
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1 block">
                   {plan?.type === "gimnasio"
                     ? `${plan.routine_name} · ${plan.muscle_focus}`
                     : plan?.type === "actividad"
@@ -129,9 +129,9 @@ const TrainingPlanView = ({ dayPlans }: Props) => {
 
               {plan && (
                 isExpanded ? (
-                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                  <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
                 )
               )}
             </button>
@@ -140,23 +140,23 @@ const TrainingPlanView = ({ dayPlans }: Props) => {
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
-                className="px-4 pb-4 space-y-2"
+                className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2"
               >
                 {plan.exercises.map((ex, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 p-3 bg-secondary/20 rounded-lg"
+                    className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 bg-secondary/20 rounded-lg"
                   >
                     {ex.image_url ? (
-                      <img src={ex.image_url} alt={ex.name} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                      <img src={ex.image_url} alt={ex.name} className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg object-cover shrink-0" />
                     ) : (
-                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
                         <Dumbbell className="w-4 h-4 text-muted-foreground" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{ex.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-medium text-[13px] sm:text-sm truncate">{ex.name}</p>
+                      <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
                         {ex.series} series × {ex.reps} reps · {ex.rest}
                       </p>
                     </div>
@@ -169,13 +169,13 @@ const TrainingPlanView = ({ dayPlans }: Props) => {
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
-                className="px-4 pb-4"
+                className="px-3 sm:px-4 pb-3 sm:pb-4"
               >
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1.5 bg-secondary/40 px-3 py-1.5 rounded-full">
+                <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground flex-wrap">
+                  <span className="flex items-center gap-1.5 bg-secondary/40 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full">
                     <Flame className="w-3.5 h-3.5 text-primary" />{plan.intensity}
                   </span>
-                  <span className="flex items-center gap-1.5 bg-secondary/40 px-3 py-1.5 rounded-full">
+                  <span className="flex items-center gap-1.5 bg-secondary/40 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full">
                     <Clock className="w-3.5 h-3.5 text-primary" />{plan.duration}
                   </span>
                 </div>
