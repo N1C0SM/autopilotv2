@@ -237,10 +237,16 @@ const Dashboard = () => {
                   </div>
                   <h2 className="text-xl font-bold font-display mb-2">{content.title}</h2>
                   <p className="text-muted-foreground mb-6">{content.description}</p>
-                  <Button variant="hero" size="lg" onClick={handleCompletePayment}>
+                  <Button variant="hero" size="lg" onClick={() => handleCompletePayment("monthly")}>
                     {content.cta}
                   </Button>
-                  <p className="text-xs text-muted-foreground mt-3">Cancela cuando quieras. Sin permanencia.</p>
+                  <button
+                    onClick={() => handleCompletePayment("yearly")}
+                    className="block mx-auto mt-4 text-xs text-primary hover:underline font-semibold flex items-center gap-1.5"
+                  >
+                    <CalendarIcon className="w-3 h-3" /> O paga anual: 190€/año (ahorras 38€)
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-3">Cancela cuando quieras · Garantía 30 días</p>
                 </motion.div>
               );
             })()}
