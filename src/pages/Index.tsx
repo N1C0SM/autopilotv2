@@ -675,53 +675,13 @@ const Index = () => {
 
           {/* CARD PRINCIPAL */}
           <ScrollReveal delay={0.2}>
-            <div className="max-w-md mx-auto">
-              <div className="bg-card rounded-3xl p-8 border border-primary/40 card-shadow glow-shadow text-center">
-                <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-6">
-                  <Zap className="w-3 h-3" /> 7 DÍAS GRATIS
-                </div>
-                <div className="flex items-baseline justify-center gap-1 mb-1">
-                  <span className="text-5xl font-bold font-display">€19</span>
-                  <span className="text-muted-foreground">/mes</span>
-                </div>
-                <p className="text-xs text-muted-foreground mb-8">Sin permanencia · Cancela cuando quieras</p>
-
-                <ul className="space-y-3 text-left text-sm mb-6">
-                  {[
-                    "Plan de entrenamiento personalizado",
-                    "Plan de nutrición personalizado",
-                    "Chat directo conmigo (lo más importante)",
-                    "Ajustes continuos del plan",
-                    "Adaptado a gym, calistenia o mixto",
-                  ].map((f) => (
-                    <li key={f} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* GARANTÍA */}
-                <div className="bg-success/10 border border-success/30 rounded-xl p-4 mb-6 text-left flex items-start gap-3">
-                  <ShieldCheck className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-sm font-bold text-foreground mb-0.5">Garantía 14 días</div>
-                    <p className="text-xs text-muted-foreground">
-                      Si no notas la diferencia en 2 semanas, te devuelvo el dinero. Sin preguntas.
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  variant="hero"
-                  size="lg"
-                  className="w-full hover-scale"
-                  onClick={() => navigate("/signup")}
-                >
-                  Empezar mis 7 días gratis <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-                <p className="text-xs text-muted-foreground mt-3">
-                  Si cancelas en los primeros 7 días no pagas nada.
+            <PricingTiers onSelect={(plan) => navigate(`/signup?plan=${plan}`)} />
+            <div className="max-w-md mx-auto mt-6 bg-success/10 border border-success/30 rounded-xl p-4 flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="text-sm font-bold text-foreground mb-0.5">Garantía 30 días</div>
+                <p className="text-xs text-muted-foreground">
+                  Si no notas la diferencia en 30 días, te devuelvo el dinero. Sin preguntas.
                 </p>
               </div>
             </div>
