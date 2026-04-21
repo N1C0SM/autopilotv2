@@ -57,19 +57,19 @@ const TrainingPlanView = ({ dayPlans }: Props) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4 px-1 sm:px-0">
       {/* Header + actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Dumbbell className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-bold font-display">Tu Plan</h2>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Dumbbell className="w-5 h-5 text-primary shrink-0" />
+          <h2 className="text-lg sm:text-xl font-bold font-display truncate">Tu Plan</h2>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleCopy}>
+        <div className="flex gap-1.5 sm:gap-2 shrink-0">
+          <Button variant="outline" size="sm" onClick={handleCopy} className="h-8 px-2 sm:px-3">
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             <span className="hidden sm:inline ml-1">{copied ? "Copiado" : "Copiar"}</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDownload}>
+          <Button variant="outline" size="sm" onClick={handleDownload} className="h-8 px-2 sm:px-3">
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline ml-1">Descargar</span>
           </Button>
