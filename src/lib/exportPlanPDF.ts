@@ -71,25 +71,37 @@ export function exportPlanPDF({ userName, dayPlans, macros, meals }: ExportArgs)
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
       doc.setTextColor(30, 30, 40);
-      doc.text(`Día ${idx + 1} · ${day.label || ""}`, M, y);
+      const dayLabel = day.type === "gimnasio"
+        ? `${day.day || ""}${day.routine_name ? " · " + day.routine_name : ""}`
+        : `${day.day || ""}${day.sport ? " · " + day.sport : ""}`;
+      doc.text(`Día ${idx + 1} · ${dayLabel}`, M, y);
       y += 14;
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 70);
-      const exercises = (day.exercises || []) as Array<{ name: string; sets?: number; reps?: string; rest?: string }>;
-      if (exercises.length === 0) {
+      if (day.type === "actividad") {
         ensureSpace(16);
         doc.setFont("helvetica", "italic");
-        doc.text("Día de descanso", M + 12, y);
+        const desc = [day.intensity, day.duration].filter(Boolean).join(" · ");
+        doc.text(desc || "Actividad libre", M + 12, y);
         doc.setFont("helvetica", "normal");
         y += 18;
       } else {
+        const exercises = day.exercises || [];
+        if (exercises.length === 0) {
+          ensureSpace(16);
+          doc.setFont("helvetica", "italic");
+          doc.text("Día de descanso", M + 12, y);
+          doc.setFont("helvetica", "normal");
+          y += 18;
+        } else {
         exercises.forEach((ex) => {
           ensureSpace(16);
           const detail = [
-            ex.sets ? `${ex.sets} series` : "",
-            ex.reps ? `· ${ex.reps}` : "",
+            ex.series ? `${ex.series} series` : "",
+            ex.reps ? `· ${ex.reps} reps` : "",
+            ex.weight ? `· ${ex.weight}` : "",
             ex.rest ? `· descanso ${ex.rest}` : "",
           ].filter(Boolean).join(" ");
           doc.setFont("helvetica", "bold");
@@ -104,6 +116,7 @@ export function exportPlanPDF({ userName, dayPlans, macros, meals }: ExportArgs)
             y += 16;
           }
         });
+        }
       }
       y += 6;
     });
