@@ -16,6 +16,10 @@ interface SettingsData {
   price_id_test: string;
   price_id_live: string;
   referral_coupon_id: string;
+  price_id_yearly_test: string;
+  price_id_yearly_live: string;
+  payment_link_yearly_test: string;
+  payment_link_yearly_live: string;
 }
 
 const PaymentModeToggle = () => {
@@ -38,6 +42,10 @@ const PaymentModeToggle = () => {
           price_id_test: (data as any).price_id_test || "",
           price_id_live: (data as any).price_id_live || "",
           referral_coupon_id: (data as any).referral_coupon_id || "",
+          price_id_yearly_test: (data as any).price_id_yearly_test || "",
+          price_id_yearly_live: (data as any).price_id_yearly_live || "",
+          payment_link_yearly_test: (data as any).payment_link_yearly_test || "",
+          payment_link_yearly_live: (data as any).payment_link_yearly_live || "",
         });
       }
       setLoading(false);
