@@ -120,10 +120,10 @@ serve(async (req) => {
       mode: "subscription",
       success_url: `${origin}/payment-success`,
       cancel_url: `${origin}/signup`,
-      metadata: { user_id: user.id, tier: "personal" },
+      metadata: { user_id: user.id, tier: "personal", plan },
       subscription_data: {
-        trial_period_days: 7,
-        metadata: { user_id: user.id, tier: "personal" },
+        trial_period_days: plan === "yearly" ? 0 : 7,
+        metadata: { user_id: user.id, tier: "personal", plan },
       },
     };
 
