@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Apple, Clock, Loader2, Crown, Dumbbell, UtensilsCrossed, MessageCircle } from "lucide-react";
+import { Download, Calendar as CalendarIcon } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -20,6 +21,8 @@ import UserSidebar from "@/components/UserSidebar";
 import type { UserSection } from "@/components/UserSidebar";
 import SettingsPanel from "@/components/SettingsPanel";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import ReferralShare from "@/components/ReferralShare";
+import { exportPlanPDF } from "@/lib/exportPlanPDF";
 
 export interface Profile {
   user_id: string;
@@ -106,10 +109,10 @@ const Dashboard = () => {
     fetchData();
   }, [user, navigate]);
 
-  const handleCompletePayment = async () => {
+  const handleCompletePayment = async (plan: "monthly" | "yearly" = "monthly") => {
     try {
       const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke("create-checkout", {
-        body: { referral_code: "" },
+        body: { referral_code: "", plan },
       });
       if (checkoutError || !checkoutData?.url) {
         toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
@@ -118,6 +121,15 @@ const Dashboard = () => {
       window.location.href = checkoutData.url;
     } catch {
       toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      exportPlanPDF({ userName: profileName, dayPlans, macros, meals });
+      toast.success("PDF descargado");
+    } catch (e) {
+      toast.error("No se pudo generar el PDF");
     }
   };
 
@@ -225,10 +237,16 @@ const Dashboard = () => {
                   </div>
                   <h2 className="text-xl font-bold font-display mb-2">{content.title}</h2>
                   <p className="text-muted-foreground mb-6">{content.description}</p>
-                  <Button variant="hero" size="lg" onClick={handleCompletePayment}>
+                  <Button variant="hero" size="lg" onClick={() => handleCompletePayment("monthly")}>
                     {content.cta}
                   </Button>
-                  <p className="text-xs text-muted-foreground mt-3">Cancela cuando quieras. Sin permanencia.</p>
+                  <button
+                    onClick={() => handleCompletePayment("yearly")}
+                    className="block mx-auto mt-4 text-xs text-primary hover:underline font-semibold flex items-center gap-1.5"
+                  >
+                    <CalendarIcon className="w-3 h-3" /> O paga anual: 190€/año (ahorras 38€)
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-3">Cancela cuando quieras · Garantía 30 días</p>
                 </motion.div>
               );
             })()}
@@ -266,6 +284,18 @@ const Dashboard = () => {
                 />
                 {user && <TravelModeCard userId={user.id} />}
                 {user && <PRsList userId={user.id} />}
+                <ReferralShare />
+
+                {/* Exportar plan a PDF */}
+                <div className="bg-card rounded-2xl p-6 border border-border card-shadow flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-bold font-display mb-0.5">Llévate tu plan al gym</h3>
+                    <p className="text-sm text-muted-foreground">Descarga tu entrenamiento + nutrición en PDF.</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleExportPDF} className="flex-shrink-0">
+                    <Download className="w-4 h-4 mr-1.5" /> PDF
+                  </Button>
+                </div>
               </div>
             )}
 

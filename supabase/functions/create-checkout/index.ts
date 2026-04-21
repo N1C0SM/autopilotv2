@@ -34,16 +34,18 @@ serve(async (req) => {
     log("User authenticated", { email: user.email });
 
     let referralCode = "";
+    let plan: "monthly" | "yearly" = "monthly";
     try {
       const body = await req.json();
       referralCode = body.referral_code || "";
+      if (body.plan === "yearly") plan = "yearly";
     } catch { /* no body */ }
-    log("Referral code", { referralCode });
+    log("Request params", { referralCode, plan });
 
     // Read all settings from DB
     const { data: settings } = await supabaseClient
       .from("settings")
-      .select("payment_mode, price_id_test, price_id_live, payment_link_test, payment_link_live, referral_coupon_id")
+      .select("payment_mode, price_id_test, price_id_live, payment_link_test, payment_link_live, price_id_yearly_test, price_id_yearly_live, payment_link_yearly_test, payment_link_yearly_live, referral_coupon_id")
       .limit(1)
       .single();
 
@@ -55,13 +57,15 @@ serve(async (req) => {
       : Deno.env.get("STRIPE_TEST_SECRET_KEY");
     if (!stripeKey) throw new Error(`Stripe ${paymentMode} secret key not configured`);
 
-    const PRICE_ID = paymentMode === "live"
-      ? (settings?.price_id_live || "")
-      : (settings?.price_id_test || "");
-    const PAYMENT_LINK = paymentMode === "live"
-      ? (settings?.payment_link_live || "")
-      : (settings?.payment_link_test || "");
+    const isLive = paymentMode === "live";
+    const PRICE_ID = plan === "yearly"
+      ? (isLive ? (settings?.price_id_yearly_live || "") : (settings?.price_id_yearly_test || ""))
+      : (isLive ? (settings?.price_id_live || "") : (settings?.price_id_test || ""));
+    const PAYMENT_LINK = plan === "yearly"
+      ? (isLive ? (settings?.payment_link_yearly_live || "") : (settings?.payment_link_yearly_test || ""))
+      : (isLive ? (settings?.payment_link_live || "") : (settings?.payment_link_test || ""));
     log("Price config", {
+      plan,
       priceId: PRICE_ID || "missing",
       hasPaymentLink: Boolean(PAYMENT_LINK),
     });
@@ -116,10 +120,10 @@ serve(async (req) => {
       mode: "subscription",
       success_url: `${origin}/payment-success`,
       cancel_url: `${origin}/signup`,
-      metadata: { user_id: user.id, tier: "personal" },
+      metadata: { user_id: user.id, tier: "personal", plan },
       subscription_data: {
-        trial_period_days: 7,
-        metadata: { user_id: user.id, tier: "personal" },
+        trial_period_days: plan === "yearly" ? 0 : 7,
+        metadata: { user_id: user.id, tier: "personal", plan },
       },
     };
 
