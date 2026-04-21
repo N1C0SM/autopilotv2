@@ -284,6 +284,18 @@ const Dashboard = () => {
                 />
                 {user && <TravelModeCard userId={user.id} />}
                 {user && <PRsList userId={user.id} />}
+                <ReferralShare />
+
+                {/* Exportar plan a PDF */}
+                <div className="bg-card rounded-2xl p-6 border border-border card-shadow flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-bold font-display mb-0.5">Llévate tu plan al gym</h3>
+                    <p className="text-sm text-muted-foreground">Descarga tu entrenamiento + nutrición en PDF.</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleExportPDF} className="flex-shrink-0">
+                    <Download className="w-4 h-4 mr-1.5" /> PDF
+                  </Button>
+                </div>
               </div>
             )}
 
