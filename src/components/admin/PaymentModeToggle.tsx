@@ -110,13 +110,35 @@ const PaymentModeToggle = () => {
     {
       icon: CreditCard,
       title: "Price IDs de Stripe",
-      description: "IDs de precio para la suscripción (price_...)",
+      description: "IDs de precio MENSUAL (price_...)",
       fields: [
         { key: "price_id_test" as keyof SettingsData, label: "Price ID Test", placeholder: "price_..." },
         { key: "price_id_live" as keyof SettingsData, label: "Price ID Live", placeholder: "price_..." },
       ],
       saveKey: "Price IDs",
       saveFields: () => ({ price_id_test: settings.price_id_test, price_id_live: settings.price_id_live }),
+    },
+    {
+      icon: CreditCard,
+      title: "Plan Anual — Price IDs",
+      description: "IDs de precio ANUAL (190€/año). Crea un Price recurring=year en Stripe.",
+      fields: [
+        { key: "price_id_yearly_test" as keyof SettingsData, label: "Price ID Anual Test", placeholder: "price_..." },
+        { key: "price_id_yearly_live" as keyof SettingsData, label: "Price ID Anual Live", placeholder: "price_..." },
+      ],
+      saveKey: "Price IDs Anual",
+      saveFields: () => ({ price_id_yearly_test: settings.price_id_yearly_test, price_id_yearly_live: settings.price_id_yearly_live }),
+    },
+    {
+      icon: Link,
+      title: "Plan Anual — Payment Links",
+      description: "Payment Links anuales (fallback si falla el checkout dinámico)",
+      fields: [
+        { key: "payment_link_yearly_test" as keyof SettingsData, label: "Payment Link Anual Test", placeholder: "https://buy.stripe.com/test_..." },
+        { key: "payment_link_yearly_live" as keyof SettingsData, label: "Payment Link Anual Live", placeholder: "https://buy.stripe.com/..." },
+      ],
+      saveKey: "Payment Links Anual",
+      saveFields: () => ({ payment_link_yearly_test: settings.payment_link_yearly_test, payment_link_yearly_live: settings.payment_link_yearly_live }),
     },
     {
       icon: Link,
