@@ -14,6 +14,8 @@ import Chat from "@/components/Chat";
 import Greeting from "@/components/Greeting";
 import HomeOverview from "@/components/dashboard/HomeOverview";
 import TrainingPlanView from "@/components/dashboard/TrainingPlanView";
+import CalendarView from "@/components/dashboard/CalendarView";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PRsList from "@/components/dashboard/PRsList";
 import TravelModeCard from "@/components/dashboard/TravelModeCard";
 import MealsList from "@/components/dashboard/MealsList";
@@ -305,7 +307,18 @@ const Dashboard = () => {
 
             {/* Training section — clean plan view */}
             {hasPlan && section === "training" && user && (
-              <TrainingPlanView dayPlans={dayPlans} />
+              <Tabs defaultValue="list" className="max-w-5xl">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="list">Lista</TabsTrigger>
+                  <TabsTrigger value="calendar">Calendario</TabsTrigger>
+                </TabsList>
+                <TabsContent value="list">
+                  <TrainingPlanView dayPlans={dayPlans} />
+                </TabsContent>
+                <TabsContent value="calendar">
+                  <CalendarView dayPlans={dayPlans} />
+                </TabsContent>
+              </Tabs>
             )}
 
             {/* Nutrition section */}
