@@ -23,6 +23,7 @@ import SettingsPanel from "@/components/SettingsPanel";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import ReferralShare from "@/components/ReferralShare";
 import { exportPlanPDF } from "@/lib/exportPlanPDF";
+import CalendarExportDialog from "@/components/dashboard/CalendarExportDialog";
 
 export interface Profile {
   user_id: string;
@@ -290,11 +291,14 @@ const Dashboard = () => {
                 <div className="bg-card rounded-2xl p-6 border border-border card-shadow flex items-center justify-between gap-4">
                   <div>
                     <h3 className="font-bold font-display mb-0.5">Llévate tu plan al gym</h3>
-                    <p className="text-sm text-muted-foreground">Descarga tu entrenamiento + nutrición en PDF.</p>
+                    <p className="text-sm text-muted-foreground">Descarga el PDF o sincroniza con tu calendario.</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleExportPDF} className="flex-shrink-0">
-                    <Download className="w-4 h-4 mr-1.5" /> PDF
-                  </Button>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                      <Download className="w-4 h-4 mr-1.5" /> PDF
+                    </Button>
+                    <CalendarExportDialog dayPlans={dayPlans} />
+                  </div>
                 </div>
               </div>
             )}
