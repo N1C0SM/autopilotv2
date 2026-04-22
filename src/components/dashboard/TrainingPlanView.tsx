@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Dumbbell, Flame, Clock, Download, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Dumbbell, Flame, Clock, Download, Copy, Check, ChevronDown, ChevronUp, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { DayPlan } from "@/types/training";
+import CalendarExportDialog from "./CalendarExportDialog";
 
 const DAYS_ORDER = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -73,6 +74,15 @@ const TrainingPlanView = ({ dayPlans }: Props) => {
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline ml-1">Descargar</span>
           </Button>
+          <CalendarExportDialog
+            dayPlans={dayPlans}
+            trigger={
+              <Button variant="outline" size="sm" className="h-8 px-2 sm:px-3">
+                <CalendarIcon className="w-4 h-4" />
+                <span className="hidden sm:inline ml-1">Calendario</span>
+              </Button>
+            }
+          />
         </div>
       </div>
 
