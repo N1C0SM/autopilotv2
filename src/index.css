@@ -4,6 +4,57 @@
 @tailwind components;
 @tailwind utilities;
 
+/* FullCalendar dark theme tweaks */
+.fc-themed .fc {
+  --fc-border-color: hsl(var(--border));
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: hsl(var(--secondary) / 0.3);
+  --fc-neutral-text-color: hsl(var(--muted-foreground));
+  --fc-today-bg-color: hsl(var(--primary) / 0.06);
+  --fc-now-indicator-color: hsl(var(--primary));
+  font-family: inherit;
+  color: hsl(var(--foreground));
+}
+.fc-themed .fc-toolbar-title { font-size: 1rem; font-weight: 700; text-transform: capitalize; }
+.fc-themed .fc .fc-button {
+  background: hsl(var(--secondary));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  text-transform: capitalize;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  box-shadow: none;
+}
+.fc-themed .fc .fc-button:hover { background: hsl(var(--secondary) / 0.7); }
+.fc-themed .fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc-themed .fc .fc-button-primary:not(:disabled):active {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+.fc-themed .fc-col-header-cell-cushion,
+.fc-themed .fc-daygrid-day-number,
+.fc-themed .fc-timegrid-axis-cushion,
+.fc-themed .fc-timegrid-slot-label-cushion { color: hsl(var(--muted-foreground)); font-size: 0.75rem; }
+.fc-themed .fc-event {
+  border: none !important;
+  border-radius: 6px;
+  padding: 2px 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fc-themed .fc-event:hover { filter: brightness(1.1); }
+.fc-themed .fc-day-today { background: hsl(var(--primary) / 0.05) !important; }
+.fc-themed .fc-scrollgrid, .fc-themed .fc-scrollgrid td, .fc-themed .fc-scrollgrid th { border-color: hsl(var(--border)) !important; }
+.fc-themed .fc-timegrid-slot { height: 2.2em !important; }
+@media (max-width: 640px) {
+  .fc-themed .fc-toolbar { flex-wrap: wrap; gap: 0.5rem; }
+  .fc-themed .fc-toolbar-title { font-size: 0.85rem; }
+  .fc-themed .fc .fc-button { font-size: 0.68rem; padding: 0.2rem 0.45rem; }
+  .fc-themed .fc-col-header-cell-cushion { font-size: 0.65rem; }
+}
+
 @layer base {
   :root {
     --background: 0 0% 4.3%;

@@ -1,0 +1,489 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import FullCalendar from "@fullcalendar/react";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import esLocale from "@fullcalendar/core/locales/es";
+import type { EventInput, EventClickArg, EventDropArg, EventChangeArg, DateSelectArg } from "@fullcalendar/core";
+import { Plus, Trash2, X, Dumbbell, Flame, Apple } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import type { DayPlan } from "@/types/training";
+
+const DAYS_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const DAY_TO_DOW: Record<string, number> = {
+  Lunes: 1, Martes: 2, Miércoles: 3, Jueves: 4, Viernes: 5, Sábado: 6, Domingo: 0,
+};
+
+const COLORS = {
+  training: "#3b82f6",   // azul
+  external: "#f97316",   // naranja
+  nutrition: "#22c55e",  // verde
+};
+
+const CATEGORIES = [
+  { value: "boxeo", label: "🥊 Boxeo", color: "#f97316" },
+  { value: "escalada", label: "🧗 Escalada", color: "#f97316" },
+  { value: "yoga", label: "🧘 Yoga", color: "#10b981" },
+  { value: "running", label: "🏃 Running", color: "#ef4444" },
+  { value: "ciclismo", label: "🚴 Ciclismo", color: "#06b6d4" },
+  { value: "natacion", label: "🏊 Natación", color: "#0ea5e9" },
+  { value: "futbol", label: "⚽ Fútbol", color: "#84cc16" },
+  { value: "tenis", label: "🎾 Tenis", color: "#eab308" },
+  { value: "padel", label: "🏓 Pádel", color: "#a855f7" },
+  { value: "danza", label: "💃 Danza", color: "#ec4899" },
+  { value: "otro", label: "✨ Otro", color: "#f97316" },
+];
+
+interface ExternalActivity {
+  id: string;
+  title: string;
+  category: string;
+  day_of_week: number;
+  start_hour: number;
+  start_minute: number;
+  duration_min: number;
+  color: string;
+  icon: string | null;
+  note: string | null;
+}
+
+interface ScheduleOverride {
+  day_label: string;
+  new_day_of_week: number;
+  start_hour: number;
+  start_minute: number;
+  duration_min: number;
+}
+
+interface Props {
+  dayPlans: DayPlan[];
+}
+
+function getMondayOfWeek(date = new Date()): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function dateForDow(monday: Date, dow: number, hour: number, minute: number): Date {
+  const d = new Date(monday);
+  // dow: 0=Domingo, 1=Lunes... convertir a offset desde lunes
+  const offset = dow === 0 ? 6 : dow - 1;
+  d.setDate(monday.getDate() + offset);
+  d.setHours(hour, minute, 0, 0);
+  return d;
+}
+
+const CalendarView = ({ dayPlans }: Props) => {
+  const { user } = useAuth();
+  const calendarRef = useRef<FullCalendar | null>(null);
+  const [externals, setExternals] = useState<ExternalActivity[]>([]);
+  const [overrides, setOverrides] = useState<Record<string, ScheduleOverride>>({});
+  const [loading, setLoading] = useState(true);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<EventInput | null>(null);
+
+  // form state
+  const [editId, setEditId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("boxeo");
+  const [dow, setDow] = useState(2);
+  const [hour, setHour] = useState(18);
+  const [minute, setMinute] = useState(0);
+  const [duration, setDuration] = useState(60);
+  const [note, setNote] = useState("");
+
+  const monday = useMemo(() => getMondayOfWeek(), []);
+
+  const loadData = async () => {
+    if (!user) return;
+    const [{ data: ext }, { data: ovr }] = await Promise.all([
+      supabase.from("external_activities").select("*").eq("user_id", user.id),
+      supabase.from("training_schedule_overrides").select("*").eq("user_id", user.id),
+    ]);
+    setExternals((ext as ExternalActivity[]) || []);
+    const map: Record<string, ScheduleOverride> = {};
+    (ovr || []).forEach((o: any) => { map[o.day_label] = o; });
+    setOverrides(map);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadData(); }, [user]);
+
+  // Build events from plan + externals
+  const events: EventInput[] = useMemo(() => {
+    const out: EventInput[] = [];
+
+    for (const plan of dayPlans) {
+      const baseDow = DAY_TO_DOW[plan.day];
+      if (baseDow === undefined) continue;
+      const ovr = overrides[plan.day];
+      const finalDow = ovr?.new_day_of_week ?? baseDow;
+      const h = ovr?.start_hour ?? (plan.type === "gimnasio" ? 18 : 19);
+      const m = ovr?.start_minute ?? 0;
+      const dur = ovr?.duration_min ?? 60;
+      const start = dateForDow(monday, finalDow, h, m);
+      const end = new Date(start.getTime() + dur * 60 * 1000);
+      const icon = plan.type === "gimnasio" ? "🏋️" : "🔥";
+      const titleText = plan.type === "gimnasio"
+        ? (plan.routine_name || "Entrenamiento")
+        : (plan.sport || "Actividad");
+
+      out.push({
+        id: `plan-${plan.day}`,
+        title: `${icon} ${titleText}`,
+        start,
+        end,
+        backgroundColor: COLORS.training,
+        borderColor: COLORS.training,
+        extendedProps: { kind: "training", plan },
+      });
+    }
+
+    for (const ext of externals) {
+      const start = dateForDow(monday, ext.day_of_week, ext.start_hour, ext.start_minute);
+      const end = new Date(start.getTime() + ext.duration_min * 60 * 1000);
+      out.push({
+        id: `ext-${ext.id}`,
+        title: `${ext.icon || "✨"} ${ext.title}`,
+        start,
+        end,
+        backgroundColor: ext.color,
+        borderColor: ext.color,
+        extendedProps: { kind: "external", ext },
+      });
+    }
+
+    return out;
+  }, [dayPlans, externals, overrides, monday]);
+
+  const resetForm = () => {
+    setEditId(null);
+    setTitle("");
+    setCategory("boxeo");
+    setDow(2);
+    setHour(18);
+    setMinute(0);
+    setDuration(60);
+    setNote("");
+  };
+
+  const openCreate = (preset?: { dow?: number; hour?: number; minute?: number }) => {
+    resetForm();
+    if (preset?.dow !== undefined) setDow(preset.dow);
+    if (preset?.hour !== undefined) setHour(preset.hour);
+    if (preset?.minute !== undefined) setMinute(preset.minute);
+    setEditOpen(true);
+  };
+
+  const openEdit = (ext: ExternalActivity) => {
+    setEditId(ext.id);
+    setTitle(ext.title);
+    setCategory(ext.category);
+    setDow(ext.day_of_week);
+    setHour(ext.start_hour);
+    setMinute(ext.start_minute);
+    setDuration(ext.duration_min);
+    setNote(ext.note || "");
+    setDetailOpen(false);
+    setEditOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    if (!title.trim()) { toast.error("Pon un nombre"); return; }
+    const cat = CATEGORIES.find((c) => c.value === category) || CATEGORIES[0];
+    const icon = cat.label.split(" ")[0];
+    const payload = {
+      user_id: user.id,
+      title: title.trim(),
+      category,
+      day_of_week: dow,
+      start_hour: hour,
+      start_minute: minute,
+      duration_min: duration,
+      color: cat.color,
+      icon,
+      note,
+    };
+    if (editId) {
+      const { error } = await supabase.from("external_activities").update(payload).eq("id", editId);
+      if (error) { toast.error("Error al guardar"); return; }
+      toast.success("Actividad actualizada");
+    } else {
+      const { error } = await supabase.from("external_activities").insert(payload);
+      if (error) { toast.error("Error al crear"); return; }
+      toast.success("Actividad añadida");
+    }
+    setEditOpen(false);
+    loadData();
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("external_activities").delete().eq("id", id);
+    if (error) { toast.error("Error al borrar"); return; }
+    toast.success("Actividad eliminada");
+    setDetailOpen(false);
+    loadData();
+  };
+
+  const handleEventClick = (arg: EventClickArg) => {
+    setSelectedEvent({
+      id: arg.event.id,
+      title: arg.event.title,
+      start: arg.event.start || undefined,
+      end: arg.event.end || undefined,
+      extendedProps: arg.event.extendedProps,
+    });
+    setDetailOpen(true);
+  };
+
+  const handleEventDrop = async (arg: EventDropArg | EventChangeArg) => {
+    if (!user) return;
+    const ev = arg.event;
+    const newStart = ev.start;
+    const newEnd = ev.end;
+    if (!newStart) return;
+    const newDow = newStart.getDay();
+    const newHour = newStart.getHours();
+    const newMinute = newStart.getMinutes();
+    const newDuration = newEnd ? Math.round((newEnd.getTime() - newStart.getTime()) / 60000) : 60;
+    const props = ev.extendedProps as any;
+
+    if (props.kind === "external") {
+      const { error } = await supabase.from("external_activities").update({
+        day_of_week: newDow,
+        start_hour: newHour,
+        start_minute: newMinute,
+        duration_min: newDuration,
+      }).eq("id", props.ext.id);
+      if (error) { toast.error("No se pudo mover"); arg.revert(); return; }
+      toast.success("Movido");
+      loadData();
+    } else if (props.kind === "training") {
+      const dayLabel = props.plan.day;
+      const { error } = await supabase.from("training_schedule_overrides").upsert({
+        user_id: user.id,
+        day_label: dayLabel,
+        new_day_of_week: newDow,
+        start_hour: newHour,
+        start_minute: newMinute,
+        duration_min: newDuration,
+      }, { onConflict: "user_id,day_label" });
+      if (error) { toast.error("No se pudo mover"); arg.revert(); return; }
+      toast.success("Entreno movido");
+      loadData();
+    }
+  };
+
+  const handleSelect = (sel: DateSelectArg) => {
+    openCreate({
+      dow: sel.start.getDay(),
+      hour: sel.start.getHours(),
+      minute: sel.start.getMinutes(),
+    });
+    sel.view.calendar.unselect();
+  };
+
+  const detailProps = selectedEvent?.extendedProps as any;
+
+  return (
+    <div className="space-y-3">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-3 text-xs flex-wrap">
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: COLORS.training }} /> Entreno</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: COLORS.external }} /> Externa</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: COLORS.nutrition }} /> Nutrición</span>
+        </div>
+        <Button size="sm" onClick={() => openCreate()} variant="hero">
+          <Plus className="w-4 h-4 mr-1.5" /> Añadir actividad
+        </Button>
+      </div>
+
+      {/* Calendar */}
+      <div className="bg-card border border-border rounded-xl p-2 sm:p-4 fc-themed">
+        <FullCalendar
+          ref={calendarRef as any}
+          plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          locale={esLocale}
+          headerToolbar={{ left: "prev,next today", center: "title", right: "timeGridWeek,dayGridMonth,timeGridDay" }}
+          buttonText={{ today: "Hoy", month: "Mes", week: "Semana", day: "Día" }}
+          firstDay={1}
+          allDaySlot={false}
+          slotMinTime="06:00:00"
+          slotMaxTime="23:00:00"
+          slotDuration="00:30:00"
+          height="auto"
+          expandRows
+          nowIndicator
+          editable
+          selectable
+          selectMirror
+          eventDurationEditable
+          eventStartEditable
+          events={events}
+          eventClick={handleEventClick}
+          eventDrop={handleEventDrop}
+          eventResize={handleEventDrop as any}
+          select={handleSelect}
+          dayMaxEvents={3}
+        />
+      </div>
+
+      {/* Edit dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editId ? "Editar actividad" : "Nueva actividad"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Tipo</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Nombre</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej. Boxeo en BoxStudio" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Día</Label>
+                <Select value={dow.toString()} onValueChange={(v) => setDow(parseInt(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[1,2,3,4,5,6,0].map((d) => <SelectItem key={d} value={d.toString()}>{DAYS_ES[d]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Duración</Label>
+                <Select value={duration.toString()} onValueChange={(v) => setDuration(parseInt(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[30,45,60,75,90,120,150,180].map((d) => <SelectItem key={d} value={d.toString()}>{d} min</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Hora</Label>
+                <Select value={hour.toString()} onValueChange={(v) => setHour(parseInt(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => <SelectItem key={h} value={h.toString()}>{h}:00</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Minutos</Label>
+                <Select value={minute.toString()} onValueChange={(v) => setMinute(parseInt(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[0,15,30,45].map((m) => <SelectItem key={m} value={m.toString()}>:{m.toString().padStart(2,"0")}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Nota (opcional)</Label>
+              <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Lugar, profesor, etc." />
+            </div>
+            <div className="flex gap-2 pt-2">
+              {editId && (
+                <Button variant="outline" size="sm" onClick={() => handleDelete(editId)} className="text-destructive">
+                  <Trash2 className="w-4 h-4 mr-1" /> Borrar
+                </Button>
+              )}
+              <Button onClick={handleSave} className="flex-1" variant="hero">
+                {editId ? "Guardar" : "Añadir"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail dialog */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{selectedEvent?.title}</DialogTitle>
+          </DialogHeader>
+          {selectedEvent && (
+            <div className="space-y-3 text-sm">
+              <p className="text-muted-foreground">
+                {selectedEvent.start instanceof Date && selectedEvent.start.toLocaleString("es-ES", {
+                  weekday: "long", hour: "2-digit", minute: "2-digit",
+                })}
+                {selectedEvent.end instanceof Date && ` — ${selectedEvent.end.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}`}
+              </p>
+
+              {detailProps?.kind === "training" && detailProps.plan?.type === "gimnasio" && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Dumbbell className="w-3.5 h-3.5" /> {detailProps.plan.muscle_focus}
+                  </div>
+                  <div className="space-y-1.5">
+                    {(detailProps.plan.exercises || []).map((ex: any, i: number) => (
+                      <div key={i} className="bg-secondary/30 rounded-lg p-2.5">
+                        <p className="font-medium text-sm">{ex.name}</p>
+                        <p className="text-xs text-muted-foreground">{ex.series} × {ex.reps} · {ex.rest}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {detailProps?.kind === "training" && detailProps.plan?.type === "actividad" && (
+                <div className="flex gap-2 text-xs">
+                  <span className="bg-secondary/40 px-2.5 py-1 rounded-full flex items-center gap-1.5"><Flame className="w-3 h-3" />{detailProps.plan.intensity}</span>
+                  <span className="bg-secondary/40 px-2.5 py-1 rounded-full">{detailProps.plan.duration}</span>
+                </div>
+              )}
+
+              {detailProps?.kind === "external" && (
+                <>
+                  {detailProps.ext.note && <p className="text-sm bg-secondary/30 rounded-lg p-3">{detailProps.ext.note}</p>}
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(detailProps.ext.id)} className="text-destructive">
+                      <Trash2 className="w-4 h-4 mr-1" /> Borrar
+                    </Button>
+                    <Button size="sm" onClick={() => openEdit(detailProps.ext)} className="flex-1">
+                      Editar
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {detailProps?.kind === "training" && (
+                <p className="text-[11px] text-muted-foreground italic">
+                  💡 Arrastra el evento en el calendario para moverlo a otro día/hora.
+                </p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default CalendarView;
