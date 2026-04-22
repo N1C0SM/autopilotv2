@@ -172,6 +172,54 @@ export type Database = {
           },
         ]
       }
+      external_activities: {
+        Row: {
+          category: string
+          color: string
+          created_at: string
+          day_of_week: number
+          duration_min: number
+          icon: string | null
+          id: string
+          note: string | null
+          start_hour: number
+          start_minute: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          color?: string
+          created_at?: string
+          day_of_week: number
+          duration_min?: number
+          icon?: string | null
+          id?: string
+          note?: string | null
+          start_hour?: number
+          start_minute?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          color?: string
+          created_at?: string
+          day_of_week?: number
+          duration_min?: number
+          icon?: string | null
+          id?: string
+          note?: string | null
+          start_hour?: number
+          start_minute?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -616,6 +664,42 @@ export type Database = {
           series_p3_max?: number
           series_p3_min?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      training_schedule_overrides: {
+        Row: {
+          created_at: string
+          day_label: string
+          duration_min: number
+          id: string
+          new_day_of_week: number
+          start_hour: number
+          start_minute: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_label: string
+          duration_min?: number
+          id?: string
+          new_day_of_week: number
+          start_hour?: number
+          start_minute?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_label?: string
+          duration_min?: number
+          id?: string
+          new_day_of_week?: number
+          start_hour?: number
+          start_minute?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
