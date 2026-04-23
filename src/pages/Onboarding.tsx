@@ -22,7 +22,6 @@ const STEPS = [
   "Intensidad",
   "Tests de Nivel",
   "Lesiones",
-  "Disponibilidad",
   "Nutrición",
   "Resumen",
 ];
