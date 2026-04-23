@@ -123,11 +123,26 @@ const Onboarding = () => {
   const update = (field: string, value: any) => setData((d) => ({ ...d, [field]: value }));
 
   const toggleSport = (sport: string) => {
+    setData((d) => {
+      const has = d.sports.includes(sport);
+      const newSports = has ? d.sports.filter((s) => s !== sport) : [...d.sports, sport];
+      const newSchedules = { ...d.sport_schedules };
+      if (has) {
+        delete newSchedules[sport];
+      } else if (!newSchedules[sport]) {
+        newSchedules[sport] = SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, hour: 19, minute: 0, duration: 60 };
+      }
+      return { ...d, sports: newSports, sport_schedules: newSchedules };
+    });
+  };
+
+  const updateSchedule = (sport: string, patch: Partial<{ dow: number; hour: number; minute: number; duration: number }>) => {
     setData((d) => ({
       ...d,
-      sports: d.sports.includes(sport)
-        ? d.sports.filter((s) => s !== sport)
-        : [...d.sports, sport],
+      sport_schedules: {
+        ...d.sport_schedules,
+        [sport]: { ...(d.sport_schedules[sport] || SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, hour: 19, minute: 0, duration: 60 }), ...patch },
+      },
     }));
   };
 
