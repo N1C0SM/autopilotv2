@@ -760,7 +760,7 @@ const Onboarding = () => {
                   <span className="text-xl">🏋️</span>
                   <div>
                     <p className="font-semibold text-sm">
-                      Rutina de {data.availability.days || "?"} días/semana ·{" "}
+                      Rutina ajustada a tus huecos libres ·{" "}
                       {PRIMARY_FOCUS_OPTIONS.find((p) => p.value === data.primary_focus)?.label || "Mixto"}
                     </p>
                     <p className="text-xs text-muted-foreground">
