@@ -81,19 +81,30 @@ const SPECIFIC_GOAL_SUGGESTIONS: Record<string, string[]> = {
 
 const DAYS_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-// Horario sugerido por defecto al seleccionar un deporte (el usuario puede cambiarlo)
-const SPORT_SCHEDULE_DEFAULTS: Record<string, { dow: number; hour: number; minute: number; duration: number }> = {
-  boxeo:    { dow: 2, hour: 19, minute: 0, duration: 60 },
-  escalada: { dow: 4, hour: 18, minute: 0, duration: 90 },
-  yoga:     { dow: 3, hour: 8,  minute: 0, duration: 60 },
-  running:  { dow: 6, hour: 9,  minute: 0, duration: 45 },
-  natacion: { dow: 5, hour: 19, minute: 0, duration: 45 },
-  ciclismo: { dow: 6, hour: 10, minute: 0, duration: 90 },
-  futbol:   { dow: 5, hour: 20, minute: 0, duration: 90 },
-  tenis:    { dow: 4, hour: 19, minute: 0, duration: 60 },
-  padel:    { dow: 4, hour: 20, minute: 0, duration: 60 },
-  danza:    { dow: 3, hour: 19, minute: 0, duration: 60 },
+// Horario sugerido por defecto al seleccionar un deporte (el usuario puede cambiarlo).
+// Ahora trabajamos con hora de inicio y hora de fin (no duración).
+const SPORT_SCHEDULE_DEFAULTS: Record<string, { dow: number; start: string; end: string }> = {
+  boxeo:    { dow: 2, start: "19:00", end: "20:00" },
+  escalada: { dow: 4, start: "18:00", end: "19:30" },
+  yoga:     { dow: 3, start: "08:00", end: "09:00" },
+  running:  { dow: 6, start: "09:00", end: "09:45" },
+  natacion: { dow: 5, start: "19:00", end: "19:45" },
+  ciclismo: { dow: 6, start: "10:00", end: "11:30" },
+  futbol:   { dow: 5, start: "20:00", end: "21:30" },
+  tenis:    { dow: 4, start: "19:00", end: "20:00" },
+  padel:    { dow: 4, start: "20:00", end: "21:00" },
+  danza:    { dow: 3, start: "19:00", end: "20:00" },
 };
+
+type Schedule = { dow: number; start: string; end: string };
+type CustomActivity = { id: string; title: string; dow: number; start: string; end: string };
+
+const TIME_OPTIONS = Array.from({ length: 36 }).map((_, i) => {
+  const totalMin = 6 * 60 + i * 30; // 06:00 → 23:30
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+});
 
 const Onboarding = () => {
   const { user } = useAuth();
