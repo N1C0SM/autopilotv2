@@ -95,6 +95,7 @@ const Onboarding = () => {
     goal: "",
     specific_goal: "",
     sports: [] as string[],
+    sport_schedules: {} as Record<string, { dow: number; hour: number; minute: number; duration: number }>,
     intensity_level: 5,
     initial_tests: { pullups: "", pushups: "", squat: "", plank: "" },
     injuries: "",
