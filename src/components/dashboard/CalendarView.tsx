@@ -42,6 +42,21 @@ const CATEGORIES = [
   { value: "otro", label: "✨ Otro", color: "#f97316" },
 ];
 
+// Default day-of-week + hour for auto-seeded sports from onboarding.
+// Uses evenings, staggered so they don't all collide on the same day.
+const SPORT_DEFAULTS: Record<string, { dow: number; hour: number; label: string; icon: string; color: string }> = {
+  boxeo:    { dow: 2, hour: 19, label: "Boxeo",    icon: "🥊", color: "#f97316" },
+  escalada: { dow: 4, hour: 18, label: "Escalada", icon: "🧗", color: "#f97316" },
+  yoga:     { dow: 3, hour: 8,  label: "Yoga",     icon: "🧘", color: "#10b981" },
+  running:  { dow: 6, hour: 9,  label: "Running",  icon: "🏃", color: "#ef4444" },
+  ciclismo: { dow: 6, hour: 10, label: "Ciclismo", icon: "🚴", color: "#06b6d4" },
+  natacion: { dow: 5, hour: 19, label: "Natación", icon: "🏊", color: "#0ea5e9" },
+  futbol:   { dow: 5, hour: 20, label: "Fútbol",   icon: "⚽", color: "#84cc16" },
+  tenis:    { dow: 4, hour: 19, label: "Tenis",    icon: "🎾", color: "#eab308" },
+  padel:    { dow: 4, hour: 20, label: "Pádel",    icon: "🏓", color: "#a855f7" },
+  danza:    { dow: 3, hour: 19, label: "Danza",    icon: "💃", color: "#ec4899" },
+};
+
 interface ExternalActivity {
   id: string;
   title: string;
