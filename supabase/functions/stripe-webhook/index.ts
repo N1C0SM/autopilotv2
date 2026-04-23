@@ -53,6 +53,63 @@ serve(async (req) => {
 
     console.log(`Received Stripe event: ${event.type}`);
 
+    // ─── REFERRAL REWARD: when referred user makes first real payment, credit referrer ───
+    const applyReferralReward = async (referredEmail: string) => {
+      try {
+        const { data: referredProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("user_id")
+          .eq("email", referredEmail)
+          .maybeSingle();
+        if (!referredProfile) return;
+
+        const { data: referral } = await supabaseAdmin
+          .from("referrals")
+          .select("id, referrer_user_id, reward_applied")
+          .eq("referred_user_id", referredProfile.user_id)
+          .eq("reward_applied", false)
+          .maybeSingle();
+        if (!referral) return;
+
+        const { data: referrerProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("stripe_customer_id, email")
+          .eq("user_id", referral.referrer_user_id)
+          .maybeSingle();
+
+        let referrerCustomerId = referrerProfile?.stripe_customer_id;
+        if (!referrerCustomerId && referrerProfile?.email) {
+          const found = await stripe.customers.list({ email: referrerProfile.email, limit: 1 });
+          if (found.data[0]) referrerCustomerId = found.data[0].id;
+        }
+
+        if (referrerCustomerId) {
+          // 19€ credit (1 month) on next invoice
+          await stripe.customers.createBalanceTransaction(referrerCustomerId, {
+            amount: -1900, // negative = credit (cents)
+            currency: "eur",
+            description: `Recompensa por referido: ${referredEmail}`,
+          });
+          console.log(`Applied 19€ credit to referrer ${referrerProfile.email}`);
+        }
+
+        await supabaseAdmin
+          .from("referrals")
+          .update({ reward_applied: true, status: "completed" })
+          .eq("id", referral.id);
+
+        // Notify referrer
+        await supabaseAdmin.from("notifications").insert({
+          user_id: referral.referrer_user_id,
+          title: "🎁 ¡Mes gratis ganado!",
+          message: `Tu amigo se ha suscrito. Hemos aplicado 19€ de crédito a tu próxima factura.`,
+          type: "success",
+        });
+      } catch (e) {
+        console.error("applyReferralReward error:", (e as Error).message);
+      }
+    };
+
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const customerEmail = session.customer_details?.email || session.customer_email;
@@ -82,6 +139,16 @@ serve(async (req) => {
 
         await supabaseAdmin.from("profiles").update(updates).eq("email", customerEmail);
         console.log(`Checkout completed for ${customerEmail}, mode: ${session.mode}`);
+      }
+    }
+
+    // First successful invoice payment (after trial) → trigger referral reward
+    if (event.type === "invoice.payment_succeeded") {
+      const invoice = event.data.object as Stripe.Invoice;
+      const email = invoice.customer_email;
+      // Only reward when there's actual money charged (not 0€ trial invoices)
+      if (email && (invoice.amount_paid || 0) > 0) {
+        await applyReferralReward(email);
       }
     }
 

@@ -49,7 +49,7 @@ const ReferralShare = () => {
         <h3 className="font-bold font-display">Invita y Gana</h3>
       </div>
       <p className="text-sm text-muted-foreground mb-4">
-        Comparte tu código y ambos obtendréis un <span className="text-primary font-semibold">20% de descuento</span> en el primer mes.
+        Tu amigo recibe <span className="text-primary font-semibold">20% off</span> el primer mes. Cuando pague, tú ganas <span className="text-primary font-semibold">1 mes gratis</span> (19€ de crédito en tu próxima factura).
       </p>
 
       <div className="flex gap-2 mb-4">

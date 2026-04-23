@@ -70,9 +70,33 @@ serve(async (req) => {
       hasPaymentLink: Boolean(PAYMENT_LINK),
     });
 
-    const REFERRAL_COUPON_ID = settings?.referral_coupon_id || "";
+    let REFERRAL_COUPON_ID = settings?.referral_coupon_id || "";
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+    // Auto-create referral coupon if missing AND a referral code was provided
+    const ensureReferralCoupon = async (): Promise<string> => {
+      if (REFERRAL_COUPON_ID) {
+        try {
+          await stripe.coupons.retrieve(REFERRAL_COUPON_ID);
+          return REFERRAL_COUPON_ID;
+        } catch {
+          log("Stored coupon not found in Stripe, creating new one");
+        }
+      }
+      const coupon = await stripe.coupons.create({
+        percent_off: 20,
+        duration: "once",
+        name: "Referido Autopilot 20%",
+        metadata: { source: "autopilot_referral" },
+      });
+      log("Created new referral coupon", { id: coupon.id });
+      await supabaseClient
+        .from("settings")
+        .update({ referral_coupon_id: coupon.id })
+        .eq("id", (await supabaseClient.from("settings").select("id").limit(1).single()).data?.id);
+      return coupon.id;
+    };
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
@@ -84,7 +108,7 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "https://autopilotv2.lovable.app";
 
     const discounts: Array<{ coupon: string }> = [];
-    if (referralCode && REFERRAL_COUPON_ID) {
+    if (referralCode) {
       const { data: referrerProfile } = await supabaseClient
         .from("profiles")
         .select("user_id")
@@ -92,13 +116,15 @@ serve(async (req) => {
         .single();
 
       if (referrerProfile && referrerProfile.user_id !== user.id) {
-        discounts.push({ coupon: REFERRAL_COUPON_ID });
+        const couponId = await ensureReferralCoupon();
+        discounts.push({ coupon: couponId });
         await supabaseClient.from("referrals").insert({
           referrer_user_id: referrerProfile.user_id,
           referral_code: referralCode,
           referred_email: user.email,
           referred_user_id: user.id,
-          status: "completed",
+          status: "checkout",
+          reward_applied: false,
         });
       }
     }
