@@ -18,6 +18,7 @@ const STEPS = [
   "Objetivo",
   "Meta Específica",
   "Deportes",
+  "Horarios",
   "Intensidad",
   "Tests de Nivel",
   "Lesiones",
@@ -79,6 +80,22 @@ const SPECIFIC_GOAL_SUGGESTIONS: Record<string, string[]> = {
   Mixto: ["Handstand / Pino", "Muscle Up", "Press banca 100kg", "Front Lever", "Sentadilla 120kg"],
 };
 
+const DAYS_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+// Horario sugerido por defecto al seleccionar un deporte (el usuario puede cambiarlo)
+const SPORT_SCHEDULE_DEFAULTS: Record<string, { dow: number; hour: number; minute: number; duration: number }> = {
+  boxeo:    { dow: 2, hour: 19, minute: 0, duration: 60 },
+  escalada: { dow: 4, hour: 18, minute: 0, duration: 90 },
+  yoga:     { dow: 3, hour: 8,  minute: 0, duration: 60 },
+  running:  { dow: 6, hour: 9,  minute: 0, duration: 45 },
+  natacion: { dow: 5, hour: 19, minute: 0, duration: 45 },
+  ciclismo: { dow: 6, hour: 10, minute: 0, duration: 90 },
+  futbol:   { dow: 5, hour: 20, minute: 0, duration: 90 },
+  tenis:    { dow: 4, hour: 19, minute: 0, duration: 60 },
+  padel:    { dow: 4, hour: 20, minute: 0, duration: 60 },
+  danza:    { dow: 3, hour: 19, minute: 0, duration: 60 },
+};
+
 const Onboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -94,6 +111,7 @@ const Onboarding = () => {
     goal: "",
     specific_goal: "",
     sports: [] as string[],
+    sport_schedules: {} as Record<string, { dow: number; hour: number; minute: number; duration: number }>,
     intensity_level: 5,
     initial_tests: { pullups: "", pushups: "", squat: "", plank: "" },
     injuries: "",
@@ -105,11 +123,26 @@ const Onboarding = () => {
   const update = (field: string, value: any) => setData((d) => ({ ...d, [field]: value }));
 
   const toggleSport = (sport: string) => {
+    setData((d) => {
+      const has = d.sports.includes(sport);
+      const newSports = has ? d.sports.filter((s) => s !== sport) : [...d.sports, sport];
+      const newSchedules = { ...d.sport_schedules };
+      if (has) {
+        delete newSchedules[sport];
+      } else if (!newSchedules[sport]) {
+        newSchedules[sport] = SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, hour: 19, minute: 0, duration: 60 };
+      }
+      return { ...d, sports: newSports, sport_schedules: newSchedules };
+    });
+  };
+
+  const updateSchedule = (sport: string, patch: Partial<{ dow: number; hour: number; minute: number; duration: number }>) => {
     setData((d) => ({
       ...d,
-      sports: d.sports.includes(sport)
-        ? d.sports.filter((s) => s !== sport)
-        : [...d.sports, sport],
+      sport_schedules: {
+        ...d.sport_schedules,
+        [sport]: { ...(d.sport_schedules[sport] || SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, hour: 19, minute: 0, duration: 60 }), ...patch },
+      },
     }));
   };
 
@@ -131,7 +164,7 @@ const Onboarding = () => {
         intensity_level: data.intensity_level,
         initial_tests: data.initial_tests,
         injuries: data.injuries || null,
-        availability: data.availability,
+        availability: { ...data.availability, sport_schedules: data.sport_schedules },
         nutrition_preferences: data.nutrition_preferences,
         allergies: data.allergies,
       },
@@ -385,8 +418,89 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 7: Intensity */}
+          {/* Step 7: Sport schedules */}
           {step === 7 && (
+            <div>
+              <Label className="mb-1.5 block">¿Cuándo practicas cada deporte?</Label>
+              <p className="text-xs text-muted-foreground mb-4">
+                Esto se añadirá a tu calendario semanal. Puedes cambiarlo cuando quieras.
+              </p>
+              {(() => {
+                const secondary = data.sports.filter((s) => s !== "gimnasio" && s !== "calistenia");
+                if (secondary.length === 0) {
+                  return (
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border text-center text-sm text-muted-foreground">
+                      No has añadido deportes secundarios. Pasa al siguiente paso 👉
+                    </div>
+                  );
+                }
+                return (
+                  <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                    {secondary.map((sportKey) => {
+                      const sport = SPORTS.find((s) => s.value === sportKey);
+                      const sched = data.sport_schedules[sportKey] || SPORT_SCHEDULE_DEFAULTS[sportKey] || { dow: 2, hour: 19, minute: 0, duration: 60 };
+                      return (
+                        <div key={sportKey} className="p-3 rounded-xl border border-border bg-card">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-xl">{sport?.emoji}</span>
+                            <span className="font-medium text-sm">{sport?.label}</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Día</Label>
+                              <select
+                                value={sched.dow}
+                                onChange={(e) => updateSchedule(sportKey, { dow: parseInt(e.target.value) })}
+                                className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                              >
+                                {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+                                  <option key={d} value={d}>{DAYS_ES[d].slice(0, 3)}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Hora</Label>
+                              <select
+                                value={`${sched.hour}:${String(sched.minute).padStart(2, "0")}`}
+                                onChange={(e) => {
+                                  const [h, m] = e.target.value.split(":").map((v) => parseInt(v));
+                                  updateSchedule(sportKey, { hour: h, minute: m });
+                                }}
+                                className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                              >
+                                {Array.from({ length: 32 }).map((_, i) => {
+                                  const totalMin = 6 * 60 + i * 30;
+                                  const h = Math.floor(totalMin / 60);
+                                  const m = totalMin % 60;
+                                  const v = `${h}:${String(m).padStart(2, "0")}`;
+                                  return <option key={v} value={v}>{`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`}</option>;
+                                })}
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Dur.</Label>
+                              <select
+                                value={sched.duration}
+                                onChange={(e) => updateSchedule(sportKey, { duration: parseInt(e.target.value) })}
+                                className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                              >
+                                {[30, 45, 60, 75, 90, 120, 150, 180].map((d) => (
+                                  <option key={d} value={d}>{d}m</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Step 8: Intensity */}
+          {step === 8 && (
             <div>
               <Label className="mb-3 block">¿Qué nivel de intensidad buscas?</Label>
               <p className="text-xs text-muted-foreground mb-6">1 = suave y progresivo · 10 = máxima intensidad</p>
@@ -407,8 +521,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 8: Initial level tests */}
-          {step === 8 && (
+          {/* Step 9: Initial level tests */}
+          {step === 9 && (
             <div>
               <Label className="mb-1.5 block">¿Cuál es tu nivel ahora mismo?</Label>
               <p className="text-xs text-muted-foreground mb-5">
@@ -471,8 +585,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 9: Injuries */}
-          {step === 9 && (
+          {/* Step 10: Injuries */}
+          {step === 10 && (
             <div>
               <Label className="mb-1.5 block">¿Tienes lesiones, molestias o condiciones físicas?</Label>
               <p className="text-xs text-muted-foreground mb-3">Déjalo vacío si no tienes ninguna</p>
@@ -485,8 +599,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 10: Availability */}
-          {step === 10 && (
+          {/* Step 11: Availability */}
+          {step === 11 && (
             <div className="space-y-4">
               <div>
                 <Label>Días por semana disponibles</Label>
@@ -514,8 +628,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 11: Nutrition */}
-          {step === 11 && (
+          {/* Step 12: Nutrition */}
+          {step === 12 && (
             <div className="space-y-4">
               <div>
                 <Label>Preferencias nutricionales</Label>
@@ -540,8 +654,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 12: Summary */}
-          {step === 12 && (
+          {/* Step 13: Summary */}
+          {step === 13 && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
