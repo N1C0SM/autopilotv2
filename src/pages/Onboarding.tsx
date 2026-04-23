@@ -720,37 +720,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 11: Availability */}
+          {/* Step 11: Nutrition */}
           {step === 11 && (
-            <div className="space-y-4">
-              <div>
-                <Label>Días por semana disponibles</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={7}
-                  value={data.availability.days}
-                  onChange={(e) => setData((d) => ({ ...d, availability: { ...d.availability, days: e.target.value } }))}
-                  placeholder="4"
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label>Horas por sesión</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={data.availability.hours}
-                  onChange={(e) => setData((d) => ({ ...d, availability: { ...d.availability, hours: e.target.value } }))}
-                  placeholder="1.5"
-                  className="mt-1.5"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Step 12: Nutrition */}
-          {step === 12 && (
             <div className="space-y-4">
               <div>
                 <Label>Preferencias nutricionales</Label>
@@ -775,8 +746,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 13: Summary */}
-          {step === 13 && (
+          {/* Step 12: Summary */}
+          {step === 12 && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
