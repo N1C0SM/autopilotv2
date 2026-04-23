@@ -42,6 +42,21 @@ const CATEGORIES = [
   { value: "otro", label: "✨ Otro", color: "#f97316" },
 ];
 
+// Default day-of-week + hour for auto-seeded sports from onboarding.
+// Uses evenings, staggered so they don't all collide on the same day.
+const SPORT_DEFAULTS: Record<string, { dow: number; hour: number; label: string; icon: string; color: string }> = {
+  boxeo:    { dow: 2, hour: 19, label: "Boxeo",    icon: "🥊", color: "#f97316" },
+  escalada: { dow: 4, hour: 18, label: "Escalada", icon: "🧗", color: "#f97316" },
+  yoga:     { dow: 3, hour: 8,  label: "Yoga",     icon: "🧘", color: "#10b981" },
+  running:  { dow: 6, hour: 9,  label: "Running",  icon: "🏃", color: "#ef4444" },
+  ciclismo: { dow: 6, hour: 10, label: "Ciclismo", icon: "🚴", color: "#06b6d4" },
+  natacion: { dow: 5, hour: 19, label: "Natación", icon: "🏊", color: "#0ea5e9" },
+  futbol:   { dow: 5, hour: 20, label: "Fútbol",   icon: "⚽", color: "#84cc16" },
+  tenis:    { dow: 4, hour: 19, label: "Tenis",    icon: "🎾", color: "#eab308" },
+  padel:    { dow: 4, hour: 20, label: "Pádel",    icon: "🏓", color: "#a855f7" },
+  danza:    { dow: 3, hour: 19, label: "Danza",    icon: "💃", color: "#ec4899" },
+};
+
 interface ExternalActivity {
   id: string;
   title: string;
@@ -121,7 +136,80 @@ const CalendarView = ({ dayPlans }: Props) => {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, [user]);
+  // Auto-seed external activities from onboarding sports (the ones that aren't
+  // the main training focus, e.g. boxeo, escalada, yoga…). Runs once per user.
+  const seedFromOnboarding = async () => {
+    if (!user) return;
+    const { data: onb } = await supabase
+      .from("onboarding")
+      .select("sports, primary_focus")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!onb?.sports) return;
+    const focus = (onb.primary_focus || "").toLowerCase();
+    const sportsList = String(onb.sports)
+      .split(/[,;]/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    const { data: existing } = await supabase
+      .from("external_activities")
+      .select("category")
+      .eq("user_id", user.id);
+    const existingCats = new Set((existing || []).map((e: any) => e.category));
+
+    const toInsert = sportsList
+      .filter((s) => SPORT_DEFAULTS[s])
+      .filter((s) => s !== "gimnasio" && s !== "calistenia") // entrenos, no externas
+      .filter((s) => !(focus === "gimnasio" && s === "gimnasio"))
+      .filter((s) => !existingCats.has(s))
+      .map((s) => {
+        const def = SPORT_DEFAULTS[s];
+        return {
+          user_id: user.id,
+          title: def.label,
+          category: s,
+          day_of_week: def.dow,
+          start_hour: def.hour,
+          start_minute: 0,
+          duration_min: 60,
+          color: def.color,
+          icon: def.icon,
+          note: "Añadido desde tu onboarding · puedes editarlo o moverlo",
+        };
+      });
+
+    if (toInsert.length > 0) {
+      await supabase.from("external_activities").insert(toInsert);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      await seedFromOnboarding();
+      await loadData();
+    })();
+
+    // Realtime: refrescar el calendario cuando cambien externas u overrides
+    const channel = supabase
+      .channel(`calendar-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "external_activities", filter: `user_id=eq.${user.id}` },
+        () => loadData()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "training_schedule_overrides", filter: `user_id=eq.${user.id}` },
+        () => loadData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   // Build events from plan + externals
   const events: EventInput[] = useMemo(() => {
