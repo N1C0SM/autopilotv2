@@ -181,6 +181,22 @@ const Onboarding = () => {
   const handleSubmit = async () => {
     if (!user) return;
     setLoading(true);
+
+    // Auto-calcular días disponibles para entrenar = días sin actividad fija que ocupe la franja 17-22.
+    // Si una actividad fija ocupa la noche, ese día NO se considera disponible para gym/calistenia.
+    const busyEveningDays = new Set<number>();
+    Object.values(data.sport_schedules).forEach((s) => {
+      const startH = parseInt((s.start || "00:00").split(":")[0]);
+      if (startH >= 17 && startH <= 21) busyEveningDays.add(s.dow);
+    });
+    data.custom_activities.forEach((a) => {
+      const startH = parseInt((a.start || "00:00").split(":")[0]);
+      if (startH >= 17 && startH <= 21) busyEveningDays.add(a.dow);
+    });
+    const freeDays = [1, 2, 3, 4, 5, 6, 0].filter((d) => !busyEveningDays.has(d));
+    const autoDays = Math.max(3, Math.min(5, freeDays.length));
+    const autoHours = 1.25; // duración estándar por sesión
+
     const { error } = await supabase.from("onboarding").upsert(
       {
         user_id: user.id,
@@ -196,7 +212,13 @@ const Onboarding = () => {
         intensity_level: data.intensity_level,
         initial_tests: data.initial_tests,
         injuries: data.injuries || null,
-        availability: { ...data.availability, sport_schedules: data.sport_schedules },
+        availability: {
+          days: String(autoDays),
+          hours: String(autoHours),
+          auto_calculated: true,
+          sport_schedules: data.sport_schedules,
+          custom_activities: data.custom_activities,
+        },
         nutrition_preferences: data.nutrition_preferences,
         allergies: data.allergies,
       },
