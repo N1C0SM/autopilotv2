@@ -164,7 +164,7 @@ const Onboarding = () => {
         intensity_level: data.intensity_level,
         initial_tests: data.initial_tests,
         injuries: data.injuries || null,
-        availability: data.availability,
+        availability: { ...data.availability, sport_schedules: data.sport_schedules },
         nutrition_preferences: data.nutrition_preferences,
         allergies: data.allergies,
       },
