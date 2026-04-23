@@ -121,11 +121,11 @@ const Onboarding = () => {
     goal: "",
     specific_goal: "",
     sports: [] as string[],
-    sport_schedules: {} as Record<string, { dow: number; hour: number; minute: number; duration: number }>,
+    sport_schedules: {} as Record<string, Schedule>,
+    custom_activities: [] as CustomActivity[],
     intensity_level: 5,
     initial_tests: { pullups: "", pushups: "", squat: "", plank: "" },
     injuries: "",
-    availability: { days: "", hours: "" },
     nutrition_preferences: "",
     allergies: "",
   });
@@ -140,20 +140,42 @@ const Onboarding = () => {
       if (has) {
         delete newSchedules[sport];
       } else if (!newSchedules[sport]) {
-        newSchedules[sport] = SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, hour: 19, minute: 0, duration: 60 };
+        newSchedules[sport] = SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, start: "19:00", end: "20:00" };
       }
       return { ...d, sports: newSports, sport_schedules: newSchedules };
     });
   };
 
-  const updateSchedule = (sport: string, patch: Partial<{ dow: number; hour: number; minute: number; duration: number }>) => {
+  const updateSchedule = (sport: string, patch: Partial<Schedule>) => {
     setData((d) => ({
       ...d,
       sport_schedules: {
         ...d.sport_schedules,
-        [sport]: { ...(d.sport_schedules[sport] || SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, hour: 19, minute: 0, duration: 60 }), ...patch },
+        [sport]: { ...(d.sport_schedules[sport] || SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, start: "19:00", end: "20:00" }), ...patch },
       },
     }));
+  };
+
+  // --- Custom activities (cosas no deportivas: salir con amigos, trabajo, etc.) ---
+  const addCustomActivity = () => {
+    setData((d) => ({
+      ...d,
+      custom_activities: [
+        ...d.custom_activities,
+        { id: crypto.randomUUID(), title: "", dow: 5, start: "20:00", end: "22:00" },
+      ],
+    }));
+  };
+
+  const updateCustomActivity = (id: string, patch: Partial<CustomActivity>) => {
+    setData((d) => ({
+      ...d,
+      custom_activities: d.custom_activities.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+    }));
+  };
+
+  const removeCustomActivity = (id: string) => {
+    setData((d) => ({ ...d, custom_activities: d.custom_activities.filter((a) => a.id !== id) }));
   };
 
   const handleSubmit = async () => {
