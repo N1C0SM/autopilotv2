@@ -152,17 +152,39 @@ const CalendarView = ({ dayPlans }: Props) => {
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
 
-    // Horarios definidos por el usuario en el onboarding
-    const userSchedules: Record<string, { dow: number; hour: number; minute: number; duration: number }> =
+    // Horarios definidos por el usuario en el onboarding (formato nuevo: start/end como "HH:MM")
+    const userSchedules: Record<string, { dow: number; start: string; end: string }> =
       ((onb.availability as any)?.sport_schedules) || {};
+
+    // Actividades personalizadas del onboarding (salir con amigos, trabajo, etc.)
+    const customActivities: Array<{ id: string; title: string; dow: number; start: string; end: string }> =
+      ((onb.availability as any)?.custom_activities) || [];
 
     const { data: existing } = await supabase
       .from("external_activities")
-      .select("category")
+      .select("category, title")
       .eq("user_id", user.id);
     const existingCats = new Set((existing || []).map((e: any) => e.category));
+    const existingTitles = new Set((existing || []).map((e: any) => `personal::${(e.title || "").toLowerCase()}`));
 
-    const toInsert = sportsList
+    const parseHM = (hm: string, fallback = { h: 19, m: 0 }) => {
+      const [hStr, mStr] = (hm || "").split(":");
+      const h = parseInt(hStr);
+      const m = parseInt(mStr);
+      return {
+        h: Number.isFinite(h) ? h : fallback.h,
+        m: Number.isFinite(m) ? m : fallback.m,
+      };
+    };
+    const minutesBetween = (start: string, end: string) => {
+      const a = parseHM(start, { h: 19, m: 0 });
+      const b = parseHM(end, { h: 20, m: 0 });
+      const diff = (b.h * 60 + b.m) - (a.h * 60 + a.m);
+      return diff > 0 ? diff : 60;
+    };
+
+    // 1) Deportes secundarios → external_activities
+    const sportsToInsert = sportsList
       .filter((s) => SPORT_DEFAULTS[s])
       .filter((s) => s !== "gimnasio" && s !== "calistenia") // entrenos, no externas
       .filter((s) => !(focus === "gimnasio" && s === "gimnasio"))
@@ -170,14 +192,18 @@ const CalendarView = ({ dayPlans }: Props) => {
       .map((s) => {
         const def = SPORT_DEFAULTS[s];
         const userSched = userSchedules[s];
+        const start = userSched?.start;
+        const end = userSched?.end;
+        const startHM = start ? parseHM(start, { h: def.hour, m: 0 }) : { h: def.hour, m: 0 };
+        const dur = start && end ? minutesBetween(start, end) : 60;
         return {
           user_id: user.id,
           title: def.label,
           category: s,
           day_of_week: userSched?.dow ?? def.dow,
-          start_hour: userSched?.hour ?? def.hour,
-          start_minute: userSched?.minute ?? 0,
-          duration_min: userSched?.duration ?? 60,
+          start_hour: startHM.h,
+          start_minute: startHM.m,
+          duration_min: dur,
           color: def.color,
           icon: def.icon,
           note: userSched
@@ -186,6 +212,28 @@ const CalendarView = ({ dayPlans }: Props) => {
         };
       });
 
+    // 2) Actividades personalizadas → external_activities (categoría "personal")
+    const customsToInsert = customActivities
+      .filter((a) => a.title && a.title.trim().length > 0)
+      .filter((a) => !existingTitles.has(`personal::${a.title.trim().toLowerCase()}`))
+      .map((a) => {
+        const startHM = parseHM(a.start, { h: 20, m: 0 });
+        const dur = minutesBetween(a.start, a.end);
+        return {
+          user_id: user.id,
+          title: a.title.trim(),
+          category: "personal",
+          day_of_week: a.dow,
+          start_hour: startHM.h,
+          start_minute: startHM.m,
+          duration_min: dur,
+          color: "#a855f7", // púrpura para "vida personal"
+          icon: "📌",
+          note: "Añadido desde tu onboarding · puedes editarlo o moverlo",
+        };
+      });
+
+    const toInsert = [...sportsToInsert, ...customsToInsert];
     if (toInsert.length > 0) {
       await supabase.from("external_activities").insert(toInsert);
     }
