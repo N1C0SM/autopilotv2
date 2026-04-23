@@ -39,6 +39,8 @@ const CATEGORIES = [
   { value: "tenis", label: "🎾 Tenis", color: "#eab308" },
   { value: "padel", label: "🏓 Pádel", color: "#a855f7" },
   { value: "danza", label: "💃 Danza", color: "#ec4899" },
+  { value: "personal", label: "📌 Personal", color: "#a855f7" },
+  { value: "trabajo", label: "💼 Trabajo", color: "#64748b" },
   { value: "otro", label: "✨ Otro", color: "#f97316" },
 ];
 
