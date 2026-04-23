@@ -585,8 +585,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 9: Injuries */}
-          {step === 9 && (
+          {/* Step 10: Injuries */}
+          {step === 10 && (
             <div>
               <Label className="mb-1.5 block">¿Tienes lesiones, molestias o condiciones físicas?</Label>
               <p className="text-xs text-muted-foreground mb-3">Déjalo vacío si no tienes ninguna</p>
@@ -599,8 +599,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 10: Availability */}
-          {step === 10 && (
+          {/* Step 11: Availability */}
+          {step === 11 && (
             <div className="space-y-4">
               <div>
                 <Label>Días por semana disponibles</Label>
@@ -628,8 +628,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 11: Nutrition */}
-          {step === 11 && (
+          {/* Step 12: Nutrition */}
+          {step === 12 && (
             <div className="space-y-4">
               <div>
                 <Label>Preferencias nutricionales</Label>
@@ -654,8 +654,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 12: Summary */}
-          {step === 12 && (
+          {/* Step 13: Summary */}
+          {step === 13 && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
