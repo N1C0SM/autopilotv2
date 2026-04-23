@@ -418,8 +418,89 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 7: Intensity */}
+          {/* Step 7: Sport schedules */}
           {step === 7 && (
+            <div>
+              <Label className="mb-1.5 block">¿Cuándo practicas cada deporte?</Label>
+              <p className="text-xs text-muted-foreground mb-4">
+                Esto se añadirá a tu calendario semanal. Puedes cambiarlo cuando quieras.
+              </p>
+              {(() => {
+                const secondary = data.sports.filter((s) => s !== "gimnasio" && s !== "calistenia");
+                if (secondary.length === 0) {
+                  return (
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border text-center text-sm text-muted-foreground">
+                      No has añadido deportes secundarios. Pasa al siguiente paso 👉
+                    </div>
+                  );
+                }
+                return (
+                  <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                    {secondary.map((sportKey) => {
+                      const sport = SPORTS.find((s) => s.value === sportKey);
+                      const sched = data.sport_schedules[sportKey] || SPORT_SCHEDULE_DEFAULTS[sportKey] || { dow: 2, hour: 19, minute: 0, duration: 60 };
+                      return (
+                        <div key={sportKey} className="p-3 rounded-xl border border-border bg-card">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-xl">{sport?.emoji}</span>
+                            <span className="font-medium text-sm">{sport?.label}</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Día</Label>
+                              <select
+                                value={sched.dow}
+                                onChange={(e) => updateSchedule(sportKey, { dow: parseInt(e.target.value) })}
+                                className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                              >
+                                {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+                                  <option key={d} value={d}>{DAYS_ES[d].slice(0, 3)}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Hora</Label>
+                              <select
+                                value={`${sched.hour}:${String(sched.minute).padStart(2, "0")}`}
+                                onChange={(e) => {
+                                  const [h, m] = e.target.value.split(":").map((v) => parseInt(v));
+                                  updateSchedule(sportKey, { hour: h, minute: m });
+                                }}
+                                className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                              >
+                                {Array.from({ length: 32 }).map((_, i) => {
+                                  const totalMin = 6 * 60 + i * 30;
+                                  const h = Math.floor(totalMin / 60);
+                                  const m = totalMin % 60;
+                                  const v = `${h}:${String(m).padStart(2, "0")}`;
+                                  return <option key={v} value={v}>{`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`}</option>;
+                                })}
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Dur.</Label>
+                              <select
+                                value={sched.duration}
+                                onChange={(e) => updateSchedule(sportKey, { duration: parseInt(e.target.value) })}
+                                className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                              >
+                                {[30, 45, 60, 75, 90, 120, 150, 180].map((d) => (
+                                  <option key={d} value={d}>{d}m</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Step 8: Intensity */}
+          {step === 8 && (
             <div>
               <Label className="mb-3 block">¿Qué nivel de intensidad buscas?</Label>
               <p className="text-xs text-muted-foreground mb-6">1 = suave y progresivo · 10 = máxima intensidad</p>
@@ -440,8 +521,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 8: Initial level tests */}
-          {step === 8 && (
+          {/* Step 9: Initial level tests */}
+          {step === 9 && (
             <div>
               <Label className="mb-1.5 block">¿Cuál es tu nivel ahora mismo?</Label>
               <p className="text-xs text-muted-foreground mb-5">
