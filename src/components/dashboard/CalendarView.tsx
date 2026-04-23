@@ -136,7 +136,80 @@ const CalendarView = ({ dayPlans }: Props) => {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, [user]);
+  // Auto-seed external activities from onboarding sports (the ones that aren't
+  // the main training focus, e.g. boxeo, escalada, yoga…). Runs once per user.
+  const seedFromOnboarding = async () => {
+    if (!user) return;
+    const { data: onb } = await supabase
+      .from("onboarding")
+      .select("sports, primary_focus")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!onb?.sports) return;
+    const focus = (onb.primary_focus || "").toLowerCase();
+    const sportsList = String(onb.sports)
+      .split(/[,;]/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    const { data: existing } = await supabase
+      .from("external_activities")
+      .select("category")
+      .eq("user_id", user.id);
+    const existingCats = new Set((existing || []).map((e: any) => e.category));
+
+    const toInsert = sportsList
+      .filter((s) => SPORT_DEFAULTS[s])
+      .filter((s) => s !== "gimnasio" && s !== "calistenia") // entrenos, no externas
+      .filter((s) => !(focus === "gimnasio" && s === "gimnasio"))
+      .filter((s) => !existingCats.has(s))
+      .map((s) => {
+        const def = SPORT_DEFAULTS[s];
+        return {
+          user_id: user.id,
+          title: def.label,
+          category: s,
+          day_of_week: def.dow,
+          start_hour: def.hour,
+          start_minute: 0,
+          duration_min: 60,
+          color: def.color,
+          icon: def.icon,
+          note: "Añadido desde tu onboarding · puedes editarlo o moverlo",
+        };
+      });
+
+    if (toInsert.length > 0) {
+      await supabase.from("external_activities").insert(toInsert);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      await seedFromOnboarding();
+      await loadData();
+    })();
+
+    // Realtime: refrescar el calendario cuando cambien externas u overrides
+    const channel = supabase
+      .channel(`calendar-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "external_activities", filter: `user_id=eq.${user.id}` },
+        () => loadData()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "training_schedule_overrides", filter: `user_id=eq.${user.id}` },
+        () => loadData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   // Build events from plan + externals
   const events: EventInput[] = useMemo(() => {
