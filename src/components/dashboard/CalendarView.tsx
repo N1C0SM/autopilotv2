@@ -142,7 +142,7 @@ const CalendarView = ({ dayPlans }: Props) => {
     if (!user) return;
     const { data: onb } = await supabase
       .from("onboarding")
-      .select("sports, primary_focus")
+      .select("sports, primary_focus, availability")
       .eq("user_id", user.id)
       .maybeSingle();
     if (!onb?.sports) return;
@@ -151,6 +151,10 @@ const CalendarView = ({ dayPlans }: Props) => {
       .split(/[,;]/)
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
+
+    // Horarios definidos por el usuario en el onboarding
+    const userSchedules: Record<string, { dow: number; hour: number; minute: number; duration: number }> =
+      ((onb.availability as any)?.sport_schedules) || {};
 
     const { data: existing } = await supabase
       .from("external_activities")
@@ -165,17 +169,20 @@ const CalendarView = ({ dayPlans }: Props) => {
       .filter((s) => !existingCats.has(s))
       .map((s) => {
         const def = SPORT_DEFAULTS[s];
+        const userSched = userSchedules[s];
         return {
           user_id: user.id,
           title: def.label,
           category: s,
-          day_of_week: def.dow,
-          start_hour: def.hour,
-          start_minute: 0,
-          duration_min: 60,
+          day_of_week: userSched?.dow ?? def.dow,
+          start_hour: userSched?.hour ?? def.hour,
+          start_minute: userSched?.minute ?? 0,
+          duration_min: userSched?.duration ?? 60,
           color: def.color,
           icon: def.icon,
-          note: "Añadido desde tu onboarding · puedes editarlo o moverlo",
+          note: userSched
+            ? "Añadido desde tu onboarding · puedes editarlo o moverlo"
+            : "Horario por defecto · ajústalo arrastrando el bloque",
         };
       });
 
