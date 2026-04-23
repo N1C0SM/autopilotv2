@@ -80,6 +80,22 @@ const SPECIFIC_GOAL_SUGGESTIONS: Record<string, string[]> = {
   Mixto: ["Handstand / Pino", "Muscle Up", "Press banca 100kg", "Front Lever", "Sentadilla 120kg"],
 };
 
+const DAYS_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+// Horario sugerido por defecto al seleccionar un deporte (el usuario puede cambiarlo)
+const SPORT_SCHEDULE_DEFAULTS: Record<string, { dow: number; hour: number; minute: number; duration: number }> = {
+  boxeo:    { dow: 2, hour: 19, minute: 0, duration: 60 },
+  escalada: { dow: 4, hour: 18, minute: 0, duration: 90 },
+  yoga:     { dow: 3, hour: 8,  minute: 0, duration: 60 },
+  running:  { dow: 6, hour: 9,  minute: 0, duration: 45 },
+  natacion: { dow: 5, hour: 19, minute: 0, duration: 45 },
+  ciclismo: { dow: 6, hour: 10, minute: 0, duration: 90 },
+  futbol:   { dow: 5, hour: 20, minute: 0, duration: 90 },
+  tenis:    { dow: 4, hour: 19, minute: 0, duration: 60 },
+  padel:    { dow: 4, hour: 20, minute: 0, duration: 60 },
+  danza:    { dow: 3, hour: 19, minute: 0, duration: 60 },
+};
+
 const Onboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
