@@ -22,7 +22,6 @@ const STEPS = [
   "Intensidad",
   "Tests de Nivel",
   "Lesiones",
-  "Disponibilidad",
   "Nutrición",
   "Resumen",
 ];
@@ -82,19 +81,30 @@ const SPECIFIC_GOAL_SUGGESTIONS: Record<string, string[]> = {
 
 const DAYS_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-// Horario sugerido por defecto al seleccionar un deporte (el usuario puede cambiarlo)
-const SPORT_SCHEDULE_DEFAULTS: Record<string, { dow: number; hour: number; minute: number; duration: number }> = {
-  boxeo:    { dow: 2, hour: 19, minute: 0, duration: 60 },
-  escalada: { dow: 4, hour: 18, minute: 0, duration: 90 },
-  yoga:     { dow: 3, hour: 8,  minute: 0, duration: 60 },
-  running:  { dow: 6, hour: 9,  minute: 0, duration: 45 },
-  natacion: { dow: 5, hour: 19, minute: 0, duration: 45 },
-  ciclismo: { dow: 6, hour: 10, minute: 0, duration: 90 },
-  futbol:   { dow: 5, hour: 20, minute: 0, duration: 90 },
-  tenis:    { dow: 4, hour: 19, minute: 0, duration: 60 },
-  padel:    { dow: 4, hour: 20, minute: 0, duration: 60 },
-  danza:    { dow: 3, hour: 19, minute: 0, duration: 60 },
+// Horario sugerido por defecto al seleccionar un deporte (el usuario puede cambiarlo).
+// Ahora trabajamos con hora de inicio y hora de fin (no duración).
+const SPORT_SCHEDULE_DEFAULTS: Record<string, { dow: number; start: string; end: string }> = {
+  boxeo:    { dow: 2, start: "19:00", end: "20:00" },
+  escalada: { dow: 4, start: "18:00", end: "19:30" },
+  yoga:     { dow: 3, start: "08:00", end: "09:00" },
+  running:  { dow: 6, start: "09:00", end: "09:45" },
+  natacion: { dow: 5, start: "19:00", end: "19:45" },
+  ciclismo: { dow: 6, start: "10:00", end: "11:30" },
+  futbol:   { dow: 5, start: "20:00", end: "21:30" },
+  tenis:    { dow: 4, start: "19:00", end: "20:00" },
+  padel:    { dow: 4, start: "20:00", end: "21:00" },
+  danza:    { dow: 3, start: "19:00", end: "20:00" },
 };
+
+type Schedule = { dow: number; start: string; end: string };
+type CustomActivity = { id: string; title: string; dow: number; start: string; end: string };
+
+const TIME_OPTIONS = Array.from({ length: 36 }).map((_, i) => {
+  const totalMin = 6 * 60 + i * 30; // 06:00 → 23:30
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+});
 
 const Onboarding = () => {
   const { user } = useAuth();
@@ -111,11 +121,11 @@ const Onboarding = () => {
     goal: "",
     specific_goal: "",
     sports: [] as string[],
-    sport_schedules: {} as Record<string, { dow: number; hour: number; minute: number; duration: number }>,
+    sport_schedules: {} as Record<string, Schedule>,
+    custom_activities: [] as CustomActivity[],
     intensity_level: 5,
     initial_tests: { pullups: "", pushups: "", squat: "", plank: "" },
     injuries: "",
-    availability: { days: "", hours: "" },
     nutrition_preferences: "",
     allergies: "",
   });
@@ -130,25 +140,63 @@ const Onboarding = () => {
       if (has) {
         delete newSchedules[sport];
       } else if (!newSchedules[sport]) {
-        newSchedules[sport] = SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, hour: 19, minute: 0, duration: 60 };
+        newSchedules[sport] = SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, start: "19:00", end: "20:00" };
       }
       return { ...d, sports: newSports, sport_schedules: newSchedules };
     });
   };
 
-  const updateSchedule = (sport: string, patch: Partial<{ dow: number; hour: number; minute: number; duration: number }>) => {
+  const updateSchedule = (sport: string, patch: Partial<Schedule>) => {
     setData((d) => ({
       ...d,
       sport_schedules: {
         ...d.sport_schedules,
-        [sport]: { ...(d.sport_schedules[sport] || SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, hour: 19, minute: 0, duration: 60 }), ...patch },
+        [sport]: { ...(d.sport_schedules[sport] || SPORT_SCHEDULE_DEFAULTS[sport] || { dow: 2, start: "19:00", end: "20:00" }), ...patch },
       },
     }));
+  };
+
+  // --- Custom activities (cosas no deportivas: salir con amigos, trabajo, etc.) ---
+  const addCustomActivity = () => {
+    setData((d) => ({
+      ...d,
+      custom_activities: [
+        ...d.custom_activities,
+        { id: crypto.randomUUID(), title: "", dow: 5, start: "20:00", end: "22:00" },
+      ],
+    }));
+  };
+
+  const updateCustomActivity = (id: string, patch: Partial<CustomActivity>) => {
+    setData((d) => ({
+      ...d,
+      custom_activities: d.custom_activities.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+    }));
+  };
+
+  const removeCustomActivity = (id: string) => {
+    setData((d) => ({ ...d, custom_activities: d.custom_activities.filter((a) => a.id !== id) }));
   };
 
   const handleSubmit = async () => {
     if (!user) return;
     setLoading(true);
+
+    // Auto-calcular días disponibles para entrenar = días sin actividad fija que ocupe la franja 17-22.
+    // Si una actividad fija ocupa la noche, ese día NO se considera disponible para gym/calistenia.
+    const busyEveningDays = new Set<number>();
+    Object.values(data.sport_schedules).forEach((s) => {
+      const startH = parseInt((s.start || "00:00").split(":")[0]);
+      if (startH >= 17 && startH <= 21) busyEveningDays.add(s.dow);
+    });
+    data.custom_activities.forEach((a) => {
+      const startH = parseInt((a.start || "00:00").split(":")[0]);
+      if (startH >= 17 && startH <= 21) busyEveningDays.add(a.dow);
+    });
+    const freeDays = [1, 2, 3, 4, 5, 6, 0].filter((d) => !busyEveningDays.has(d));
+    const autoDays = Math.max(3, Math.min(5, freeDays.length));
+    const autoHours = 1.25; // duración estándar por sesión
+
     const { error } = await supabase.from("onboarding").upsert(
       {
         user_id: user.id,
@@ -164,7 +212,13 @@ const Onboarding = () => {
         intensity_level: data.intensity_level,
         initial_tests: data.initial_tests,
         injuries: data.injuries || null,
-        availability: { ...data.availability, sport_schedules: data.sport_schedules },
+        availability: {
+          days: String(autoDays),
+          hours: String(autoHours),
+          auto_calculated: true,
+          sport_schedules: data.sport_schedules,
+          custom_activities: data.custom_activities,
+        },
         nutrition_preferences: data.nutrition_preferences,
         allergies: data.allergies,
       },
@@ -421,81 +475,148 @@ const Onboarding = () => {
           {/* Step 7: Sport schedules */}
           {step === 7 && (
             <div>
-              <Label className="mb-1.5 block">¿Cuándo practicas cada deporte?</Label>
+              <Label className="mb-1.5 block">Tu agenda semanal fija</Label>
               <p className="text-xs text-muted-foreground mb-4">
-                Esto se añadirá a tu calendario semanal. Puedes cambiarlo cuando quieras.
+                Indica a qué hora <span className="text-foreground font-medium">empieza y acaba</span> cada deporte y cualquier otra cosa fija (trabajo, salir con amigos, clases…). Tu plan de entrenos se ajustará a los huecos libres automáticamente.
               </p>
-              {(() => {
-                const secondary = data.sports.filter((s) => s !== "gimnasio" && s !== "calistenia");
-                if (secondary.length === 0) {
+
+              <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1">
+                {/* Deportes secundarios */}
+                {(() => {
+                  const secondary = data.sports.filter((s) => s !== "gimnasio" && s !== "calistenia");
+                  if (secondary.length === 0) return null;
                   return (
-                    <div className="p-4 rounded-xl bg-muted/30 border border-border text-center text-sm text-muted-foreground">
-                      No has añadido deportes secundarios. Pasa al siguiente paso 👉
+                    <div className="space-y-2">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Deportes</p>
+                      {secondary.map((sportKey) => {
+                        const sport = SPORTS.find((s) => s.value === sportKey);
+                        const sched = data.sport_schedules[sportKey] || SPORT_SCHEDULE_DEFAULTS[sportKey] || { dow: 2, start: "19:00", end: "20:00" };
+                        return (
+                          <div key={sportKey} className="p-3 rounded-xl border border-border bg-card">
+                            <div className="flex items-center gap-2 mb-2.5">
+                              <span className="text-xl">{sport?.emoji}</span>
+                              <span className="font-medium text-sm">{sport?.label}</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Día</Label>
+                                <select
+                                  value={sched.dow}
+                                  onChange={(e) => updateSchedule(sportKey, { dow: parseInt(e.target.value) })}
+                                  className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                                >
+                                  {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+                                    <option key={d} value={d}>{DAYS_ES[d].slice(0, 3)}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Inicio</Label>
+                                <select
+                                  value={sched.start}
+                                  onChange={(e) => updateSchedule(sportKey, { start: e.target.value })}
+                                  className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                                >
+                                  {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Fin</Label>
+                                <select
+                                  value={sched.end}
+                                  onChange={(e) => updateSchedule(sportKey, { end: e.target.value })}
+                                  className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                                >
+                                  {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
-                }
-                return (
-                  <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                    {secondary.map((sportKey) => {
-                      const sport = SPORTS.find((s) => s.value === sportKey);
-                      const sched = data.sport_schedules[sportKey] || SPORT_SCHEDULE_DEFAULTS[sportKey] || { dow: 2, hour: 19, minute: 0, duration: 60 };
-                      return (
-                        <div key={sportKey} className="p-3 rounded-xl border border-border bg-card">
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="text-xl">{sport?.emoji}</span>
-                            <span className="font-medium text-sm">{sport?.label}</span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            <div>
-                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Día</Label>
-                              <select
-                                value={sched.dow}
-                                onChange={(e) => updateSchedule(sportKey, { dow: parseInt(e.target.value) })}
-                                className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
-                              >
-                                {[1, 2, 3, 4, 5, 6, 0].map((d) => (
-                                  <option key={d} value={d}>{DAYS_ES[d].slice(0, 3)}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Hora</Label>
-                              <select
-                                value={`${sched.hour}:${String(sched.minute).padStart(2, "0")}`}
-                                onChange={(e) => {
-                                  const [h, m] = e.target.value.split(":").map((v) => parseInt(v));
-                                  updateSchedule(sportKey, { hour: h, minute: m });
-                                }}
-                                className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
-                              >
-                                {Array.from({ length: 32 }).map((_, i) => {
-                                  const totalMin = 6 * 60 + i * 30;
-                                  const h = Math.floor(totalMin / 60);
-                                  const m = totalMin % 60;
-                                  const v = `${h}:${String(m).padStart(2, "0")}`;
-                                  return <option key={v} value={v}>{`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`}</option>;
-                                })}
-                              </select>
-                            </div>
-                            <div>
-                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Dur.</Label>
-                              <select
-                                value={sched.duration}
-                                onChange={(e) => updateSchedule(sportKey, { duration: parseInt(e.target.value) })}
-                                className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
-                              >
-                                {[30, 45, 60, 75, 90, 120, 150, 180].map((d) => (
-                                  <option key={d} value={d}>{d}m</option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                })()}
+
+                {/* Actividades personalizadas */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Otras cosas fijas</p>
+                    <button
+                      type="button"
+                      onClick={addCustomActivity}
+                      className="text-xs text-primary font-medium hover:underline"
+                    >
+                      + Añadir
+                    </button>
                   </div>
-                );
-              })()}
+
+                  {data.custom_activities.length === 0 && (
+                    <div className="p-3 rounded-xl bg-muted/30 border border-dashed border-border text-center text-xs text-muted-foreground">
+                      Trabajo, clases, quedadas, recoger niños… cualquier cosa que ocupe horas fijas en tu semana.
+                    </div>
+                  )}
+
+                  {data.custom_activities.map((act) => (
+                    <div key={act.id} className="p-3 rounded-xl border border-border bg-card">
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <Input
+                          value={act.title}
+                          onChange={(e) => updateCustomActivity(act.id, { title: e.target.value })}
+                          placeholder="Ej: Salir con amigos, trabajo, clase de inglés…"
+                          className="h-8 text-sm flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeCustomActivity(act.id)}
+                          className="text-muted-foreground hover:text-destructive text-lg leading-none px-1"
+                          aria-label="Eliminar"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Día</Label>
+                          <select
+                            value={act.dow}
+                            onChange={(e) => updateCustomActivity(act.id, { dow: parseInt(e.target.value) })}
+                            className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                          >
+                            {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+                              <option key={d} value={d}>{DAYS_ES[d].slice(0, 3)}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Inicio</Label>
+                          <select
+                            value={act.start}
+                            onChange={(e) => updateCustomActivity(act.id, { start: e.target.value })}
+                            className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                          >
+                            {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Fin</Label>
+                          <select
+                            value={act.end}
+                            onChange={(e) => updateCustomActivity(act.id, { end: e.target.value })}
+                            className="w-full mt-1 h-9 rounded-md border border-border bg-background px-2 text-sm"
+                          >
+                            {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-3 rounded-xl bg-primary/5 border border-primary/15 text-xs text-muted-foreground">
+                  ✨ Calcularemos automáticamente los días y huecos libres que tienes para entrenar.
+                </div>
+              </div>
             </div>
           )}
 
@@ -599,37 +720,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 11: Availability */}
+          {/* Step 11: Nutrition */}
           {step === 11 && (
-            <div className="space-y-4">
-              <div>
-                <Label>Días por semana disponibles</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={7}
-                  value={data.availability.days}
-                  onChange={(e) => setData((d) => ({ ...d, availability: { ...d.availability, days: e.target.value } }))}
-                  placeholder="4"
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label>Horas por sesión</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={data.availability.hours}
-                  onChange={(e) => setData((d) => ({ ...d, availability: { ...d.availability, hours: e.target.value } }))}
-                  placeholder="1.5"
-                  className="mt-1.5"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Step 12: Nutrition */}
-          {step === 12 && (
             <div className="space-y-4">
               <div>
                 <Label>Preferencias nutricionales</Label>
@@ -654,8 +746,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 13: Summary */}
-          {step === 13 && (
+          {/* Step 12: Summary */}
+          {step === 12 && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
@@ -668,7 +760,7 @@ const Onboarding = () => {
                   <span className="text-xl">🏋️</span>
                   <div>
                     <p className="font-semibold text-sm">
-                      Rutina de {data.availability.days || "?"} días/semana ·{" "}
+                      Rutina ajustada a tus huecos libres ·{" "}
                       {PRIMARY_FOCUS_OPTIONS.find((p) => p.value === data.primary_focus)?.label || "Mixto"}
                     </p>
                     <p className="text-xs text-muted-foreground">
