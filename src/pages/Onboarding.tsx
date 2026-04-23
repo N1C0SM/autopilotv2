@@ -18,6 +18,7 @@ const STEPS = [
   "Objetivo",
   "Meta Específica",
   "Deportes",
+  "Horarios",
   "Intensidad",
   "Tests de Nivel",
   "Lesiones",
