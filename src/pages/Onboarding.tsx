@@ -242,22 +242,34 @@ const Onboarding = () => {
         toast.success("¡Tu plan se está preparando! 🎉");
         navigate("/dashboard");
       } else {
-        toast.success("¡Cuestionario completado! Redirigiendo al pago...");
-        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
-          "create-checkout",
-          { body: { referral_code: "" } }
-        );
-        if (checkoutError || !checkoutData?.url) {
-          toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
-          navigate("/dashboard");
-        } else {
-          window.location.href = checkoutData.url;
-        }
+        // Fetch yearly price from settings to show in paywall
+        const { data: settings } = await supabase
+          .from("settings")
+          .select("yearly_price_eur")
+          .limit(1)
+          .single();
+        if (settings?.yearly_price_eur) setYearlyPrice(settings.yearly_price_eur);
+        toast.success("¡Cuestionario completado! Elige tu plan.");
+        setShowPaywall(true);
       }
     } else {
       toast.error("Algo salió mal. Por favor, inténtalo de nuevo.");
     }
     setLoading(false);
+  };
+
+  const goToCheckout = async (plan: "monthly" | "yearly") => {
+    setLoading(true);
+    const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+      "create-checkout",
+      { body: { referral_code: "", plan } }
+    );
+    if (checkoutError || !checkoutData?.url) {
+      toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
+      setLoading(false);
+    } else {
+      window.location.href = checkoutData.url;
+    }
   };
 
   const canNext = () => {
