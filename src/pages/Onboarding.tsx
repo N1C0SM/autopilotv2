@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import PricingTiers from "@/components/PricingTiers";
 
 const STEPS = [
   "Datos Físicos",
@@ -111,6 +112,8 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [yearlyPrice, setYearlyPrice] = useState(190);
   const [data, setData] = useState({
     age: "",
     height: "",
@@ -239,22 +242,34 @@ const Onboarding = () => {
         toast.success("¡Tu plan se está preparando! 🎉");
         navigate("/dashboard");
       } else {
-        toast.success("¡Cuestionario completado! Redirigiendo al pago...");
-        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
-          "create-checkout",
-          { body: { referral_code: "" } }
-        );
-        if (checkoutError || !checkoutData?.url) {
-          toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
-          navigate("/dashboard");
-        } else {
-          window.location.href = checkoutData.url;
-        }
+        // Fetch yearly price from settings to show in paywall
+        const { data: settings } = await supabase
+          .from("settings")
+          .select("yearly_price_eur")
+          .limit(1)
+          .single();
+        if (settings?.yearly_price_eur) setYearlyPrice(settings.yearly_price_eur);
+        toast.success("¡Cuestionario completado! Elige tu plan.");
+        setShowPaywall(true);
       }
     } else {
       toast.error("Algo salió mal. Por favor, inténtalo de nuevo.");
     }
     setLoading(false);
+  };
+
+  const goToCheckout = async (plan: "monthly" | "yearly") => {
+    setLoading(true);
+    const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+      "create-checkout",
+      { body: { referral_code: "", plan } }
+    );
+    if (checkoutError || !checkoutData?.url) {
+      toast.error("Error al iniciar el pago. Inténtalo de nuevo.");
+      setLoading(false);
+    } else {
+      window.location.href = checkoutData.url;
+    }
   };
 
   const canNext = () => {
@@ -267,6 +282,29 @@ const Onboarding = () => {
   };
 
   const suggestions = SPECIFIC_GOAL_SUGGESTIONS[data.equipment_type] || SPECIFIC_GOAL_SUGGESTIONS["Mixto"];
+
+  // Paywall view (shown after completing onboarding if user is unpaid)
+  if (showPaywall) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-8">
+            <span className="font-display text-2xl font-bold text-gradient">Autopilot</span>
+            <h1 className="text-3xl font-bold font-display mt-6 mb-2">Elige tu plan</h1>
+            <p className="text-muted-foreground text-sm">
+              Empieza con 7 días gratis · Cancela cuando quieras
+            </p>
+          </div>
+          <PricingTiers onSelect={goToCheckout} yearlyPrice={yearlyPrice} />
+          {loading && (
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Preparando tu pago...
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">

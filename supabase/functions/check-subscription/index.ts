@@ -28,6 +28,13 @@ serve(async (req) => {
     const { data: settings } = await supabaseClient.from("settings").select("payment_mode").limit(1).single();
     const paymentMode = settings?.payment_mode || "test";
 
+    // Read all price IDs to detect plan type later
+    const { data: priceSettings } = await supabaseClient
+      .from("settings")
+      .select("price_id_test, price_id_live, price_id_yearly_test, price_id_yearly_live")
+      .limit(1)
+      .single();
+
     const stripeKey = paymentMode === "live"
       ? Deno.env.get("STRIPE_LIVE_SECRET_KEY")
       : Deno.env.get("STRIPE_TEST_SECRET_KEY");
@@ -67,6 +74,7 @@ serve(async (req) => {
         subscribed: profile?.payment_status === "paid",
         subscription_end: null,
         tier: "personal",
+        plan: null,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -88,11 +96,21 @@ serve(async (req) => {
     const hasActiveSub = !!sub;
     let subscriptionEnd = null;
     let tier = "personal";
+    let plan: "monthly" | "yearly" | null = null;
 
     if (hasActiveSub) {
       subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
       tier = sub.metadata?.tier || "personal";
-      logStep("Active subscription found", { endDate: subscriptionEnd, tier, status: sub.status });
+
+      // Detect plan by comparing price_id
+      const subPriceId = sub.items?.data?.[0]?.price?.id;
+      const monthlyIds = [priceSettings?.price_id_test, priceSettings?.price_id_live].filter(Boolean);
+      const yearlyIds = [priceSettings?.price_id_yearly_test, priceSettings?.price_id_yearly_live].filter(Boolean);
+      if (subPriceId && yearlyIds.includes(subPriceId)) plan = "yearly";
+      else if (subPriceId && monthlyIds.includes(subPriceId)) plan = "monthly";
+      else plan = sub.metadata?.plan === "yearly" ? "yearly" : "monthly";
+
+      logStep("Active subscription found", { endDate: subscriptionEnd, tier, status: sub.status, plan });
 
       const updateData: Record<string, string> = {
         subscription_status: sub.status,
@@ -124,6 +142,7 @@ serve(async (req) => {
       subscribed: hasActiveSub || profile?.payment_status === "paid",
       subscription_end: subscriptionEnd,
       tier,
+      plan,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -39,6 +39,8 @@ const SettingsPanel = () => {
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState("");
   const [loadingPortal, setLoadingPortal] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<"monthly" | "yearly" | null>(null);
+  const [yearlyPriceEur, setYearlyPriceEur] = useState<number>(190);
 
   // Password
   const [newPassword, setNewPassword] = useState("");
@@ -83,6 +85,14 @@ const SettingsPanel = () => {
         });
       }
       setLoading(false);
+
+      // Fetch current plan (monthly/yearly) from check-subscription + yearly price
+      supabase.from("settings").select("yearly_price_eur").limit(1).single().then(({ data }) => {
+        if (data?.yearly_price_eur) setYearlyPriceEur(data.yearly_price_eur);
+      });
+      supabase.functions.invoke("check-subscription").then(({ data }) => {
+        if (data?.plan === "monthly" || data?.plan === "yearly") setCurrentPlan(data.plan);
+      });
     };
     fetch();
   }, [user]);
@@ -242,10 +252,31 @@ const SettingsPanel = () => {
           )}
 
           {(isActive || paymentStatus === "paid") && (
-            <Button variant="outline" className="w-full" onClick={handleManageSubscription} disabled={loadingPortal}>
-              {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ExternalLink className="w-4 h-4 mr-2" />}
-              Gestionar suscripción
-            </Button>
+            <>
+              {currentPlan && (
+                <div className="p-4 rounded-xl border border-border bg-secondary/20 text-sm space-y-1.5">
+                  <p>
+                    Plan actual:{" "}
+                    <span className="font-semibold text-foreground">
+                      {currentPlan === "monthly" ? "Mensual (19€/mes)" : `Anual (${yearlyPriceEur}€/año)`}
+                    </span>
+                  </p>
+                  {currentPlan === "monthly" ? (
+                    <p className="text-xs text-muted-foreground">
+                      💡 Cambia a Anual y ahorra {19 * 12 - yearlyPriceEur}€/año desde el portal de gestión.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Puedes cambiar a Mensual desde el portal de gestión cuando quieras.
+                    </p>
+                  )}
+                </div>
+              )}
+              <Button variant="outline" className="w-full" onClick={handleManageSubscription} disabled={loadingPortal}>
+                {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ExternalLink className="w-4 h-4 mr-2" />}
+                Gestionar suscripción
+              </Button>
+            </>
           )}
 
           {!isActive && paymentStatus !== "paid" && (
