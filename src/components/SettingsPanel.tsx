@@ -39,6 +39,8 @@ const SettingsPanel = () => {
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState("");
   const [loadingPortal, setLoadingPortal] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<"monthly" | "yearly" | null>(null);
+  const [yearlyPriceEur, setYearlyPriceEur] = useState<number>(190);
 
   // Password
   const [newPassword, setNewPassword] = useState("");
@@ -83,6 +85,14 @@ const SettingsPanel = () => {
         });
       }
       setLoading(false);
+
+      // Fetch current plan (monthly/yearly) from check-subscription + yearly price
+      supabase.from("settings").select("yearly_price_eur").limit(1).single().then(({ data }) => {
+        if (data?.yearly_price_eur) setYearlyPriceEur(data.yearly_price_eur);
+      });
+      supabase.functions.invoke("check-subscription").then(({ data }) => {
+        if (data?.plan === "monthly" || data?.plan === "yearly") setCurrentPlan(data.plan);
+      });
     };
     fetch();
   }, [user]);
