@@ -297,7 +297,7 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
         </div>
       )}
       <Tabs defaultValue="info" className="space-y-6">
-        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-5" : "grid-cols-1"}`}>
+        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-6" : "grid-cols-1"}`}>
           <TabsTrigger value="info" className="text-xs gap-1.5">
             <User2 className="w-3.5 h-3.5" /> Info
           </TabsTrigger>
@@ -308,6 +308,9 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
               </TabsTrigger>
               <TabsTrigger value="training" className="text-xs gap-1.5">
                 <Dumbbell className="w-3.5 h-3.5" /> Entreno
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="text-xs gap-1.5">
+                <Calendar className="w-3.5 h-3.5" /> Calendario
               </TabsTrigger>
               <TabsTrigger value="nutrition" className="text-xs gap-1.5">
                 <Apple className="w-3.5 h-3.5" /> Nutrición
