@@ -457,6 +457,15 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
 
   return (
     <div className="space-y-3">
+      {isAdminMode && (
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 text-sm flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+          <span>
+            Estás editando el calendario de{" "}
+            <strong>{targetUserEmail || "este usuario"}</strong>. Los cambios se sincronizan en tiempo real.
+          </span>
+        </div>
+      )}
       {/* Toolbar */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3 text-xs flex-wrap">
