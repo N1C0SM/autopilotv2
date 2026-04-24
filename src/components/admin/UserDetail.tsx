@@ -425,6 +425,16 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
           <TrainingPlanForm dayPlans={dayPlans} onChange={setDayPlans} userSports={onboarding?.sports} equipmentType={onboarding?.equipment_type || "Mixto"} specificGoal={onboarding?.specific_goal || undefined} intensityLevel={onboarding?.intensity_level ?? 5} userGoal={onboarding?.goal || undefined} userInjuries={onboarding?.injuries || undefined} userAge={onboarding?.age ?? undefined} userAvailability={onboarding?.availability as Record<string, boolean> | null} />
         </TabsContent>
 
+        {/* Tab: Calendar (admin) */}
+        <TabsContent value="calendar" className="space-y-6">
+          <CalendarView
+            dayPlans={dayPlans}
+            targetUserId={profile.user_id}
+            targetUserEmail={profile.email}
+            isAdminMode
+          />
+        </TabsContent>
+
         {/* Tab: Nutrition */}
         <TabsContent value="nutrition" className="space-y-6">
           <div className="bg-card rounded-xl p-6 border border-border">
