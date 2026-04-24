@@ -283,6 +283,29 @@ const Onboarding = () => {
 
   const suggestions = SPECIFIC_GOAL_SUGGESTIONS[data.equipment_type] || SPECIFIC_GOAL_SUGGESTIONS["Mixto"];
 
+  // Paywall view (shown after completing onboarding if user is unpaid)
+  if (showPaywall) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-8">
+            <span className="font-display text-2xl font-bold text-gradient">Autopilot</span>
+            <h1 className="text-3xl font-bold font-display mt-6 mb-2">Elige tu plan</h1>
+            <p className="text-muted-foreground text-sm">
+              Empieza con 7 días gratis · Cancela cuando quieras
+            </p>
+          </div>
+          <PricingTiers onSelect={goToCheckout} yearlyPrice={yearlyPrice} />
+          {loading && (
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Preparando tu pago...
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
