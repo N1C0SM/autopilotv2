@@ -5,7 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import esLocale from "@fullcalendar/core/locales/es";
 import type { EventInput, EventClickArg, EventDropArg, EventChangeArg, DateSelectArg } from "@fullcalendar/core";
-import { Plus, Trash2, X, Dumbbell, Flame, Apple } from "lucide-react";
+import { Plus, Trash2, X, Dumbbell, Flame, Apple, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
