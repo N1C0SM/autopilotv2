@@ -82,6 +82,12 @@ interface ScheduleOverride {
 
 interface Props {
   dayPlans: DayPlan[];
+  /** If set, the calendar operates on this user's data (admin mode). Otherwise uses the logged-in user. */
+  targetUserId?: string;
+  /** Show admin banner and skip auto-seeding from onboarding. */
+  isAdminMode?: boolean;
+  /** Email of the target user, shown in the admin banner. */
+  targetUserEmail?: string;
 }
 
 function getMondayOfWeek(date = new Date()): Date {
@@ -102,8 +108,9 @@ function dateForDow(monday: Date, dow: number, hour: number, minute: number): Da
   return d;
 }
 
-const CalendarView = ({ dayPlans }: Props) => {
+const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: Props) => {
   const { user } = useAuth();
+  const effectiveUserId = targetUserId ?? user?.id;
   const calendarRef = useRef<FullCalendar | null>(null);
   const [externals, setExternals] = useState<ExternalActivity[]>([]);
   const [overrides, setOverrides] = useState<Record<string, ScheduleOverride>>({});
