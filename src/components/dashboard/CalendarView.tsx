@@ -206,7 +206,7 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
         const startHM = start ? parseHM(start, { h: def.hour, m: 0 }) : { h: def.hour, m: 0 };
         const dur = start && end ? minutesBetween(start, end) : 60;
         return {
-          user_id: user.id,
+          user_id: effectiveUserId,
           title: def.label,
           category: s,
           day_of_week: userSched?.dow ?? def.dow,
@@ -229,7 +229,7 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
         const startHM = parseHM(a.start, { h: 20, m: 0 });
         const dur = minutesBetween(a.start, a.end);
         return {
-          user_id: user.id,
+          user_id: effectiveUserId,
           title: a.title.trim(),
           category: "personal",
           day_of_week: a.dow,
