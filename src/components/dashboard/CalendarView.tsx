@@ -133,10 +133,10 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
   const monday = useMemo(() => getMondayOfWeek(), []);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     const [{ data: ext }, { data: ovr }] = await Promise.all([
-      supabase.from("external_activities").select("*").eq("user_id", user.id),
-      supabase.from("training_schedule_overrides").select("*").eq("user_id", user.id),
+      supabase.from("external_activities").select("*").eq("user_id", effectiveUserId),
+      supabase.from("training_schedule_overrides").select("*").eq("user_id", effectiveUserId),
     ]);
     setExternals((ext as ExternalActivity[]) || []);
     const map: Record<string, ScheduleOverride> = {};
@@ -148,11 +148,11 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
   // Auto-seed external activities from onboarding sports (the ones that aren't
   // the main training focus, e.g. boxeo, escalada, yoga…). Runs once per user.
   const seedFromOnboarding = async () => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     const { data: onb } = await supabase
       .from("onboarding")
       .select("sports, primary_focus, availability")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .maybeSingle();
     if (!onb?.sports) return;
     const focus = (onb.primary_focus || "").toLowerCase();
@@ -172,7 +172,7 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
     const { data: existing } = await supabase
       .from("external_activities")
       .select("category, title")
-      .eq("user_id", user.id);
+      .eq("user_id", effectiveUserId);
     const existingCats = new Set((existing || []).map((e: any) => e.category));
     const existingTitles = new Set((existing || []).map((e: any) => `personal::${(e.title || "").toLowerCase()}`));
 
