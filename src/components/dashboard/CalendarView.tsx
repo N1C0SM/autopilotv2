@@ -358,12 +358,12 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     if (!title.trim()) { toast.error("Pon un nombre"); return; }
     const cat = CATEGORIES.find((c) => c.value === category) || CATEGORIES[0];
     const icon = cat.label.split(" ")[0];
     const payload = {
-      user_id: user.id,
+      user_id: effectiveUserId,
       title: title.trim(),
       category,
       day_of_week: dow,
@@ -407,7 +407,7 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
   };
 
   const handleEventDrop = async (arg: EventDropArg | EventChangeArg) => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     const ev = arg.event;
     const newStart = ev.start;
     const newEnd = ev.end;
@@ -431,7 +431,7 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
     } else if (props.kind === "training") {
       const dayLabel = props.plan.day;
       const { error } = await supabase.from("training_schedule_overrides").upsert({
-        user_id: user.id,
+        user_id: effectiveUserId,
         day_label: dayLabel,
         new_day_of_week: newDow,
         start_hour: newHour,
