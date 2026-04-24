@@ -252,10 +252,31 @@ const SettingsPanel = () => {
           )}
 
           {(isActive || paymentStatus === "paid") && (
-            <Button variant="outline" className="w-full" onClick={handleManageSubscription} disabled={loadingPortal}>
-              {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ExternalLink className="w-4 h-4 mr-2" />}
-              Gestionar suscripción
-            </Button>
+            <>
+              {currentPlan && (
+                <div className="p-4 rounded-xl border border-border bg-secondary/20 text-sm space-y-1.5">
+                  <p>
+                    Plan actual:{" "}
+                    <span className="font-semibold text-foreground">
+                      {currentPlan === "monthly" ? "Mensual (19€/mes)" : `Anual (${yearlyPriceEur}€/año)`}
+                    </span>
+                  </p>
+                  {currentPlan === "monthly" ? (
+                    <p className="text-xs text-muted-foreground">
+                      💡 Cambia a Anual y ahorra {19 * 12 - yearlyPriceEur}€/año desde el portal de gestión.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Puedes cambiar a Mensual desde el portal de gestión cuando quieras.
+                    </p>
+                  )}
+                </div>
+              )}
+              <Button variant="outline" className="w-full" onClick={handleManageSubscription} disabled={loadingPortal}>
+                {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ExternalLink className="w-4 h-4 mr-2" />}
+                Gestionar suscripción
+              </Button>
+            </>
           )}
 
           {!isActive && paymentStatus !== "paid" && (
