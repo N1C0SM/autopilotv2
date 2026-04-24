@@ -249,23 +249,26 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     (async () => {
-      await seedFromOnboarding();
+      // En modo admin no auto-sembramos para no contaminar los datos del usuario.
+      if (!isAdminMode) {
+        await seedFromOnboarding();
+      }
       await loadData();
     })();
 
     // Realtime: refrescar el calendario cuando cambien externas u overrides
     const channel = supabase
-      .channel(`calendar-${user.id}`)
+      .channel(`calendar-${effectiveUserId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "external_activities", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "external_activities", filter: `user_id=eq.${effectiveUserId}` },
         () => loadData()
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "training_schedule_overrides", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "training_schedule_overrides", filter: `user_id=eq.${effectiveUserId}` },
         () => loadData()
       )
       .subscribe();
@@ -273,7 +276,7 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [effectiveUserId, isAdminMode]);
 
   // Build events from plan + externals
   const events: EventInput[] = useMemo(() => {
