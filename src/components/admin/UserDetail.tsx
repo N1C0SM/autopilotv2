@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2, TrendingUp } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2, TrendingUp, Calendar } from "lucide-react";
 import UserProgressPanel from "./UserProgressPanel";
+import CalendarView from "@/components/dashboard/CalendarView";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -296,7 +297,7 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
         </div>
       )}
       <Tabs defaultValue="info" className="space-y-6">
-        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-5" : "grid-cols-1"}`}>
+        <TabsList className={`grid w-full bg-secondary/50 ${profile.payment_status === "paid" ? "grid-cols-6" : "grid-cols-1"}`}>
           <TabsTrigger value="info" className="text-xs gap-1.5">
             <User2 className="w-3.5 h-3.5" /> Info
           </TabsTrigger>
@@ -307,6 +308,9 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
               </TabsTrigger>
               <TabsTrigger value="training" className="text-xs gap-1.5">
                 <Dumbbell className="w-3.5 h-3.5" /> Entreno
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="text-xs gap-1.5">
+                <Calendar className="w-3.5 h-3.5" /> Calendario
               </TabsTrigger>
               <TabsTrigger value="nutrition" className="text-xs gap-1.5">
                 <Apple className="w-3.5 h-3.5" /> Nutrición
@@ -419,6 +423,16 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
         {/* Tab: Training */}
         <TabsContent value="training" className="space-y-6">
           <TrainingPlanForm dayPlans={dayPlans} onChange={setDayPlans} userSports={onboarding?.sports} equipmentType={onboarding?.equipment_type || "Mixto"} specificGoal={onboarding?.specific_goal || undefined} intensityLevel={onboarding?.intensity_level ?? 5} userGoal={onboarding?.goal || undefined} userInjuries={onboarding?.injuries || undefined} userAge={onboarding?.age ?? undefined} userAvailability={onboarding?.availability as Record<string, boolean> | null} />
+        </TabsContent>
+
+        {/* Tab: Calendar (admin) */}
+        <TabsContent value="calendar" className="space-y-6">
+          <CalendarView
+            dayPlans={dayPlans}
+            targetUserId={profile.user_id}
+            targetUserEmail={profile.email}
+            isAdminMode
+          />
         </TabsContent>
 
         {/* Tab: Nutrition */}

@@ -5,7 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import esLocale from "@fullcalendar/core/locales/es";
 import type { EventInput, EventClickArg, EventDropArg, EventChangeArg, DateSelectArg } from "@fullcalendar/core";
-import { Plus, Trash2, X, Dumbbell, Flame, Apple } from "lucide-react";
+import { Plus, Trash2, X, Dumbbell, Flame, Apple, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +82,12 @@ interface ScheduleOverride {
 
 interface Props {
   dayPlans: DayPlan[];
+  /** If set, the calendar operates on this user's data (admin mode). Otherwise uses the logged-in user. */
+  targetUserId?: string;
+  /** Show admin banner and skip auto-seeding from onboarding. */
+  isAdminMode?: boolean;
+  /** Email of the target user, shown in the admin banner. */
+  targetUserEmail?: string;
 }
 
 function getMondayOfWeek(date = new Date()): Date {
@@ -102,8 +108,9 @@ function dateForDow(monday: Date, dow: number, hour: number, minute: number): Da
   return d;
 }
 
-const CalendarView = ({ dayPlans }: Props) => {
+const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: Props) => {
   const { user } = useAuth();
+  const effectiveUserId = targetUserId ?? user?.id;
   const calendarRef = useRef<FullCalendar | null>(null);
   const [externals, setExternals] = useState<ExternalActivity[]>([]);
   const [overrides, setOverrides] = useState<Record<string, ScheduleOverride>>({});
@@ -126,10 +133,10 @@ const CalendarView = ({ dayPlans }: Props) => {
   const monday = useMemo(() => getMondayOfWeek(), []);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     const [{ data: ext }, { data: ovr }] = await Promise.all([
-      supabase.from("external_activities").select("*").eq("user_id", user.id),
-      supabase.from("training_schedule_overrides").select("*").eq("user_id", user.id),
+      supabase.from("external_activities").select("*").eq("user_id", effectiveUserId),
+      supabase.from("training_schedule_overrides").select("*").eq("user_id", effectiveUserId),
     ]);
     setExternals((ext as ExternalActivity[]) || []);
     const map: Record<string, ScheduleOverride> = {};
@@ -141,11 +148,11 @@ const CalendarView = ({ dayPlans }: Props) => {
   // Auto-seed external activities from onboarding sports (the ones that aren't
   // the main training focus, e.g. boxeo, escalada, yoga…). Runs once per user.
   const seedFromOnboarding = async () => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     const { data: onb } = await supabase
       .from("onboarding")
       .select("sports, primary_focus, availability")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .maybeSingle();
     if (!onb?.sports) return;
     const focus = (onb.primary_focus || "").toLowerCase();
@@ -165,7 +172,7 @@ const CalendarView = ({ dayPlans }: Props) => {
     const { data: existing } = await supabase
       .from("external_activities")
       .select("category, title")
-      .eq("user_id", user.id);
+      .eq("user_id", effectiveUserId);
     const existingCats = new Set((existing || []).map((e: any) => e.category));
     const existingTitles = new Set((existing || []).map((e: any) => `personal::${(e.title || "").toLowerCase()}`));
 
@@ -199,7 +206,7 @@ const CalendarView = ({ dayPlans }: Props) => {
         const startHM = start ? parseHM(start, { h: def.hour, m: 0 }) : { h: def.hour, m: 0 };
         const dur = start && end ? minutesBetween(start, end) : 60;
         return {
-          user_id: user.id,
+          user_id: effectiveUserId,
           title: def.label,
           category: s,
           day_of_week: userSched?.dow ?? def.dow,
@@ -222,7 +229,7 @@ const CalendarView = ({ dayPlans }: Props) => {
         const startHM = parseHM(a.start, { h: 20, m: 0 });
         const dur = minutesBetween(a.start, a.end);
         return {
-          user_id: user.id,
+          user_id: effectiveUserId,
           title: a.title.trim(),
           category: "personal",
           day_of_week: a.dow,
@@ -242,23 +249,26 @@ const CalendarView = ({ dayPlans }: Props) => {
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     (async () => {
-      await seedFromOnboarding();
+      // En modo admin no auto-sembramos para no contaminar los datos del usuario.
+      if (!isAdminMode) {
+        await seedFromOnboarding();
+      }
       await loadData();
     })();
 
     // Realtime: refrescar el calendario cuando cambien externas u overrides
     const channel = supabase
-      .channel(`calendar-${user.id}`)
+      .channel(`calendar-${effectiveUserId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "external_activities", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "external_activities", filter: `user_id=eq.${effectiveUserId}` },
         () => loadData()
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "training_schedule_overrides", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "training_schedule_overrides", filter: `user_id=eq.${effectiveUserId}` },
         () => loadData()
       )
       .subscribe();
@@ -266,7 +276,7 @@ const CalendarView = ({ dayPlans }: Props) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [effectiveUserId, isAdminMode]);
 
   // Build events from plan + externals
   const events: EventInput[] = useMemo(() => {
@@ -348,12 +358,12 @@ const CalendarView = ({ dayPlans }: Props) => {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     if (!title.trim()) { toast.error("Pon un nombre"); return; }
     const cat = CATEGORIES.find((c) => c.value === category) || CATEGORIES[0];
     const icon = cat.label.split(" ")[0];
     const payload = {
-      user_id: user.id,
+      user_id: effectiveUserId,
       title: title.trim(),
       category,
       day_of_week: dow,
@@ -397,7 +407,7 @@ const CalendarView = ({ dayPlans }: Props) => {
   };
 
   const handleEventDrop = async (arg: EventDropArg | EventChangeArg) => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     const ev = arg.event;
     const newStart = ev.start;
     const newEnd = ev.end;
@@ -421,7 +431,7 @@ const CalendarView = ({ dayPlans }: Props) => {
     } else if (props.kind === "training") {
       const dayLabel = props.plan.day;
       const { error } = await supabase.from("training_schedule_overrides").upsert({
-        user_id: user.id,
+        user_id: effectiveUserId,
         day_label: dayLabel,
         new_day_of_week: newDow,
         start_hour: newHour,
@@ -447,6 +457,15 @@ const CalendarView = ({ dayPlans }: Props) => {
 
   return (
     <div className="space-y-3">
+      {isAdminMode && (
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 text-sm flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+          <span>
+            Estás editando el calendario de{" "}
+            <strong>{targetUserEmail || "este usuario"}</strong>. Los cambios se sincronizan en tiempo real.
+          </span>
+        </div>
+      )}
       {/* Toolbar */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3 text-xs flex-wrap">
