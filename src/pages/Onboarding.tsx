@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import PricingTiers from "@/components/PricingTiers";
 
 const STEPS = [
   "Datos Físicos",
@@ -111,6 +112,8 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [yearlyPrice, setYearlyPrice] = useState(190);
   const [data, setData] = useState({
     age: "",
     height: "",
