@@ -5,7 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import esLocale from "@fullcalendar/core/locales/es";
 import type { EventInput, EventClickArg, EventDropArg, EventChangeArg, DateSelectArg } from "@fullcalendar/core";
-import { Plus, Trash2, X, Dumbbell, Flame, Apple, ShieldCheck } from "lucide-react";
+import { Plus, Trash2, X, Dumbbell, Flame, Apple, ShieldCheck, StickyNote, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,51 @@ const COLORS = {
   external: "#f97316",   // naranja
   nutrition: "#22c55e",  // verde
 };
+
+/**
+ * Fatiga estimada por categoría de actividad externa.
+ * Sirve para mostrar el puntito de carga y para que el admin/usuario entienda
+ * por qué un entreno se reubica.
+ */
+const EXTERNAL_FATIGUE: Record<string, "Alta" | "Media" | "Baja"> = {
+  boxeo: "Alta", escalada: "Alta", futbol: "Alta", padel: "Alta", tenis: "Alta",
+  running: "Media", ciclismo: "Media", natacion: "Media", danza: "Media",
+  yoga: "Baja", personal: "Baja", trabajo: "Baja", otro: "Baja",
+};
+
+const LOAD_LABEL: Record<string, { dot: string; bg: string; label: string; recovery: string }> = {
+  Alta:  { dot: "bg-red-500",    bg: "bg-red-500/10 text-red-400 border-red-500/30",     label: "Carga alta",  recovery: "48h recomendadas" },
+  Media: { dot: "bg-amber-400",  bg: "bg-amber-500/10 text-amber-400 border-amber-500/30", label: "Carga media", recovery: "24h recomendadas" },
+  Baja:  { dot: "bg-emerald-500",bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30", label: "Carga baja",  recovery: "Sin restricción" },
+};
+
+/** Estima la carga de un día de plan a partir de los fatigue_level de sus ejercicios. */
+function estimatePlanLoad(plan: any): "Alta" | "Media" | "Baja" {
+  if (plan?.type === "actividad") {
+    const intensity = (plan.intensity || "").toLowerCase();
+    if (intensity.includes("alta") || intensity.includes("intensa")) return "Alta";
+    if (intensity.includes("media") || intensity.includes("moderada")) return "Media";
+    return "Baja";
+  }
+  const exs = plan?.exercises || [];
+  let high = 0, med = 0;
+  for (const ex of exs) {
+    const f = (ex.fatigue_level || "Media").toLowerCase();
+    if (f.includes("alta")) high++;
+    else if (f.includes("media")) med++;
+  }
+  if (high >= 3) return "Alta";
+  if (high >= 1 || med >= 4) return "Media";
+  return "Baja";
+}
+
+interface ScheduleConflict {
+  dayLabel: string;          // "Lunes"
+  trainingTitle: string;     // "Pecho + Tríceps"
+  conflictType: "overlap" | "recovery";
+  externalTitle: string;     // "Boxeo"
+  hint: string;              // texto humano que se enseña al admin
+}
 
 const CATEGORIES = [
   { value: "boxeo", label: "🥊 Boxeo", color: "#f97316" },
@@ -78,6 +123,7 @@ interface ScheduleOverride {
   start_hour: number;
   start_minute: number;
   duration_min: number;
+  admin_note?: string | null;
 }
 
 interface Props {
@@ -88,6 +134,8 @@ interface Props {
   isAdminMode?: boolean;
   /** Email of the target user, shown in the admin banner. */
   targetUserEmail?: string;
+  /** Callback con conflictos detectados (solo se usa en modo admin). */
+  onConflictsChange?: (conflicts: ScheduleConflict[]) => void;
 }
 
 function getMondayOfWeek(date = new Date()): Date {
@@ -108,7 +156,7 @@ function dateForDow(monday: Date, dow: number, hour: number, minute: number): Da
   return d;
 }
 
-const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: Props) => {
+const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail, onConflictsChange }: Props) => {
   const { user } = useAuth();
   const effectiveUserId = targetUserId ?? user?.id;
   const calendarRef = useRef<FullCalendar | null>(null);
@@ -129,6 +177,10 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
   const [minute, setMinute] = useState(0);
   const [duration, setDuration] = useState(60);
   const [note, setNote] = useState("");
+
+  // Admin: nota privada coach → usuario para el día seleccionado.
+  const [adminNoteDraft, setAdminNoteDraft] = useState("");
+  const [adminNoteSaving, setAdminNoteSaving] = useState(false);
 
   const monday = useMemo(() => getMondayOfWeek(), []);
 
@@ -296,34 +348,85 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
       const titleText = plan.type === "gimnasio"
         ? (plan.routine_name || "Entrenamiento")
         : (plan.sport || "Actividad");
+      const load = estimatePlanLoad(plan);
+      const loadEmoji = load === "Alta" ? "🔴" : load === "Media" ? "🟡" : "🟢";
 
       out.push({
         id: `plan-${plan.day}`,
-        title: `${icon} ${titleText}`,
+        title: `${loadEmoji} ${icon} ${titleText}`,
         start,
         end,
         backgroundColor: COLORS.training,
         borderColor: COLORS.training,
-        extendedProps: { kind: "training", plan },
+        extendedProps: { kind: "training", plan, load, override: ovr },
       });
     }
 
     for (const ext of externals) {
       const start = dateForDow(monday, ext.day_of_week, ext.start_hour, ext.start_minute);
       const end = new Date(start.getTime() + ext.duration_min * 60 * 1000);
+      const load = EXTERNAL_FATIGUE[ext.category] || "Baja";
+      const loadEmoji = load === "Alta" ? "🔴" : load === "Media" ? "🟡" : "🟢";
       out.push({
         id: `ext-${ext.id}`,
-        title: `${ext.icon || "✨"} ${ext.title}`,
+        title: `${loadEmoji} ${ext.icon || "✨"} ${ext.title}`,
         start,
         end,
         backgroundColor: ext.color,
         borderColor: ext.color,
-        extendedProps: { kind: "external", ext },
+        extendedProps: { kind: "external", ext, load },
       });
     }
 
     return out;
   }, [dayPlans, externals, overrides, monday]);
+
+  // Detección de conflictos: si hay una externa de carga Alta dentro de las
+  // 24h previas a un entreno, marcamos como conflicto de recuperación.
+  const conflicts: ScheduleConflict[] = useMemo(() => {
+    const list: ScheduleConflict[] = [];
+    const trainingEvents = events.filter((e) => (e.extendedProps as any)?.kind === "training");
+    const externalEvents = events.filter((e) => (e.extendedProps as any)?.kind === "external");
+    for (const tr of trainingEvents) {
+      const trStart = tr.start as Date;
+      const trEnd = tr.end as Date;
+      const trProps = tr.extendedProps as any;
+      for (const ex of externalEvents) {
+        const exStart = ex.start as Date;
+        const exEnd = ex.end as Date;
+        const exProps = ex.extendedProps as any;
+        // Solape directo
+        if (exStart < trEnd && exEnd > trStart) {
+          list.push({
+            dayLabel: trProps.plan.day,
+            trainingTitle: trProps.plan.routine_name || trProps.plan.sport || "Entrenamiento",
+            conflictType: "overlap",
+            externalTitle: exProps.ext.title,
+            hint: `Solape directo con ${exProps.ext.title}`,
+          });
+          continue;
+        }
+        // Recuperación: externa Alta dentro de las 24h previas al entreno (no Baja)
+        if (exProps.load === "Alta" && trProps.load !== "Baja") {
+          const hoursBetween = (trStart.getTime() - exEnd.getTime()) / 3600000;
+          if (hoursBetween > 0 && hoursBetween < 24) {
+            list.push({
+              dayLabel: trProps.plan.day,
+              trainingTitle: trProps.plan.routine_name || trProps.plan.sport || "Entrenamiento",
+              conflictType: "recovery",
+              externalTitle: exProps.ext.title,
+              hint: `Solo ${Math.round(hoursBetween)}h tras ${exProps.ext.title} (carga alta)`,
+            });
+          }
+        }
+      }
+    }
+    return list;
+  }, [events]);
+
+  useEffect(() => {
+    onConflictsChange?.(conflicts);
+  }, [conflicts, onConflictsChange]);
 
   const resetForm = () => {
     setEditId(null);
@@ -387,6 +490,27 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
     loadData();
   };
 
+  const saveAdminNote = async () => {
+    if (!effectiveUserId || !detailProps?.plan?.day) return;
+    setAdminNoteSaving(true);
+    const dayLabel = detailProps.plan.day;
+    const existingOvr = overrides[dayLabel];
+    const baseDow = DAY_TO_DOW[dayLabel] ?? 1;
+    const { error } = await supabase.from("training_schedule_overrides").upsert({
+      user_id: effectiveUserId,
+      day_label: dayLabel,
+      new_day_of_week: existingOvr?.new_day_of_week ?? baseDow,
+      start_hour: existingOvr?.start_hour ?? 18,
+      start_minute: existingOvr?.start_minute ?? 0,
+      duration_min: existingOvr?.duration_min ?? 60,
+      admin_note: adminNoteDraft.trim() || null,
+    }, { onConflict: "user_id,day_label" });
+    setAdminNoteSaving(false);
+    if (error) { toast.error("No se pudo guardar la nota"); return; }
+    toast.success("Nota guardada");
+    loadData();
+  };
+
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("external_activities").delete().eq("id", id);
     if (error) { toast.error("Error al borrar"); return; }
@@ -396,6 +520,12 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
   };
 
   const handleEventClick = (arg: EventClickArg) => {
+    const props = arg.event.extendedProps as any;
+    if (props?.kind === "training") {
+      const dayLabel = props.plan?.day;
+      const existingNote = dayLabel ? (overrides[dayLabel]?.admin_note || "") : "";
+      setAdminNoteDraft(existingNote);
+    }
     setSelectedEvent({
       id: arg.event.id,
       title: arg.event.title,
@@ -622,6 +752,50 @@ const CalendarView = ({ dayPlans, targetUserId, isAdminMode, targetUserEmail }: 
                   <span className="bg-secondary/40 px-2.5 py-1 rounded-full">{detailProps.plan.duration}</span>
                 </div>
               )}
+
+              {/* Etiqueta de carga visible en cualquier evento */}
+              {detailProps?.load && (
+                <div className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${LOAD_LABEL[detailProps.load].bg}`}>
+                  <span className={`w-2 h-2 rounded-full ${LOAD_LABEL[detailProps.load].dot}`} />
+                  {LOAD_LABEL[detailProps.load].label} · {LOAD_LABEL[detailProps.load].recovery}
+                </div>
+              )}
+
+              {/* Nota del coach (visible para el usuario, editable por admin) */}
+              {detailProps?.kind === "training" && (() => {
+                const dayLabel = detailProps.plan?.day;
+                const existingNote = dayLabel ? overrides[dayLabel]?.admin_note : null;
+                if (isAdminMode) {
+                  return (
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-2">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <StickyNote className="w-3.5 h-3.5 text-primary" /> Nota del coach (visible para el usuario)
+                      </Label>
+                      <Textarea
+                        value={adminNoteDraft}
+                        onChange={(e) => setAdminNoteDraft(e.target.value)}
+                        rows={2}
+                        placeholder="Ej. Hoy mete RIR 1, ya estás listo."
+                      />
+                      <Button size="sm" onClick={saveAdminNote} disabled={adminNoteSaving} className="w-full">
+                        {adminNoteSaving ? "Guardando…" : "Guardar nota"}
+                      </Button>
+                    </div>
+                  );
+                }
+                if (existingNote) {
+                  return (
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm flex gap-2">
+                      <StickyNote className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-primary mb-0.5">Nota de tu coach</p>
+                        <p>{existingNote}</p>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {detailProps?.kind === "external" && (
                 <>
