@@ -466,20 +466,38 @@ const Onboarding = () => {
               <div>
                 <p className="text-xs text-muted-foreground mb-2">Sugerencias para {data.equipment_type || "tu tipo"}:</p>
                 <div className="flex flex-wrap gap-2">
-                  {suggestions.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => update("specific_goal", data.specific_goal ? `${data.specific_goal}, ${s}` : s)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                        data.specific_goal.includes(s)
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:border-primary/30"
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
+                  {suggestions.map((s) => {
+                    const parts = data.specific_goal
+                      .split(",")
+                      .map((p) => p.trim())
+                      .filter(Boolean);
+                    const isSelected = parts.some((p) => p.toLowerCase() === s.toLowerCase());
+                    const toggle = () => {
+                      const next = isSelected
+                        ? parts.filter((p) => p.toLowerCase() !== s.toLowerCase())
+                        : [...parts, s];
+                      update("specific_goal", next.join(", "));
+                    };
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={toggle}
+                        className={`text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1.5 ${
+                          isSelected
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border hover:border-primary/30"
+                        }`}
+                      >
+                        <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[10px] ${
+                          isSelected ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/40"
+                        }`}>
+                          {isSelected ? "✓" : ""}
+                        </span>
+                        {s}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
