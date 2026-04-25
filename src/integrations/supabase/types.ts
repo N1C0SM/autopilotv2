@@ -669,6 +669,7 @@ export type Database = {
       }
       training_schedule_overrides: {
         Row: {
+          admin_note: string | null
           created_at: string
           day_label: string
           duration_min: number
@@ -680,6 +681,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_note?: string | null
           created_at?: string
           day_label: string
           duration_min?: number
@@ -691,6 +693,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_note?: string | null
           created_at?: string
           day_label?: string
           duration_min?: number
