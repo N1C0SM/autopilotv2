@@ -1,61 +1,113 @@
+## Calendario hipercómodo: integración total con la vida del usuario
 
+Objetivo: que el calendario de Autopilot se sienta como una **extensión natural de Google Calendar** del usuario, con inteligencia automática de recuperación y atajos brutales para ti como admin.
 
-## Elección Mensual / Anual en Onboarding + Cambio en Settings
+Lo entregamos en **4 fases**, cada una usable de forma independiente. Empezamos por las que más impacto dan **sin requerir OAuth de Google** (efecto inmediato), y dejamos Google Calendar para el final cuando ya tengas la infraestructura lista.
 
-Ahora mismo:
-- El onboarding manda al checkout **siempre en mensual** (no pasa el parámetro `plan` a `create-checkout`).
-- Settings solo tiene un botón "Gestionar suscripción" que abre el portal de Stripe — el usuario no ve la opción anual de forma nativa.
+---
 
-La función `create-checkout` ya soporta `plan: "yearly"`, los precios anuales están guardados en `settings`, y el componente `PricingTiers` ya tiene el toggle Mensual/Anual perfecto. Solo falta conectarlo bien.
+### FASE 1 — Etiquetas de carga visibles (impacto inmediato, sin dependencias)
 
-### 1. Onboarding → mostrar paywall con elección antes del checkout
+Cada bloque del calendario muestra un puntito de color con su carga estimada para que el usuario **entienda** la lógica detrás de su semana:
 
-En `src/pages/Onboarding.tsx`, dentro de `handleSubmit`, cuando el usuario no está pagado:
-- En vez de invocar `create-checkout` directamente, **mostrar un paso final tipo paywall** con `<PricingTiers />` (el mismo componente que ya existe).
-- El usuario elige Mensual (19€ con 7 días gratis) o Anual (190€, ahorra 38€).
-- Al hacer click → invoca `create-checkout` con `{ referral_code, plan: "monthly" | "yearly" }`.
+- 🔴 **Alta**: piernas pesadas, fullbody intenso, deportes de alto impacto (boxeo, escalada, fútbol)
+- 🟡 **Media**: push, pull, hipertrofia general
+- 🟢 **Baja**: movilidad, técnica, cardio suave, yoga
 
-Implementación concreta:
-- Añadir un estado `showPaywall: boolean`.
-- Tras el upsert exitoso del onboarding, si `payment_status !== "paid"` → setear `showPaywall = true` en lugar de llamar al checkout.
-- Renderizar condicionalmente: si `showPaywall` → pantalla con título "Elige tu plan" + `<PricingTiers onSelect={(plan) => goToCheckout(plan)} />`.
-- `goToCheckout(plan)` invoca `create-checkout` con el plan elegido y redirige a la URL.
+La carga se calcula en el cliente a partir de `fatigue_level` ya existente en cada ejercicio del `training_plan` y de un mapeo fijo por categoría para `external_activities` (boxeo=Alta, yoga=Baja, etc.).
 
-### 2. Settings → permitir cambiar de plan (mensual ↔ anual)
+Tooltip al pasar por encima: *"Carga alta — recuperación recomendada 48h"*.
 
-En `src/components/SettingsPanel.tsx`, dentro de la sección "Suscripción":
-- Añadir, debajo del estado actual de la suscripción, un bloque **"Cambiar de plan"** visible solo si el usuario tiene suscripción activa (`isActive`).
-- Detectar el plan actual leyendo el periodo de la suscripción. Como no lo tenemos almacenado, hacer una llamada a `check-subscription` (ya existe) y leer el `subscription_end` o el `price_id` para inferir si es mensual o anual.
+---
 
-Implementación concreta:
-- En la función `check-subscription` (`supabase/functions/check-subscription/index.ts`), añadir al payload de respuesta el campo `plan: "monthly" | "yearly" | null` comparándolo con los `price_id_*` y `price_id_yearly_*` de la tabla `settings`.
-- En `SettingsPanel`, guardar `currentPlan` en estado y mostrar:
-  - Si `currentPlan === "monthly"` → botón "Cambiar a Anual (ahorra 38€/año)" 
-  - Si `currentPlan === "yearly"` → botón "Cambiar a Mensual"
-- Click → abre `customer-portal` (Stripe) **con configuración de upgrade/downgrade** O bien invoca un nuevo endpoint que use `stripe.subscriptions.update()` para cambiar el `price_id` directamente.
+### FASE 2 — Auto-reubicación inteligente de entrenos (sin OAuth)
 
-**Decisión recomendada**: usar el portal de Stripe (más seguro, gestiona prorrateo automáticamente). El portal ya permite cambiar de plan si los precios están agrupados en el mismo producto en Stripe — lo cual es nuestro caso (`prod_U729ZYgVubAkcE`).
+Hoy tienes `training_rules.recovery_hours` por grupo muscular y `external_activities` con horarios. Conectamos las dos cosas:
 
-Por eso, lo más limpio es:
-- Mantener un único botón "Gestionar suscripción" que abre el portal.
-- **Añadir un texto informativo** debajo: *"Plan actual: Mensual (19€/mes) · Puedes cambiar a Anual (190€/año, ahorras 38€) desde el portal de gestión."*
-- Esto evita complejidad y aprovecha el flujo nativo de Stripe.
+**Lógica nueva en una función `auto-reschedule`** (Edge Function que se llama tras crear/mover una actividad externa):
 
-### 3. Backend — extender check-subscription para devolver el plan
+1. Detecta solapes entre el `training_plan` (día → ejercicios) y `external_activities`/`training_schedule_overrides` del usuario.
+2. Si el usuario tiene **boxeo el martes 20h** (alta fatiga hombros + core), el sistema busca el siguiente entreno de empuje/pull dentro de 24h y lo **reubica** automáticamente al próximo día libre con suficiente recuperación.
+3. Crea un `training_schedule_override` para el día afectado y dispara una notificación amable: *"Movimos tu entreno de pecho del miércoles al jueves porque ayer tuviste boxeo (recuperación de hombros pendiente)."*
 
-Actualizar `supabase/functions/check-subscription/index.ts`:
-- Tras detectar la suscripción activa, leer la tabla `settings` y comparar el `price_id` de la suscripción con `price_id_test/live` (mensual) y `price_id_yearly_test/live` (anual).
-- Devolver `plan: "monthly" | "yearly" | null` además de los campos actuales.
+**Para el admin**: en `UserDetail` se ve un panel "Conflictos detectados esta semana" con un botón "Aplicar auto-ajuste" que invoca la misma función.
 
-### Archivos a modificar
+---
 
-- `src/pages/Onboarding.tsx` → añadir paso paywall con `<PricingTiers />` antes de llamar a checkout.
-- `src/components/SettingsPanel.tsx` → mostrar plan actual y mensaje informativo sobre cómo cambiar.
-- `src/contexts/AuthContext.tsx` → si almacena el resultado de `check-subscription`, exponer el nuevo campo `plan`.
-- `supabase/functions/check-subscription/index.ts` → calcular y devolver `plan: "monthly" | "yearly"`.
+### FASE 3 — Atajos admin para sentirse pro
 
-### Fuera de alcance (v1)
+En la pestaña Calendario del `UserDetail`:
 
-- No cambiamos el `subscription_data.trial_period_days` para anual — sigue siendo 0 (anual sin trial, mensual con 7 días).
-- No creamos un endpoint propio de "swap plan" — delegamos en el portal de Stripe.
+- **Vista "Semana real"**: muestra superpuestos training_plan + external_activities + (más adelante) Google Calendar como fondo gris.
+- **Sugerencia automática de huecos al crear entreno**: al arrastrar/soltar un día de entreno sobre el calendario, el sistema propone los 3 mejores huecos libres de la semana ordenados por menor conflicto de recuperación. Dropdown rápido: *"Mar 7am · Jue 19h · Sáb 10am"*.
+- **Notas privadas admin → usuario** en cada bloque del calendario (campo `admin_note` en `training_schedule_overrides`). El usuario las ve como una línea destacada en el detalle del entreno: *"📝 Nota del coach: Hoy mete RIR 1, ya estás listo."*
+- **Indicador "Conectado con Google Calendar 🟢"** en la cabecera del calendario del usuario (visible solo cuando la fase 4 esté activa).
 
+---
+
+### FASE 4 — Sincronización bidireccional con Google Calendar (per-user OAuth)
+
+Esto es lo grande. Cada usuario conecta **su propio** Google Calendar (no el tuyo), por lo que necesitamos OAuth per-user con credenciales propias en Google Cloud Console.
+
+**Flujo de configuración (una sola vez, lo hacemos juntos):**
+1. Tú creas un proyecto en Google Cloud Console, habilitas Google Calendar API y configuras la pantalla de consentimiento OAuth.
+2. Generas un Client ID y Client Secret.
+3. Me los pasas y los guardo como secretos (`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`).
+4. Yo te paso la URL de callback exacta para que la añadas a "Authorized redirect URIs".
+
+**Funcionalidad para el usuario:**
+- Botón "Conectar Google Calendar" en `Settings`. Hace OAuth con scope `calendar.readonly` + `calendar.events`. Tokens (access + refresh) guardados en una nueva tabla `google_calendar_tokens` (user_id, access_token, refresh_token, expires_at) con RLS estricta.
+- Eventos de Google aparecen como **bloques grises de fondo** (no editables) en el calendario de Autopilot — el usuario y el admin ven al instante "ah, este tío tiene clase de 17 a 21h los lunes".
+- Cuando se crea/mueve/borra un entreno o actividad en Autopilot → Edge Function `sync-to-google` escribe el evento en un calendario dedicado llamado **"Autopilot Training"** dentro del Google Calendar del usuario. Así no contamina su calendario principal y puede activar/desactivar la visibilidad.
+
+**Funcionalidad para el admin:**
+- Cuando entras al calendario de un usuario, ves automáticamente sus eventos de Google como contexto de fondo → arrastras el entreno sabiendo dónde no choca.
+- La auto-reubicación de la Fase 2 ahora también considera Google Calendar como fuente de conflictos, no solo `external_activities`.
+
+**Edge Functions nuevas:**
+- `google-oauth-callback`: recibe el code, intercambia por tokens, los guarda.
+- `google-oauth-refresh`: refresca tokens caducados (llamada interna automática).
+- `sync-to-google`: crea/actualiza/borra eventos en el calendario "Autopilot Training" del usuario.
+- `fetch-google-events`: lee eventos de la semana actual del usuario (para mostrarlos como fondo). Cacheado 15min.
+
+---
+
+### Detalles técnicos
+
+**Tabla nueva `google_calendar_tokens`** (Fase 4):
+- `user_id` (uuid, unique), `access_token`, `refresh_token`, `expires_at`, `autopilot_calendar_id` (string, el ID del calendario "Autopilot Training" que creamos al conectar)
+- RLS: el usuario gestiona el suyo, admin lee todos.
+
+**Cambio en `training_schedule_overrides`** (Fase 3):
+- Añadir columna `admin_note text nullable`.
+
+**Función fatiga por categoría externa** (Fase 1, hardcoded en frontend):
+```
+boxeo, escalada, futbol, padel, tenis: Alta
+running, ciclismo, natacion: Media
+yoga, danza, personal, trabajo: Baja
+```
+
+**Llamada a `auto-reschedule`** (Fase 2): se invoca al `INSERT/UPDATE/DELETE` sobre `external_activities` mediante un trigger en Postgres que llama a `pg_net.http_post` hacia la Edge Function. Alternativa más simple: invocarla desde el cliente tras cada mutación en `CalendarView`.
+
+**Archivos a tocar:**
+- Fase 1: `src/components/dashboard/CalendarView.tsx` (etiquetas + tooltips)
+- Fase 2: nueva Edge Function `auto-reschedule`, actualización de `CalendarView.tsx` para invocarla
+- Fase 3: `src/components/admin/UserDetail.tsx` (panel conflictos, sugerencia huecos), migración para `admin_note`
+- Fase 4: `src/components/SettingsPanel.tsx` (botón conectar), 4 edge functions nuevas, migración para tabla `google_calendar_tokens`, actualización de `CalendarView.tsx` para mostrar fondo
+
+---
+
+### Fuera de alcance v1
+
+- No tocamos el flujo de generación inicial del plan (`generate-plan`). Solo **mueve** entrenos ya generados.
+- No sincronizamos comidas con Google Calendar (solo entrenos + actividades), si quieres se añade después.
+- No soportamos múltiples calendarios de Google por usuario (solo el primario).
+
+---
+
+### Orden recomendado de aprobación
+
+Si te parece, lanzamos las fases **1, 2 y 3 ya** (no necesitan nada externo, las tienes funcionando esta tarde). Y cuando estés listo me avisas y montamos juntos el OAuth de Google para la Fase 4.
+
+¿Apruebas las 4 fases o prefieres acotar a alguna?

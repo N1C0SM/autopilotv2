@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2, TrendingUp, Calendar } from "lucide-react";
+import { ArrowLeft, Save, ShieldCheck, User2, Dumbbell, Apple, MessageCircle, Loader2, Zap, Wand2, CreditCard, Trash2, TrendingUp, Calendar, AlertTriangle, Sparkles } from "lucide-react";
 import UserProgressPanel from "./UserProgressPanel";
 import CalendarView from "@/components/dashboard/CalendarView";
 import {
@@ -466,12 +466,7 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
 
         {/* Tab: Calendar (admin) */}
         <TabsContent value="calendar" className="space-y-6">
-          <CalendarView
-            dayPlans={dayPlans}
-            targetUserId={profile.user_id}
-            targetUserEmail={profile.email}
-            isAdminMode
-          />
+          <AdminCalendarTab profile={profile} dayPlans={dayPlans} />
         </TabsContent>
 
         {/* Tab: Nutrition */}
@@ -547,3 +542,80 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
 };
 
 export default UserDetail;
+
+// ─── Admin Calendar Tab ──────────────────────────────────────────────────────
+// Envuelve el CalendarView con un panel superior de "Conflictos detectados"
+// y un botón para invocar la auto-reorganización (edge function).
+interface AdminCalendarTabProps {
+  profile: Profile;
+  dayPlans: DayPlan[];
+}
+
+interface ConflictItem {
+  dayLabel: string;
+  trainingTitle: string;
+  conflictType: "overlap" | "recovery";
+  externalTitle: string;
+  hint: string;
+}
+
+function AdminCalendarTab({ profile, dayPlans }: AdminCalendarTabProps) {
+  const [conflicts, setConflicts] = useState<ConflictItem[]>([]);
+  const [running, setRunning] = useState(false);
+
+  const runAutoReschedule = async () => {
+    setRunning(true);
+    const { data, error } = await supabase.functions.invoke("auto-reschedule", {
+      body: { user_id: profile.user_id },
+    });
+    setRunning(false);
+    if (error) { toast.error("No se pudo aplicar el ajuste"); return; }
+    const moved = data?.conflictsResolved ?? 0;
+    if (moved === 0) toast.info("No había conflictos resolubles");
+    else toast.success(`Reorganizamos ${moved} entreno${moved > 1 ? "s" : ""}`);
+  };
+
+  return (
+    <div className="space-y-4">
+      {conflicts.length > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-sm">{conflicts.length} conflicto{conflicts.length > 1 ? "s" : ""} detectado{conflicts.length > 1 ? "s" : ""} esta semana</p>
+                <p className="text-xs text-muted-foreground mt-0.5">El sistema puede reubicar los entrenos automáticamente respetando recuperación.</p>
+              </div>
+            </div>
+            <Button size="sm" onClick={runAutoReschedule} disabled={running} variant="hero">
+              {running ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
+              {running ? "Aplicando…" : "Aplicar auto-ajuste"}
+            </Button>
+          </div>
+          <ul className="space-y-1.5">
+            {conflicts.slice(0, 5).map((c, i) => (
+              <li key={i} className="text-xs flex items-start gap-2">
+                <span className="text-amber-400 mt-0.5">•</span>
+                <span>
+                  <strong>{c.dayLabel}</strong> · {c.trainingTitle} —{" "}
+                  <span className="text-muted-foreground">{c.hint}</span>
+                </span>
+              </li>
+            ))}
+            {conflicts.length > 5 && (
+              <li className="text-xs text-muted-foreground italic">…y {conflicts.length - 5} más</li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      <CalendarView
+        dayPlans={dayPlans}
+        targetUserId={profile.user_id}
+        targetUserEmail={profile.email}
+        isAdminMode
+        onConflictsChange={setConflicts}
+      />
+    </div>
+  );
+}
