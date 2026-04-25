@@ -374,6 +374,17 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
           {onboarding ? (
             <div className="bg-card rounded-xl p-6 border border-border">
               <h2 className="font-bold font-display mb-4 text-sm uppercase tracking-wider text-muted-foreground">Datos del Onboarding</h2>
+              {(() => {
+                const av = onboarding.availability as any;
+                const sportSchedules: Record<string, { dow: number; start: string; end: string }> = av?.sport_schedules || {};
+                const customActivities: Array<{ title: string; dow: number; start: string; end: string }> = av?.custom_activities || [];
+                const dowNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+                const formatSchedule = (s: { dow: number; start: string; end: string }) =>
+                  `${dowNames[s.dow] ?? "?"} ${s.start}–${s.end}`;
+                const days = av?.days ? `${av.days} días/sem` : null;
+                const hours = av?.hours ? `${av.hours}h por sesión` : null;
+                const summary = [days, hours].filter(Boolean).join(" · ") || null;
+                return (
               <div className="grid sm:grid-cols-2 gap-4">
                 {[
                   { label: "Edad", value: onboarding.age },
@@ -385,13 +396,39 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
                   { label: "Meta específica", value: onboarding.specific_goal ? `🎯 ${onboarding.specific_goal}` : null },
                   { label: "Deportes", value: onboarding.sports },
                   { label: "Intensidad", value: onboarding.intensity_level ? `${onboarding.intensity_level}/10` : null },
-                  { label: "Disponibilidad", value: onboarding.availability ? JSON.stringify(onboarding.availability) : null },
+                  { label: "Disponibilidad", value: summary },
                 ].map((item) => (
                   <div key={item.label} className="bg-secondary/30 rounded-lg p-3">
                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{item.label}</div>
                     <div className="text-sm font-medium">{item.value || "—"}</div>
                   </div>
                 ))}
+                {Object.keys(sportSchedules).length > 0 && (
+                  <div className="sm:col-span-2 bg-secondary/30 rounded-lg p-3">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">🏃 Horarios de deportes</div>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(sportSchedules).map(([sport, sched]) => (
+                        <div key={sport} className="bg-card rounded-md px-3 py-1.5 text-xs border border-border">
+                          <span className="font-semibold capitalize">{sport}</span>
+                          <span className="text-muted-foreground ml-2">{formatSchedule(sched)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {customActivities.length > 0 && (
+                  <div className="sm:col-span-2 bg-secondary/30 rounded-lg p-3">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">📌 Actividades personalizadas</div>
+                    <div className="flex flex-wrap gap-2">
+                      {customActivities.map((act, i) => (
+                        <div key={i} className="bg-card rounded-md px-3 py-1.5 text-xs border border-border">
+                          <span className="font-semibold">{act.title}</span>
+                          <span className="text-muted-foreground ml-2">{formatSchedule(act)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {onboarding.injuries && (
                   <div className="sm:col-span-2 bg-destructive/10 rounded-lg p-3 border border-destructive/20">
                     <div className="text-[10px] uppercase tracking-wider text-destructive mb-1">⚠️ Lesiones / Condiciones</div>
@@ -407,6 +444,8 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
                   <div className="text-sm">{onboarding.allergies || "—"}</div>
                 </div>
               </div>
+                );
+              })()}
             </div>
           ) : (
             <div className="bg-card rounded-xl p-8 border border-border text-center">
