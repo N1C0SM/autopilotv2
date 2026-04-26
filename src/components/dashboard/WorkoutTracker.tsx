@@ -479,6 +479,31 @@ const WorkoutTracker = ({ userId, dayPlans }: Props) => {
                       className="overflow-hidden"
                     >
                       <div className="px-4 pb-4 space-y-1.5">
+                        {/* Vídeo del ejercicio */}
+                        {(ex.video_url || videosByName[ex.name]) && (
+                          <div className="mb-2">
+                            {showVideo[ex.name] ? (
+                              <div className="space-y-1.5">
+                                <VideoEmbed url={ex.video_url || videosByName[ex.name]} />
+                                <button
+                                  onClick={() => setShowVideo((s) => ({ ...s, [ex.name]: false }))}
+                                  className="text-[10px] text-muted-foreground hover:text-foreground underline"
+                                >
+                                  Ocultar vídeo
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setShowVideo((s) => ({ ...s, [ex.name]: true }))}
+                                className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium px-2 py-1.5 rounded-md bg-primary/10 hover:bg-primary/15 transition-colors"
+                              >
+                                <Video className="w-3.5 h-3.5" />
+                                Ver vídeo del ejercicio
+                              </button>
+                            )}
+                          </div>
+                        )}
+
                         {/* Previous session hint */}
                         {prevSets && prevSets.length > 0 && (
                           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-2 px-1">
