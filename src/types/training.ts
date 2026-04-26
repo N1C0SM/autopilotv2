@@ -3,6 +3,7 @@ export interface Exercise {
   name: string;
   muscle_group: string | null;
   image_url?: string | null;
+  video_url?: string | null;
   exercise_type?: string | null;
   movement_pattern?: string | null;
   level?: number | null;
@@ -24,6 +25,7 @@ export interface GymExerciseEntry {
   weight: string;
   rest: string;
   image_url?: string;
+  video_url?: string;
 }
 
 export interface DayPlan {
