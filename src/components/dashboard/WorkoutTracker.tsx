@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check, Dumbbell, ChevronDown, ChevronUp, Flame, Clock,
-  Timer, TrendingUp, RotateCcw,
+  Timer, TrendingUp, RotateCcw, Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { DayPlan } from "@/types/training";
 import RPEDialog from "./RPEDialog";
+import VideoEmbed from "@/components/VideoEmbed";
 
 interface SetLog {
   reps: number;
@@ -33,6 +34,25 @@ const WorkoutTracker = ({ userId, dayPlans }: Props) => {
   const [restTimer, setRestTimer] = useState<number | null>(null);
   const [restTarget, setRestTarget] = useState(0);
   const [rpeOpen, setRpeOpen] = useState(false);
+  const [videosByName, setVideosByName] = useState<Record<string, string>>({});
+  const [showVideo, setShowVideo] = useState<Record<string, boolean>>({});
+
+  // Cargar URLs de vídeo de la biblioteca de ejercicios (mapeado por nombre)
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("exercises")
+        .select("name, video_url")
+        .not("video_url", "is", null);
+      if (data) {
+        const map: Record<string, string> = {};
+        data.forEach((row: any) => {
+          if (row.video_url) map[row.name] = row.video_url;
+        });
+        setVideosByName(map);
+      }
+    })();
+  }, []);
 
   const todayStr = new Date().toISOString().split("T")[0];
   const currentPlan = dayPlans.find((p) => p.day === selectedDay);
