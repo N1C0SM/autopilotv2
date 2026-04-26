@@ -6,12 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, Dumbbell, Edit2, Search, X, ArrowLeftRight } from "lucide-react";
+import { Plus, Trash2, Dumbbell, Edit2, Search, X, ArrowLeftRight, Video } from "lucide-react";
 import type { Exercise } from "@/types/training";
 import {
   MUSCLE_GROUPS, EXERCISE_TYPES, MOVEMENT_PATTERNS, LEVELS,
   PRIORITIES, STIMULUS_TYPES, LOAD_LEVELS, FATIGUE_LEVELS, RECOMMENDED_ORDERS, SKILL_TAGS,
 } from "@/types/training";
+import VideoEmbed, { toEmbedUrl } from "@/components/VideoEmbed";
 
 const ALL_MUSCLE_GROUPS = [...MUSCLE_GROUPS, "Otro"] as const;
 
@@ -93,7 +94,7 @@ const ExerciseFormDialog = ({
       setForm(initial ? { ...initial } : {
         name: "", muscle_group: "", exercise_type: "", movement_pattern: "",
         level: 1, priority: 2, stimulus_type: "", load_level: "", fatigue_level: "", recommended_order: 2,
-        alternative_id: null, skill_tag: null, progression_order: null,
+        alternative_id: null, skill_tag: null, progression_order: null, video_url: "",
       });
       setAltSearch("");
     }
@@ -215,6 +216,27 @@ const ExerciseFormDialog = ({
               </div>
             </div>
             <p className="text-[10px] text-muted-foreground">Asigna un skill y orden para crear cadenas de progresión (1=más fácil → mayor=más difícil)</p>
+          </div>
+
+          {/* Video */}
+          <div className="space-y-3">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <Video className="w-3.5 h-3.5" /> Vídeo del ejercicio
+            </p>
+            <Input
+              value={form.video_url || ""}
+              onChange={(e) => set("video_url", e.target.value)}
+              placeholder="YouTube, Vimeo o MP4 directo (https://...)"
+              className="h-9"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Pega cualquier URL de YouTube (incluye Shorts), Vimeo o un .mp4 directo. Se mostrará al usuario en su entrenamiento.
+            </p>
+            {form.video_url && toEmbedUrl(form.video_url) && (
+              <div className="rounded-lg overflow-hidden border border-border">
+                <VideoEmbed url={form.video_url} />
+              </div>
+            )}
           </div>
 
           {/* Alternative exercise */}
