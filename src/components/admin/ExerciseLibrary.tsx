@@ -307,7 +307,7 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
 
   const fetchExercises = async () => {
     const { data } = await supabase.from("exercises")
-      .select("id, name, muscle_group, image_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order, alternative_id, skill_tag, progression_order")
+      .select("id, name, muscle_group, image_url, video_url, exercise_type, movement_pattern, level, priority, stimulus_type, load_level, fatigue_level, recommended_order, alternative_id, skill_tag, progression_order")
       .order("muscle_group").order("recommended_order").order("name");
     if (data) setExercises(data as Exercise[]);
   };
@@ -350,6 +350,7 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
       alternative_id: form.alternative_id || null,
       skill_tag: form.skill_tag || null,
       progression_order: form.progression_order ?? null,
+      video_url: form.video_url?.trim() || null,
     };
 
     if (editingExercise) {
