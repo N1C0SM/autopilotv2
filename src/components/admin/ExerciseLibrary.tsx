@@ -518,6 +518,11 @@ const ExerciseLibrary = ({ defaultOpen = false }: ExerciseLibraryProps) => {
                         {ex.movement_pattern}
                       </span>
                     )}
+                    {ex.video_url && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium flex items-center gap-1">
+                        <Video className="w-2.5 h-2.5" /> Vídeo
+                      </span>
+                    )}
                   </div>
 
                   {/* Skill tag */}
