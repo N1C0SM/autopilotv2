@@ -45,6 +45,8 @@ export const INTENSITIES = ["Baja", "Media", "Alta", "Muy Alta"] as const;
 export const MUSCLE_GROUPS = [
   "Pecho", "Espalda", "Hombros", "Bíceps", "Tríceps",
   "Piernas", "Glúteos", "Core", "Cardio", "Cuerpo completo",
+  "Isquiotibiales", "Gemelos", "Antebrazos", "Trapecios", "Romboides",
+  "Lumbares", "Serrato", "Aductores", "Abductores", "Cuello",
 ] as const;
 
 export const EXERCISE_TYPES = ["Calistenia", "Gimnasio", "Mixto"] as const;
@@ -72,4 +74,5 @@ export const SKILL_TAGS = [
   "handstand", "muscle_up", "planche", "front_lever", "back_lever",
   "human_flag", "pistol_squat", "press_banca", "sentadilla", "peso_muerto",
   "press_militar", "dominadas", "l_sit", "ring_dips",
+  "one_arm_pull_up", "one_arm_push_up", "dragon_flag", "manna",
 ] as const;
