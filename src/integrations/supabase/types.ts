@@ -727,6 +727,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_schedule: {
+        Row: {
+          busy_blocks: Json
+          created_at: string
+          gym_slots: Json
+          id: string
+          meal_duration_min: number
+          meal_times: Json
+          updated_at: string
+          user_id: string
+          weekly_reminders: Json
+        }
+        Insert: {
+          busy_blocks?: Json
+          created_at?: string
+          gym_slots?: Json
+          id?: string
+          meal_duration_min?: number
+          meal_times?: Json
+          updated_at?: string
+          user_id: string
+          weekly_reminders?: Json
+        }
+        Update: {
+          busy_blocks?: Json
+          created_at?: string
+          gym_slots?: Json
+          id?: string
+          meal_duration_min?: number
+          meal_times?: Json
+          updated_at?: string
+          user_id?: string
+          weekly_reminders?: Json
+        }
+        Relationships: []
+      }
       weight_logs: {
         Row: {
           created_at: string
