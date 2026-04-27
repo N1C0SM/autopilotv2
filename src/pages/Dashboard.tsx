@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Apple, Clock, Loader2, Crown, Dumbbell, UtensilsCrossed, MessageCircle } from "lucide-react";
+import { Apple, Clock, Loader2, Crown, Dumbbell, UtensilsCrossed, MessageCircle, CalendarClock } from "lucide-react";
 import { Download, Calendar as CalendarIcon } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import { toast } from "sonner";
@@ -290,17 +290,35 @@ const Dashboard = () => {
                 <ReferralShare />
 
                 {/* Exportar plan a PDF */}
-                <div className="bg-card rounded-2xl p-6 border border-border card-shadow flex items-center justify-between gap-4">
-                  <div>
-                    <h3 className="font-bold font-display mb-0.5">Llévate tu plan al gym</h3>
-                    <p className="text-sm text-muted-foreground">Descarga el PDF o sincroniza con tu calendario.</p>
+                {/* Sincronización Calendario — CTA principal */}
+                <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl p-6 border-2 border-primary/30 card-shadow space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                      <CalendarIcon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold font-display text-lg mb-1">Tu plan, en tu Google Calendar</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Sincroniza entrenos y comidas a las horas que tú eliges. Sin app móvil. Todo en el calendario que ya usas.
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Button variant="outline" size="sm" onClick={handleExportPDF}>
-                      <Download className="w-4 h-4 mr-1.5" /> PDF
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" onClick={() => navigate("/my-schedule")}>
+                      <CalendarClock className="w-4 h-4 mr-1.5" /> Configurar mis horarios
                     </Button>
-                    <CalendarExportDialog dayPlans={dayPlans} />
+                    <CalendarExportDialog
+                      dayPlans={dayPlans}
+                      trigger={
+                        <Button variant="hero" size="sm">
+                          <CalendarIcon className="w-4 h-4 mr-1.5" /> Sincronizar con Calendar
+                        </Button>
+                      }
+                    />
                   </div>
+                  <Button variant="ghost" size="sm" onClick={handleExportPDF} className="w-full text-xs text-muted-foreground">
+                    <Download className="w-3.5 h-3.5 mr-1.5" /> O descarga el PDF
+                  </Button>
                 </div>
               </div>
             )}
