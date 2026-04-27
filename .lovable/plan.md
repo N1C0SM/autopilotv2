@@ -1,113 +1,119 @@
-## Calendario hipercómodo: integración total con la vida del usuario
 
-Objetivo: que el calendario de Autopilot se sienta como una **extensión natural de Google Calendar** del usuario, con inteligencia automática de recuperación y atajos brutales para ti como admin.
+## Visión
 
-Lo entregamos en **4 fases**, cada una usable de forma independiente. Empezamos por las que más impacto dan **sin requerir OAuth de Google** (efecto inmediato), y dejamos Google Calendar para el final cuando ya tengas la infraestructura lista.
+La app es **web (priorizada desktop, responsive funcional)**. El usuario solo recibe **2 cosas**: su **plan de entrenamiento** y su **plan de nutrición**. Como aún no hay app móvil, el usuario lo vive en su **Google Calendar** real, ajustado a sus horarios (gym, comidas, trabajo).
 
----
+## 1. Pantalla nueva: "Mi semana real"
 
-### FASE 1 — Etiquetas de carga visibles (impacto inmediato, sin dependencias)
+Una sola pantalla donde el usuario define cómo es su semana de verdad. Esto sustituye los inputs sueltos de hora.
 
-Cada bloque del calendario muestra un puntito de color con su carga estimada para que el usuario **entienda** la lógica detrás de su semana:
+Configura por día (Lunes–Domingo):
+- Bloques **ocupados** (trabajo, clases, etc.) — el plan no los pisa
+- **Hora preferida de gym** (ej. Lunes 18:00, Sábado 10:00)
+- **Horarios de comidas habituales**: desayuno, snack mañana, comida, snack tarde, cena
+- **Duración estimada** de entreno y de cada comida
 
-- 🔴 **Alta**: piernas pesadas, fullbody intenso, deportes de alto impacto (boxeo, escalada, fútbol)
-- 🟡 **Media**: push, pull, hipertrofia general
-- 🟢 **Baja**: movilidad, técnica, cardio suave, yoga
+Vista tipo grid semanal visual donde puede arrastrar/clickar bloques. Datos guardados en una nueva tabla `user_schedule` (un row por usuario con JSONB).
 
-La carga se calcula en el cliente a partir de `fatigue_level` ya existente en cada ejercicio del `training_plan` y de un mapeo fijo por categoría para `external_activities` (boxeo=Alta, yoga=Baja, etc.).
+El generador de plan y el feed de calendario leerán de aquí en lugar de los defaults actuales.
 
-Tooltip al pasar por encima: *"Carga alta — recuperación recomendada 48h"*.
+## 2. Sincronización con Google Calendar
 
----
+**Dos vías**, el usuario elige:
 
-### FASE 2 — Auto-reubicación inteligente de entrenos (sin OAuth)
+### A. OAuth real (recomendado, "premium")
+- Botón "Conectar Google Calendar"
+- OAuth flow propio con scope `calendar.events`
+- Edge Function `gcal-sync` que crea/actualiza/borra eventos directamente en su calendario cuando:
+  - Se genera o regenera el plan
+  - Cambia "Mi semana real"
+  - Se completa un entreno (marca el evento ✅)
+- Tokens (access + refresh) guardados en nueva tabla `google_calendar_tokens` con RLS
+- Cron diario que refresca tokens y sincroniza cambios
 
-Hoy tienes `training_rules.recovery_hours` por grupo muscular y `external_activities` con horarios. Conectamos las dos cosas:
+### B. ICS auto-actualizable (lo que ya existe, mejorado)
+- Mantener la Edge Function `calendar-feed` existente
+- **Ampliarla** para incluir: comidas (5/día con macros) + recordatorios semanales (pesarse, foto progreso)
+- Adaptar la generación de eventos a los horarios de "Mi semana real" en vez de los inputs simples actuales
 
-**Lógica nueva en una función `auto-reschedule`** (Edge Function que se llama tras crear/mover una actividad externa):
+### Eventos generados (ambas vías)
+- 🏋️ **Entrenos**: título de rutina, descripción con ejercicios numerados (series, reps, descanso, link al vídeo)
+- 🍽️ **Comidas**: 5 al día (Desayuno, Snack AM, Comida, Snack PM, Cena) con descripción incluyendo macros y kcal de cada comida
+- ⚖️ **Pesarse**: domingos por la mañana
+- 📸 **Foto progreso**: domingos primer día de cada mes
 
-1. Detecta solapes entre el `training_plan` (día → ejercicios) y `external_activities`/`training_schedule_overrides` del usuario.
-2. Si el usuario tiene **boxeo el martes 20h** (alta fatiga hombros + core), el sistema busca el siguiente entreno de empuje/pull dentro de 24h y lo **reubica** automáticamente al próximo día libre con suficiente recuperación.
-3. Crea un `training_schedule_override` para el día afectado y dispara una notificación amable: *"Movimos tu entreno de pecho del miércoles al jueves porque ayer tuviste boxeo (recuperación de hombros pendiente)."*
+## 3. Reorientación web/desktop
 
-**Para el admin**: en `UserDetail` se ve un panel "Conflictos detectados esta semana" con un botón "Aplicar auto-ajuste" que invoca la misma función.
+- Layout principal **maximizado para desktop**: dashboard con sidebar fija + área principal ancha (sin centrar todo en columna de 600px)
+- `MobileNav` se oculta en ≥md, sidebar siempre visible
+- HomeOverview reorganizado en grid 2-3 columnas: hoy + semana + nutrición de un vistazo
+- Botón muy visible "Sincronizar con Google Calendar" como CTA principal del dashboard
+- Mantenemos breakpoints responsive para que no rompa en móvil, pero el diseño primario es 1280px+
 
----
+## 4. Simplificación del producto
 
-### FASE 3 — Atajos admin para sentirse pro
+Quitar/colapsar lo que no sea entrenamiento o nutrición del flujo principal:
+- Chat, achievements, referrals → mover a sidebar secundaria o sección "Más"
+- Dashboard de inicio reducido a: **Hoy en mi calendario** (próximo entreno + próximas comidas) + **Estado de sincronización**
+- Settings añade tab "Calendario" con la conexión Google y la pantalla "Mi semana real"
 
-En la pestaña Calendario del `UserDetail`:
+## 5. Detalles técnicos
 
-- **Vista "Semana real"**: muestra superpuestos training_plan + external_activities + (más adelante) Google Calendar como fondo gris.
-- **Sugerencia automática de huecos al crear entreno**: al arrastrar/soltar un día de entreno sobre el calendario, el sistema propone los 3 mejores huecos libres de la semana ordenados por menor conflicto de recuperación. Dropdown rápido: *"Mar 7am · Jue 19h · Sáb 10am"*.
-- **Notas privadas admin → usuario** en cada bloque del calendario (campo `admin_note` en `training_schedule_overrides`). El usuario las ve como una línea destacada en el detalle del entreno: *"📝 Nota del coach: Hoy mete RIR 1, ya estás listo."*
-- **Indicador "Conectado con Google Calendar 🟢"** en la cabecera del calendario del usuario (visible solo cuando la fase 4 esté activa).
-
----
-
-### FASE 4 — Sincronización bidireccional con Google Calendar (per-user OAuth)
-
-Esto es lo grande. Cada usuario conecta **su propio** Google Calendar (no el tuyo), por lo que necesitamos OAuth per-user con credenciales propias en Google Cloud Console.
-
-**Flujo de configuración (una sola vez, lo hacemos juntos):**
-1. Tú creas un proyecto en Google Cloud Console, habilitas Google Calendar API y configuras la pantalla de consentimiento OAuth.
-2. Generas un Client ID y Client Secret.
-3. Me los pasas y los guardo como secretos (`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`).
-4. Yo te paso la URL de callback exacta para que la añadas a "Authorized redirect URIs".
-
-**Funcionalidad para el usuario:**
-- Botón "Conectar Google Calendar" en `Settings`. Hace OAuth con scope `calendar.readonly` + `calendar.events`. Tokens (access + refresh) guardados en una nueva tabla `google_calendar_tokens` (user_id, access_token, refresh_token, expires_at) con RLS estricta.
-- Eventos de Google aparecen como **bloques grises de fondo** (no editables) en el calendario de Autopilot — el usuario y el admin ven al instante "ah, este tío tiene clase de 17 a 21h los lunes".
-- Cuando se crea/mueve/borra un entreno o actividad en Autopilot → Edge Function `sync-to-google` escribe el evento en un calendario dedicado llamado **"Autopilot Training"** dentro del Google Calendar del usuario. Así no contamina su calendario principal y puede activar/desactivar la visibilidad.
-
-**Funcionalidad para el admin:**
-- Cuando entras al calendario de un usuario, ves automáticamente sus eventos de Google como contexto de fondo → arrastras el entreno sabiendo dónde no choca.
-- La auto-reubicación de la Fase 2 ahora también considera Google Calendar como fuente de conflictos, no solo `external_activities`.
-
-**Edge Functions nuevas:**
-- `google-oauth-callback`: recibe el code, intercambia por tokens, los guarda.
-- `google-oauth-refresh`: refresca tokens caducados (llamada interna automática).
-- `sync-to-google`: crea/actualiza/borra eventos en el calendario "Autopilot Training" del usuario.
-- `fetch-google-events`: lee eventos de la semana actual del usuario (para mostrarlos como fondo). Cacheado 15min.
-
----
-
-### Detalles técnicos
-
-**Tabla nueva `google_calendar_tokens`** (Fase 4):
-- `user_id` (uuid, unique), `access_token`, `refresh_token`, `expires_at`, `autopilot_calendar_id` (string, el ID del calendario "Autopilot Training" que creamos al conectar)
-- RLS: el usuario gestiona el suyo, admin lee todos.
-
-**Cambio en `training_schedule_overrides`** (Fase 3):
-- Añadir columna `admin_note text nullable`.
-
-**Función fatiga por categoría externa** (Fase 1, hardcoded en frontend):
+**Nueva tabla `user_schedule`**
 ```
-boxeo, escalada, futbol, padel, tenis: Alta
-running, ciclismo, natacion: Media
-yoga, danza, personal, trabajo: Baja
+user_id uuid (PK)
+busy_blocks jsonb  -- [{day:1, start:"09:00", end:"17:00", label:"Trabajo"}, ...]
+gym_slots jsonb    -- [{day:1, start:"18:00", duration:75}, ...]
+meal_times jsonb   -- {breakfast:"08:00", snack_am:"11:00", lunch:"14:00", snack_pm:"17:30", dinner:"21:00"}
+meal_duration_min int default 30
+created_at, updated_at
 ```
+RLS: usuarios manejan solo su fila; admins ven todas.
 
-**Llamada a `auto-reschedule`** (Fase 2): se invoca al `INSERT/UPDATE/DELETE` sobre `external_activities` mediante un trigger en Postgres que llama a `pg_net.http_post` hacia la Edge Function. Alternativa más simple: invocarla desde el cliente tras cada mutación en `CalendarView`.
+**Nueva tabla `google_calendar_tokens`**
+```
+user_id uuid (PK)
+access_token text, refresh_token text, expires_at timestamptz
+calendar_id text default 'primary'
+last_sync_at timestamptz
+sync_enabled bool
+```
+RLS: solo el dueño puede leer/escribir.
 
-**Archivos a tocar:**
-- Fase 1: `src/components/dashboard/CalendarView.tsx` (etiquetas + tooltips)
-- Fase 2: nueva Edge Function `auto-reschedule`, actualización de `CalendarView.tsx` para invocarla
-- Fase 3: `src/components/admin/UserDetail.tsx` (panel conflictos, sugerencia huecos), migración para `admin_note`
-- Fase 4: `src/components/SettingsPanel.tsx` (botón conectar), 4 edge functions nuevas, migración para tabla `google_calendar_tokens`, actualización de `CalendarView.tsx` para mostrar fondo
+**Nuevas Edge Functions**
+- `gcal-oauth-start` — devuelve URL de autorización de Google
+- `gcal-oauth-callback` — intercambia code por tokens, guarda en BD
+- `gcal-sync` — sincroniza plan completo del usuario (idempotente, usa UID estable por evento)
+- `gcal-disconnect` — revoca y borra tokens
 
----
+**Edge Function existente `calendar-feed`** (ICS):
+- Leer de `user_schedule` para horas reales
+- Incluir eventos de nutrición (leer `nutrition_plan.meals_json`)
+- Añadir recordatorios semanales
 
-### Fuera de alcance v1
+**Secrets a añadir** (te lo pediré cuando empiece): `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`. Te guiaré paso a paso por Google Cloud Console (10 min).
 
-- No tocamos el flujo de generación inicial del plan (`generate-plan`). Solo **mueve** entrenos ya generados.
-- No sincronizamos comidas con Google Calendar (solo entrenos + actividades), si quieres se añade después.
-- No soportamos múltiples calendarios de Google por usuario (solo el primario).
+**Frontend nuevo**
+- `src/pages/MySchedule.tsx` — pantalla "Mi semana real" con grid semanal visual
+- `src/components/dashboard/GoogleCalendarConnect.tsx` — card con estado conectado/desconectado, botón sync manual, último sync
+- Refactor de `CalendarExportDialog.tsx` — añadir tab OAuth + tab ICS
+- Refactor de `Dashboard.tsx` y `HomeOverview.tsx` — layout desktop-first, foco en sync
 
----
+## Fuera de alcance (para fases posteriores)
+- App móvil nativa
+- Push notifications propias
+- Integración con Apple Calendar OAuth (Apple solo soportará ICS)
 
-### Orden recomendado de aprobación
+## Lo que NO se toca
+- Generador de plan (`generate-plan`) — sigue funcionando, solo cambia de dónde lee horarios
+- Lógica de pago / Stripe
+- Onboarding (los datos siguen sirviendo, "Mi semana real" amplía la disponibilidad)
 
-Si te parece, lanzamos las fases **1, 2 y 3 ya** (no necesitan nada externo, las tienes funcionando esta tarde). Y cuando estés listo me avisas y montamos juntos el OAuth de Google para la Fase 4.
+## Orden de implementación sugerido (ya en build mode)
+1. Tabla `user_schedule` + pantalla "Mi semana real"
+2. Refactor desktop-first del Dashboard
+3. Ampliar `calendar-feed` ICS (nutrición + nuevos horarios + recordatorios)
+4. OAuth Google Calendar (pediré secrets aquí)
+5. Sync push automático cuando cambie el plan
 
-¿Apruebas las 4 fases o prefieres acotar a alguna?
+¿Avanzamos así?
