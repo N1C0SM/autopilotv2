@@ -23,3 +23,15 @@ verify_jwt = false
 
 [functions.generate-plan]
 verify_jwt = false
+
+[functions.gcal-oauth-start]
+verify_jwt = false
+
+[functions.gcal-oauth-callback]
+verify_jwt = false
+
+[functions.gcal-sync]
+verify_jwt = false
+
+[functions.gcal-disconnect]
+verify_jwt = false
