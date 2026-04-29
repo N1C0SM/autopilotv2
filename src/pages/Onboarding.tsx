@@ -115,6 +115,8 @@ const Onboarding = () => {
   const [loading, setLoading] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [yearlyPrice, setYearlyPrice] = useState(190);
+  const [gcalConnected, setGcalConnected] = useState(false);
+  const [gcalLoading, setGcalLoading] = useState(false);
   const [data, setData] = useState({
     age: "",
     height: "",
@@ -135,6 +137,42 @@ const Onboarding = () => {
   });
 
   const update = (field: string, value: any) => setData((d) => ({ ...d, [field]: value }));
+
+  // Detectar si volvemos del OAuth de Google Calendar y saltar al paso del calendario.
+  // El callback redirige a /onboarding?gcal=connected
+  useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("gcal") === "connected") {
+      setStep(12);
+      // limpiar query para no re-disparar
+      window.history.replaceState({}, "", "/onboarding");
+    }
+  });
+
+  // Comprobar estado de conexión cuando estamos en el step de Google Calendar
+  useState(() => {
+    if (!user) return;
+    supabase
+      .from("google_calendar_tokens")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setGcalConnected(!!data));
+  });
+
+  const handleConnectGoogle = async () => {
+    setGcalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gcal-oauth-start", {
+        body: { return_to: `${window.location.origin}/onboarding?gcal=connected` },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+    } catch (e) {
+      toast.error("No se pudo iniciar la conexión con Google");
+      setGcalLoading(false);
+    }
+  };
 
   const toggleSport = (sport: string) => {
     setData((d) => {
