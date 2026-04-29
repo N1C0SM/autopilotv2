@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Calendar as CalendarIcon, Check, Loader2, Zap } from "lucide-react";
 import PricingTiers from "@/components/PricingTiers";
 
 const STEPS = [
@@ -24,6 +24,7 @@ const STEPS = [
   "Tests de Nivel",
   "Lesiones",
   "Nutrición",
+  "Google Calendar",
   "Resumen",
 ];
 
@@ -114,6 +115,8 @@ const Onboarding = () => {
   const [loading, setLoading] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [yearlyPrice, setYearlyPrice] = useState(190);
+  const [gcalConnected, setGcalConnected] = useState(false);
+  const [gcalLoading, setGcalLoading] = useState(false);
   const [data, setData] = useState({
     age: "",
     height: "",
@@ -134,6 +137,41 @@ const Onboarding = () => {
   });
 
   const update = (field: string, value: any) => setData((d) => ({ ...d, [field]: value }));
+
+  // Detectar si volvemos del OAuth de Google Calendar y saltar al paso del calendario.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("gcal") === "connected") {
+      setStep(12);
+      setGcalConnected(true);
+      window.history.replaceState({}, "", "/onboarding");
+    }
+  }, []);
+
+  // Comprobar estado de conexión a Google Calendar
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("google_calendar_tokens")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setGcalConnected(!!data));
+  }, [user]);
+
+  const handleConnectGoogle = async () => {
+    setGcalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gcal-oauth-start", {
+        body: { return_to: `${window.location.origin}/onboarding?gcal=connected` },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+    } catch (e) {
+      toast.error("No se pudo iniciar la conexión con Google");
+      setGcalLoading(false);
+    }
+  };
 
   const toggleSport = (sport: string) => {
     setData((d) => {
@@ -802,8 +840,56 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 12: Summary */}
+          {/* Step 12: Google Calendar (opcional) */}
           {step === 12 && (
+            <div className="space-y-5">
+              <div className="text-center mb-2">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  <CalendarIcon className="w-7 h-7 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold font-display">Conecta tu Google Calendar</h2>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Tus entrenos y comidas aparecerán automáticamente en tu calendario, a las horas que tú eliges.
+                  <br />
+                  <span className="text-xs">Es opcional — puedes hacerlo más tarde desde Ajustes.</span>
+                </p>
+              </div>
+
+              {gcalConnected ? (
+                <div className="bg-primary/10 border border-primary/30 rounded-xl p-5 text-center">
+                  <div className="flex items-center justify-center gap-2 text-primary font-semibold">
+                    <Check className="w-5 h-5" />
+                    Conectado correctamente
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Sincronizaremos tu plan en cuanto esté listo.
+                  </p>
+                </div>
+              ) : (
+                <Button
+                  onClick={handleConnectGoogle}
+                  disabled={gcalLoading}
+                  variant="hero"
+                  className="w-full"
+                  size="lg"
+                >
+                  {gcalLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Zap className="w-4 h-4 mr-2" />
+                  )}
+                  Conectar Google Calendar
+                </Button>
+              )}
+
+              <p className="text-[11px] text-center text-muted-foreground">
+                Solo permisos de calendario. Puedes desconectarlo cuando quieras desde Ajustes.
+              </p>
+            </div>
+          )}
+
+          {/* Step 13: Summary */}
+          {step === 13 && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
