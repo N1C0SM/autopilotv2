@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calendar as CalendarIcon, Download, Link2, Copy, Check, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, Download, Link2, Copy, Check, Loader2, RefreshCw, Unplug, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,9 @@ const CalendarExportDialog = ({ dayPlans, trigger }: Props) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [gcalConnected, setGcalConnected] = useState(false);
+  const [gcalLastSync, setGcalLastSync] = useState<string | null>(null);
+  const [gcalLoading, setGcalLoading] = useState(false);
 
   useEffect(() => {
     if (!open || !user) return;
@@ -51,6 +54,13 @@ const CalendarExportDialog = ({ dayPlans, trigger }: Props) => {
         setDuration(data.duration_min);
         setReminder(data.reminder_min);
       }
+      const { data: gcal } = await supabase
+        .from("google_calendar_tokens")
+        .select("last_sync_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setGcalConnected(!!gcal);
+      setGcalLastSync(gcal?.last_sync_at || null);
     })();
   }, [open, user]);
 
@@ -101,6 +111,49 @@ const CalendarExportDialog = ({ dayPlans, trigger }: Props) => {
     setCopied(true);
     toast.success("Enlace copiado");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleConnectGoogle = async () => {
+    setGcalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gcal-oauth-start", {
+        body: { return_to: window.location.href },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+    } catch (e) {
+      toast.error("No se pudo iniciar la conexión con Google");
+      setGcalLoading(false);
+    }
+  };
+
+  const handleSyncGoogle = async () => {
+    setGcalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gcal-sync");
+      if (error) throw error;
+      toast.success(`✅ ${data.synced}/${data.total} eventos sincronizados`);
+      setGcalLastSync(new Date().toISOString());
+    } catch (e) {
+      toast.error("Error al sincronizar");
+    } finally {
+      setGcalLoading(false);
+    }
+  };
+
+  const handleDisconnectGoogle = async () => {
+    setGcalLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke("gcal-disconnect");
+      if (error) throw error;
+      setGcalConnected(false);
+      setGcalLastSync(null);
+      toast.success("Desconectado de Google Calendar");
+    } catch (e) {
+      toast.error("Error al desconectar");
+    } finally {
+      setGcalLoading(false);
+    }
   };
 
   return (
@@ -207,6 +260,41 @@ const CalendarExportDialog = ({ dayPlans, trigger }: Props) => {
                   {loading && <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />}
                   Actualizar configuración
                 </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Conexión OAuth Google Calendar */}
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-lg p-4 space-y-2">
+            <div className="flex items-start gap-3">
+              <Zap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Conectar con Google Calendar (1 clic)</p>
+                <p className="text-xs text-muted-foreground">
+                  Sincroniza tu plan directamente en tu calendario. Sin pegar URLs.
+                </p>
+              </div>
+            </div>
+            {!gcalConnected ? (
+              <Button onClick={handleConnectGoogle} disabled={gcalLoading} className="w-full" size="sm" variant="hero">
+                {gcalLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Zap className="w-4 h-4 mr-1.5" />}
+                Conectar Google Calendar
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Check className="w-3.5 h-3.5 text-primary" />
+                  Conectado{gcalLastSync ? ` · Última sync: ${new Date(gcalLastSync).toLocaleString("es-ES")}` : ""}
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleSyncGoogle} disabled={gcalLoading} size="sm" className="flex-1" variant="hero">
+                    {gcalLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
+                    Sincronizar ahora
+                  </Button>
+                  <Button onClick={handleDisconnectGoogle} disabled={gcalLoading} size="sm" variant="outline">
+                    <Unplug className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>
