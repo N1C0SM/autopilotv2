@@ -132,7 +132,13 @@ const SettingsPanel = () => {
     try {
       const { data, error } = await supabase.functions.invoke("gcal-sync");
       if (error) throw error;
-      toast.success(`✅ ${data.synced}/${data.total} eventos sincronizados`);
+      const parts = [`${data.synced}/${data.total} eventos sincronizados`];
+      if (data.deleted) parts.push(`${data.deleted} obsoletos eliminados`);
+      toast.success(`✅ ${parts.join(" · ")}`);
+      if (data.errors?.length) {
+        toast.error(`${data.errors.length} eventos fallaron. Revisa los logs.`);
+        console.warn("[gcal-sync] errors:", data.errors);
+      }
       setGcalLastSync(new Date().toISOString());
     } catch {
       toast.error("Error al sincronizar");

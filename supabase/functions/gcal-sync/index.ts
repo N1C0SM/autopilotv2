@@ -30,16 +30,20 @@ function nextDateForDayHM(targetDow: number, hour: number, minute: number) {
   return d;
 }
 function toRFC3339(d: Date) { return d.toISOString(); }
-// Google event IDs: a-v 0-9, length 5-1024. Hash slug to base32-ish.
+// Google event IDs MUST match: lowercase a-v + digits 0-9, length 5-1024.
+// Map any other char to its position in the alphabet [0-9a-v].
+const ALPHABET = "0123456789abcdefghijklmnopqrstuv"; // 32 chars
 function eventId(slug: string) {
-  // base32 hex from sha-like simple hash
-  let h = "";
-  for (const c of slug.toLowerCase()) {
-    const code = c.charCodeAt(0);
-    if ((code >= 97 && code <= 118) || (code >= 48 && code <= 57)) h += c;
-    else h += (code % 22 + 10).toString(22);
+  let out = "";
+  for (const ch of slug.toLowerCase()) {
+    if (/[0-9a-v]/.test(ch)) { out += ch; continue; }
+    // Deterministic mapping for invalid chars
+    out += ALPHABET[ch.charCodeAt(0) % 32];
   }
-  return ("ap" + h).slice(0, 200);
+  // Ensure length >= 5 and starts with a letter
+  if (out.length < 5) out = "ap" + out + "00000".slice(0, 5 - out.length);
+  if (!/^[a-v]/.test(out)) out = "a" + out;
+  return out.slice(0, 200);
 }
 
 async function refreshAccessToken(refreshToken: string) {
@@ -89,30 +93,70 @@ async function upsertEvent(accessToken: string, calendarId: string, ev: Record<s
   return { ok: false, error: `PUT ${putRes.status}: ${txt}` };
 }
 
+async function listAutopilotEventIds(accessToken: string, calendarId: string): Promise<string[]> {
+  const ids: string[] = [];
+  let pageToken: string | undefined;
+  do {
+    const url = new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`);
+    url.searchParams.set("privateExtendedProperty", "source=autopilot");
+    url.searchParams.set("maxResults", "250");
+    url.searchParams.set("showDeleted", "false");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+    const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) break;
+    const data = await res.json();
+    for (const item of (data.items || [])) if (item.id) ids.push(item.id);
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+  return ids;
+}
+
+async function deleteEvent(accessToken: string, calendarId: string, id: string) {
+  await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${id}`,
+    { method: "DELETE", headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "No auth" }, 401);
-
-    const userClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return json({ error: "Unauthorized" }, 401);
-
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Allow two modes:
+    //  1) End-user call: validate JWT and use auth.uid().
+    //  2) Internal call (service role): pass { user_id } in the body.
+    let userId: string | null = null;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const isServiceRole = authHeader && authHeader.replace("Bearer ", "") === serviceKey;
+
+    if (isServiceRole) {
+      try {
+        const body = await req.json();
+        if (body?.user_id) userId = body.user_id as string;
+      } catch (_) {}
+      if (!userId) return json({ error: "Missing user_id for service-role call" }, 400);
+    } else {
+      if (!authHeader) return json({ error: "No auth" }, 401);
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await userClient.auth.getUser();
+      if (!user) return json({ error: "Unauthorized" }, 401);
+      userId = user.id;
+    }
+
     const { data: tok } = await admin
       .from("google_calendar_tokens")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle();
     if (!tok) return json({ error: "Not connected" }, 400);
 
@@ -124,15 +168,15 @@ Deno.serve(async (req) => {
       await admin.from("google_calendar_tokens").update({
         access_token: accessToken,
         expiry_at: newExpiry,
-      }).eq("user_id", user.id);
+      }).eq("user_id", userId);
     }
 
     const calendarId = tok.calendar_id || "primary";
 
     const [{ data: tp }, { data: np }, { data: sched }] = await Promise.all([
-      admin.from("training_plan").select("workouts_json").eq("user_id", user.id).maybeSingle(),
-      admin.from("nutrition_plan").select("meals_json, macros_json").eq("user_id", user.id).maybeSingle(),
-      admin.from("user_schedule").select("gym_slots, meal_times, meal_duration_min, weekly_reminders").eq("user_id", user.id).maybeSingle(),
+      admin.from("training_plan").select("workouts_json").eq("user_id", userId).maybeSingle(),
+      admin.from("nutrition_plan").select("meals_json, macros_json").eq("user_id", userId).maybeSingle(),
+      admin.from("user_schedule").select("gym_slots, meal_times, meal_duration_min, weekly_reminders").eq("user_id", userId).maybeSingle(),
     ]);
 
     const plans = (tp?.workouts_json as any[]) || [];
@@ -164,6 +208,7 @@ Deno.serve(async (req) => {
         end: { dateTime: toRFC3339(end), timeZone: "Europe/Madrid" },
         recurrence: [`RRULE:FREQ=WEEKLY;BYDAY=${rrule}`],
         reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 60 }] },
+        extendedProperties: { private: { source: "autopilot", kind: "workout" } },
       });
     }
 
@@ -192,6 +237,7 @@ Deno.serve(async (req) => {
           end: { dateTime: toRFC3339(end), timeZone: "Europe/Madrid" },
           recurrence: ["RRULE:FREQ=DAILY"],
           reminders: { useDefault: false, overrides: [] },
+          extendedProperties: { private: { source: "autopilot", kind: "meal" } },
         });
       });
     }
@@ -208,6 +254,7 @@ Deno.serve(async (req) => {
         end: { dateTime: toRFC3339(end), timeZone: "Europe/Madrid" },
         recurrence: ["RRULE:FREQ=WEEKLY;BYDAY=SU"],
         reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 15 }] },
+        extendedProperties: { private: { source: "autopilot", kind: "reminder" } },
       });
     }
     if (schedule?.weekly_reminders?.progress_photo) {
@@ -221,18 +268,35 @@ Deno.serve(async (req) => {
         end: { dateTime: toRFC3339(end), timeZone: "Europe/Madrid" },
         recurrence: ["RRULE:FREQ=MONTHLY;BYDAY=1SU"],
         reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 30 }] },
+        extendedProperties: { private: { source: "autopilot", kind: "reminder" } },
       });
     }
 
+    // Upsert all events
     let synced = 0; const errors: string[] = [];
+    const wantedIds = new Set(events.map(e => e.id));
     for (const ev of events) {
       const r = await upsertEvent(accessToken, calendarId, ev);
       if (r.ok) synced++; else errors.push(`${ev.summary}: ${r.error}`);
     }
 
-    await admin.from("google_calendar_tokens").update({ last_sync_at: new Date().toISOString() }).eq("user_id", user.id);
+    // Delete orphan events (previously created by Autopilot but no longer in plan)
+    let deleted = 0;
+    try {
+      const existingIds = await listAutopilotEventIds(accessToken, calendarId);
+      for (const id of existingIds) {
+        if (!wantedIds.has(id)) {
+          await deleteEvent(accessToken, calendarId, id);
+          deleted++;
+        }
+      }
+    } catch (e) {
+      errors.push(`cleanup: ${String(e)}`);
+    }
 
-    return json({ success: true, synced, total: events.length, errors });
+    await admin.from("google_calendar_tokens").update({ last_sync_at: new Date().toISOString() }).eq("user_id", userId);
+
+    return json({ success: true, synced, total: events.length, deleted, errors });
   } catch (e) {
     return json({ error: String(e) }, 500);
   }
