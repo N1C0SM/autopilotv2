@@ -123,25 +123,40 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "No auth" }, 401);
-
-    const userClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return json({ error: "Unauthorized" }, 401);
-
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Allow two modes:
+    //  1) End-user call: validate JWT and use auth.uid().
+    //  2) Internal call (service role): pass { user_id } in the body.
+    let userId: string | null = null;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const isServiceRole = authHeader && authHeader.replace("Bearer ", "") === serviceKey;
+
+    if (isServiceRole) {
+      try {
+        const body = await req.json();
+        if (body?.user_id) userId = body.user_id as string;
+      } catch (_) {}
+      if (!userId) return json({ error: "Missing user_id for service-role call" }, 400);
+    } else {
+      if (!authHeader) return json({ error: "No auth" }, 401);
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await userClient.auth.getUser();
+      if (!user) return json({ error: "Unauthorized" }, 401);
+      userId = user.id;
+    }
+
     const { data: tok } = await admin
       .from("google_calendar_tokens")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle();
     if (!tok) return json({ error: "Not connected" }, 400);
 
@@ -153,15 +168,15 @@ Deno.serve(async (req) => {
       await admin.from("google_calendar_tokens").update({
         access_token: accessToken,
         expiry_at: newExpiry,
-      }).eq("user_id", user.id);
+      }).eq("user_id", userId);
     }
 
     const calendarId = tok.calendar_id || "primary";
 
     const [{ data: tp }, { data: np }, { data: sched }] = await Promise.all([
-      admin.from("training_plan").select("workouts_json").eq("user_id", user.id).maybeSingle(),
-      admin.from("nutrition_plan").select("meals_json, macros_json").eq("user_id", user.id).maybeSingle(),
-      admin.from("user_schedule").select("gym_slots, meal_times, meal_duration_min, weekly_reminders").eq("user_id", user.id).maybeSingle(),
+      admin.from("training_plan").select("workouts_json").eq("user_id", userId).maybeSingle(),
+      admin.from("nutrition_plan").select("meals_json, macros_json").eq("user_id", userId).maybeSingle(),
+      admin.from("user_schedule").select("gym_slots, meal_times, meal_duration_min, weekly_reminders").eq("user_id", userId).maybeSingle(),
     ]);
 
     const plans = (tp?.workouts_json as any[]) || [];
@@ -279,7 +294,7 @@ Deno.serve(async (req) => {
       errors.push(`cleanup: ${String(e)}`);
     }
 
-    await admin.from("google_calendar_tokens").update({ last_sync_at: new Date().toISOString() }).eq("user_id", user.id);
+    await admin.from("google_calendar_tokens").update({ last_sync_at: new Date().toISOString() }).eq("user_id", userId);
 
     return json({ success: true, synced, total: events.length, deleted, errors });
   } catch (e) {
