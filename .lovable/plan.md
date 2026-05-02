@@ -1,119 +1,77 @@
+## Objetivo
 
-## Visión
+Que cuando el usuario abra **su Google Calendar**, vea su semana real perfectamente organizada — entrenos en su hora, 5 comidas con kcal/macros propios, recordatorios — y que se mantenga sincronizado solo cuando edita "Mi semana real" o regenera plan, **sin solapes**.
 
-La app es **web (priorizada desktop, responsive funcional)**. El usuario solo recibe **2 cosas**: su **plan de entrenamiento** y su **plan de nutrición**. Como aún no hay app móvil, el usuario lo vive en su **Google Calendar** real, ajustado a sus horarios (gym, comidas, trabajo).
+## Cambios
 
-## 1. Pantalla nueva: "Mi semana real"
+### 1. `supabase/functions/gcal-sync/index.ts` — sync más inteligente
 
-Una sola pantalla donde el usuario define cómo es su semana de verdad. Esto sustituye los inputs sueltos de hora.
+**a) Macros y kcal por comida** (no solo total diario)
+- Leer `meal.kcal`, `meal.protein`, `meal.carbs`, `meal.fats` desde `meals_json` si existen.
+- Si no vienen por comida, dividir el total diario (`macros_json`) entre el número de comidas activas, redondeando.
+- Descripción de cada evento: `"450 kcal · 35g P · 50g C · 12g G\n\n<descripción de la comida>"`.
 
-Configura por día (Lunes–Domingo):
-- Bloques **ocupados** (trabajo, clases, etc.) — el plan no los pisa
-- **Hora preferida de gym** (ej. Lunes 18:00, Sábado 10:00)
-- **Horarios de comidas habituales**: desayuno, snack mañana, comida, snack tarde, cena
-- **Duración estimada** de entreno y de cada comida
+**b) Resolver conflictos moviendo el ENTRENO** (decisión del usuario)
+- Construir primero los slots de comidas (son fijos por preferencia del usuario).
+- Para cada entreno, comprobar solape con cualquier comida del mismo día.
+- Si solapa: mover el entreno al **siguiente hueco libre** del día (probar +30min, +60min, +90min hasta encontrar hueco que no choque con ninguna comida ni `busy_blocks`). Tope: 22:00; si no cabe, dejar la hora original y añadir aviso al `errors[]` para que el frontend lo muestre.
+- La hora final se refleja en el evento de Google Calendar.
 
-Vista tipo grid semanal visual donde puede arrastrar/clickar bloques. Datos guardados en una nueva tabla `user_schedule` (un row por usuario con JSONB).
+**c) Recurrencia desde el lunes de esta semana**, no desde "el próximo día X"
+- Cambiar `nextDateForDayHM` por una función `thisWeekDayHM(dow, h, m)` que ancle siempre al lunes de la semana actual. Así el usuario ve la semana en curso completa al instante.
 
-El generador de plan y el feed de calendario leerán de aquí en lugar de los defaults actuales.
+**d) Pequeñas mejoras**
+- Evitar generar eventos de comida cuyo slot no exista en `meals_json` (ya está, mantener).
+- Añadir `colorId` distinto para entrenos (`9` graphite/azul) y comidas (`10` verde) y recordatorios (`5` amarillo) para que visualmente se distingan en Google Calendar.
 
-## 2. Sincronización con Google Calendar
+### 2. Auto-sync al guardar "Mi semana real" — `src/pages/MySchedule.tsx`
 
-**Dos vías**, el usuario elige:
+- Tras `upsert` exitoso de `user_schedule`, comprobar si existe registro en `google_calendar_tokens` para el usuario.
+- Si existe: invocar `supabase.functions.invoke('gcal-sync')` en background (sin bloquear el guardado) y mostrar toast secundario `"Calendario sincronizado · X eventos"` o `"No se pudo sincronizar el calendario"` si falla.
+- Si no hay token: silencio, no molestar.
 
-### A. OAuth real (recomendado, "premium")
-- Botón "Conectar Google Calendar"
-- OAuth flow propio con scope `calendar.events`
-- Edge Function `gcal-sync` que crea/actualiza/borra eventos directamente en su calendario cuando:
-  - Se genera o regenera el plan
-  - Cambia "Mi semana real"
-  - Se completa un entreno (marca el evento ✅)
-- Tokens (access + refresh) guardados en nueva tabla `google_calendar_tokens` con RLS
-- Cron diario que refresca tokens y sincroniza cambios
+### 3. Edge function `generate-plan` (ya dispara sync) — verificar
+- Confirmar que el invoke a `gcal-sync` con service-role pasa el `user_id` correcto. Sin cambios si ya está bien.
 
-### B. ICS auto-actualizable (lo que ya existe, mejorado)
-- Mantener la Edge Function `calendar-feed` existente
-- **Ampliarla** para incluir: comidas (5/día con macros) + recordatorios semanales (pesarse, foto progreso)
-- Adaptar la generación de eventos a los horarios de "Mi semana real" en vez de los inputs simples actuales
+## Detalles técnicos
 
-### Eventos generados (ambas vías)
-- 🏋️ **Entrenos**: título de rutina, descripción con ejercicios numerados (series, reps, descanso, link al vídeo)
-- 🍽️ **Comidas**: 5 al día (Desayuno, Snack AM, Comida, Snack PM, Cena) con descripción incluyendo macros y kcal de cada comida
-- ⚖️ **Pesarse**: domingos por la mañana
-- 📸 **Foto progreso**: domingos primer día de cada mes
-
-## 3. Reorientación web/desktop
-
-- Layout principal **maximizado para desktop**: dashboard con sidebar fija + área principal ancha (sin centrar todo en columna de 600px)
-- `MobileNav` se oculta en ≥md, sidebar siempre visible
-- HomeOverview reorganizado en grid 2-3 columnas: hoy + semana + nutrición de un vistazo
-- Botón muy visible "Sincronizar con Google Calendar" como CTA principal del dashboard
-- Mantenemos breakpoints responsive para que no rompa en móvil, pero el diseño primario es 1280px+
-
-## 4. Simplificación del producto
-
-Quitar/colapsar lo que no sea entrenamiento o nutrición del flujo principal:
-- Chat, achievements, referrals → mover a sidebar secundaria o sección "Más"
-- Dashboard de inicio reducido a: **Hoy en mi calendario** (próximo entreno + próximas comidas) + **Estado de sincronización**
-- Settings añade tab "Calendario" con la conexión Google y la pantalla "Mi semana real"
-
-## 5. Detalles técnicos
-
-**Nueva tabla `user_schedule`**
+**Algoritmo de resolución de conflicto** (en `gcal-sync`):
+```text
+para cada entreno del día D:
+  candidates = [hora_original, +30, +60, +90, +120, +150, +180]
+  para cada candidate hasta 22:00:
+    si no solapa con ninguna meal[D] y no solapa con busy_blocks[D]:
+      usar candidate; break
+  si ninguno cabe:
+    usar hora_original y añadir errors.push("⚠️ Entreno X solapa con comidas")
 ```
-user_id uuid (PK)
-busy_blocks jsonb  -- [{day:1, start:"09:00", end:"17:00", label:"Trabajo"}, ...]
-gym_slots jsonb    -- [{day:1, start:"18:00", duration:75}, ...]
-meal_times jsonb   -- {breakfast:"08:00", snack_am:"11:00", lunch:"14:00", snack_pm:"17:30", dinner:"21:00"}
-meal_duration_min int default 30
-created_at, updated_at
+
+**Macros por comida (fallback)**:
+```text
+si meal.kcal existe → usar meal.kcal/protein/carbs/fats
+sino:
+  per_meal_kcal = round(macros.kcal / activeMealsCount)
+  per_meal_protein = round(macros.protein / activeMealsCount)
+  ...
 ```
-RLS: usuarios manejan solo su fila; admins ven todas.
 
-**Nueva tabla `google_calendar_tokens`**
+**Anclar a semana actual**:
+```text
+function thisWeekDayHM(dow, h, m):
+  hoy = new Date()
+  diasDesdeLunes = (hoy.getDay() + 6) % 7
+  lunes = hoy - diasDesdeLunes días
+  offset = (dow + 6) % 7  // Lun=0...Dom=6
+  return lunes + offset días, set HH:MM
 ```
-user_id uuid (PK)
-access_token text, refresh_token text, expires_at timestamptz
-calendar_id text default 'primary'
-last_sync_at timestamptz
-sync_enabled bool
-```
-RLS: solo el dueño puede leer/escribir.
 
-**Nuevas Edge Functions**
-- `gcal-oauth-start` — devuelve URL de autorización de Google
-- `gcal-oauth-callback` — intercambia code por tokens, guarda en BD
-- `gcal-sync` — sincroniza plan completo del usuario (idempotente, usa UID estable por evento)
-- `gcal-disconnect` — revoca y borra tokens
+## Archivos modificados
 
-**Edge Function existente `calendar-feed`** (ICS):
-- Leer de `user_schedule` para horas reales
-- Incluir eventos de nutrición (leer `nutrition_plan.meals_json`)
-- Añadir recordatorios semanales
+- `supabase/functions/gcal-sync/index.ts` — macros por comida, anti-solape de entrenos, anclaje semanal, colorId.
+- `src/pages/MySchedule.tsx` — invoke `gcal-sync` tras guardar si hay token conectado.
 
-**Secrets a añadir** (te lo pediré cuando empiece): `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`. Te guiaré paso a paso por Google Cloud Console (10 min).
+## Fuera de alcance (no se toca)
 
-**Frontend nuevo**
-- `src/pages/MySchedule.tsx` — pantalla "Mi semana real" con grid semanal visual
-- `src/components/dashboard/GoogleCalendarConnect.tsx` — card con estado conectado/desconectado, botón sync manual, último sync
-- Refactor de `CalendarExportDialog.tsx` — añadir tab OAuth + tab ICS
-- Refactor de `Dashboard.tsx` y `HomeOverview.tsx` — layout desktop-first, foco en sync
-
-## Fuera de alcance (para fases posteriores)
-- App móvil nativa
-- Push notifications propias
-- Integración con Apple Calendar OAuth (Apple solo soportará ICS)
-
-## Lo que NO se toca
-- Generador de plan (`generate-plan`) — sigue funcionando, solo cambia de dónde lee horarios
-- Lógica de pago / Stripe
-- Onboarding (los datos siguen sirviendo, "Mi semana real" amplía la disponibilidad)
-
-## Orden de implementación sugerido (ya en build mode)
-1. Tabla `user_schedule` + pantalla "Mi semana real"
-2. Refactor desktop-first del Dashboard
-3. Ampliar `calendar-feed` ICS (nutrición + nuevos horarios + recordatorios)
-4. OAuth Google Calendar (pediré secrets aquí)
-5. Sync push automático cuando cambie el plan
-
-¿Avanzamos así?
+- Cron diario nocturno (descartado: el usuario solo quiere sync tras guardar Mi semana real + el ya existente tras `generate-plan`).
+- Edición bidireccional (si el usuario mueve un evento en Google, no se refleja en Autopilot).
+- Cambios en el panel de Settings (ya tiene "Conectar / Sincronizar / Desconectar").
