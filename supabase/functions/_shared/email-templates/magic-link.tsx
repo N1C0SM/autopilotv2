@@ -24,19 +24,18 @@ export const MagicLinkEmail = ({
 }: MagicLinkEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your login link for {siteName}</Preview>
+    <Preview>Tu enlace de acceso a Autopilot</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Your login link</Heading>
+        <Heading style={h1}>Entra en Autopilot</Heading>
         <Text style={text}>
-          Click the button below to log in to {siteName}. This link will expire
-          shortly.
+          Pulsa el botón para iniciar sesión. Este enlace caduca en breve.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Log In
+          Iniciar sesión
         </Button>
         <Text style={footer}>
-          If you didn't request this link, you can safely ignore this email.
+          Si no solicitaste este enlace, puedes ignorar este email.
         </Text>
       </Container>
     </Body>
@@ -45,26 +44,29 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const main = { backgroundColor: '#ffffff', fontFamily: 'Inter, Arial, sans-serif' }
+const container = { padding: '32px 24px', maxWidth: '560px', margin: '0 auto' }
 const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
+  fontSize: '24px',
+  fontWeight: 700 as const,
+  color: '#0b0b0b',
   margin: '0 0 20px',
+  fontFamily: 'Space Grotesk, Inter, Arial, sans-serif',
 }
 const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
+  fontSize: '15px',
+  color: '#3a3a3a',
+  lineHeight: '1.6',
   margin: '0 0 25px',
 }
 const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  backgroundColor: '#FFCC00',
+  color: '#000000',
+  fontSize: '15px',
+  fontWeight: 700 as const,
+  borderRadius: '10px',
+  padding: '14px 28px',
   textDecoration: 'none',
+  display: 'inline-block',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footer = { fontSize: '13px', color: '#888888', margin: '32px 0 0' }
