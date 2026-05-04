@@ -131,7 +131,7 @@ const Index = () => {
             <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
               Iniciar sesión
             </Button>
-            <Button variant="default" size="sm" onClick={() => navigate("/signup")}>
+            <Button variant="default" size="sm" onClick={() => navigate("/quiz")}>
               Empezar gratis
             </Button>
           </div>
@@ -181,7 +181,7 @@ const Index = () => {
             <Button
               variant="hero"
               size="xl"
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/quiz")}
               className="hover-scale"
             >
               Quiero mi plan + acompañamiento
@@ -675,7 +675,7 @@ const Index = () => {
 
           {/* CARD PRINCIPAL */}
           <ScrollReveal delay={0.2}>
-            <PricingTiers onSelect={(plan) => navigate(`/signup?plan=${plan}`)} />
+            <PricingTiers onSelect={(plan) => navigate("/quiz")} />
             <div className="max-w-md mx-auto mt-6 bg-success/10 border border-success/30 rounded-xl p-4 flex items-start gap-3">
               <ShieldCheck className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
               <div>
@@ -735,7 +735,7 @@ const Index = () => {
             <Button
               variant="hero"
               size="xl"
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/quiz")}
               className="hover-scale"
             >
               Quiero mi plan + acompañamiento
@@ -758,7 +758,7 @@ const Index = () => {
 
       {/* Floating CTA mobile */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border z-50 md:hidden">
-        <Button variant="hero" size="lg" className="w-full" onClick={() => navigate("/signup")}>
+        <Button variant="hero" size="lg" className="w-full" onClick={() => navigate("/quiz")}>
           Empezar mis 7 días gratis
         </Button>
       </div>
