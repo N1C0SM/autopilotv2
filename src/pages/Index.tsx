@@ -688,6 +688,53 @@ const Index = () => {
         </div>
       </section>
 
+      {/* CÓMO FUNCIONA */}
+      <section className="py-20 px-4 border-t border-border">
+        <div className="container mx-auto max-w-4xl">
+          <ScrollReveal>
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-4">
+              Cómo funciona
+            </h2>
+            <p className="text-muted-foreground text-center mb-12 max-w-xl mx-auto">
+              En 3 pasos. Sin apps que aprender.
+            </p>
+          </ScrollReveal>
+          <div className="grid md:grid-cols-3 gap-4">
+            {[
+              { n: "01", t: "Cuestionario 2 min", d: "Cuéntanos objetivo, nivel, tiempo y lesiones." },
+              { n: "02", t: "Recibes tu plan", d: "Entrenos y comidas adaptados a ti, listos en minutos." },
+              { n: "03", t: "Lo vives en tu Calendar", d: "Todo en Google Calendar. Te ajusto el plan por chat." },
+            ].map((s, i) => (
+              <ScrollReveal key={s.n} delay={i * 0.08}>
+                <div className="bg-card border border-border rounded-2xl p-6 h-full">
+                  <div className="text-xs font-mono text-primary mb-3">{s.n}</div>
+                  <h3 className="font-bold font-display text-lg mb-2">{s.t}</h3>
+                  <p className="text-sm text-muted-foreground">{s.d}</p>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* LEAD MAGNET */}
+      <section className="py-16 px-4 bg-gradient-to-b from-card/30 to-background border-y border-border">
+        <div className="container mx-auto max-w-2xl text-center">
+          <ScrollReveal>
+            <Sparkles className="w-8 h-8 text-primary mx-auto mb-4" />
+            <h2 className="text-2xl sm:text-3xl font-bold font-display mb-3">
+              ¿Aún no estás listo? Llévate tu mini-plan gratis
+            </h2>
+            <p className="text-muted-foreground mb-6 text-sm">
+              4 preguntas, 60 segundos. Te enviamos al correo el insight clave, el error que estás cometiendo y la acción para hoy.
+            </p>
+            <Button variant="outline" size="lg" onClick={() => navigate("/mini-plan")}>
+              Quiero mi mini-plan
+            </Button>
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-2xl">
