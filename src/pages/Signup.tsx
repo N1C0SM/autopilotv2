@@ -7,6 +7,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Sparkles } from "lucide-react";
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
@@ -21,6 +22,7 @@ const Signup = () => {
   const [emailSent, setEmailSent] = useState(false);
   const referralCode = searchParams.get("ref") || "";
   const isFree = searchParams.get("free") === "true";
+  const fromQuiz = searchParams.get("from") === "quiz";
   const { signUp } = useAuth();
 
   const checkAvailability = async (field: "name" | "email", value: string) => {
@@ -107,9 +109,24 @@ const Signup = () => {
           <Link to="/" className="font-display text-2xl font-bold text-gradient">Autopilot</Link>
           <h1 className="text-2xl font-bold font-display mt-6 mb-2">Crea tu cuenta</h1>
           <p className="text-muted-foreground text-sm">
-            {isFree ? "Acceso completo por invitación" : "Empieza tu transformación hoy"}
+            {isFree
+              ? "Acceso completo por invitación"
+              : fromQuiz
+              ? "Último paso para desbloquear tu plan"
+              : "Empieza tu transformación hoy"}
           </p>
         </div>
+
+        {fromQuiz && (
+          <div className="bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 mb-4 text-center">
+            <p className="text-sm text-primary font-medium flex items-center justify-center gap-1.5">
+              <Sparkles className="w-4 h-4" /> Tu plan personalizado está reservado
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              7 días gratis · Sin tarjeta para empezar
+            </p>
+          </div>
+        )}
 
         {referralCode && !isFree && (
           <div className="bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 mb-4 text-center">

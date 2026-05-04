@@ -349,6 +349,30 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          quiz_answers: Json
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          quiz_answers?: Json
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          quiz_answers?: Json
+          source?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
