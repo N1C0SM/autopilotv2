@@ -153,7 +153,7 @@ const Index = () => {
               Iniciar sesión
             </Button>
             <Button variant="default" size="sm" onClick={() => navigate("/signup")}>
-              Empezar gratis
+              7 días gratis
             </Button>
           </div>
         </div>
