@@ -53,7 +53,6 @@ Deno.serve(async (req) => {
                 progression_order: { type: "integer", description: "1=más fácil de la skill, 0 si no aplica" },
               },
               required: ["muscle_group","exercise_type","movement_pattern","level","priority","stimulus_type","load_level","fatigue_level","recommended_order"],
-              additionalProperties: false,
             },
           },
         }],
