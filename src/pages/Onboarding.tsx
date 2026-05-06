@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Sparkles, Calendar as CalendarIcon, Check, Loader2, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Calendar as CalendarIcon, Check, Loader2, Zap, Upload, Image as ImageIcon, X } from "lucide-react";
 import PricingTiers from "@/components/PricingTiers";
 
 const STEPS = [
@@ -25,6 +25,7 @@ const STEPS = [
   "Lesiones",
   "Nutrición",
   "Google Calendar",
+  "Foto Objetivo",
   "Resumen",
 ];
 
@@ -134,6 +135,7 @@ const Onboarding = () => {
     injuries: "",
     nutrition_preferences: "",
     allergies: "",
+    goal_photo_url: "",
   });
 
   const update = (field: string, value: any) => setData((d) => ({ ...d, [field]: value }));
@@ -262,6 +264,7 @@ const Onboarding = () => {
         },
         nutrition_preferences: data.nutrition_preferences,
         allergies: data.allergies,
+        goal_photo_url: data.goal_photo_url || null,
       },
       { onConflict: "user_id" }
     );
