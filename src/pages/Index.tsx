@@ -215,14 +215,14 @@ const Index = () => {
       </nav>
 
       {/* HERO */}
-      <section className="pt-36 sm:pt-44 pb-24 px-4 overflow-hidden">
+      <section className="pt-44 sm:pt-56 pb-32 px-4 overflow-hidden">
         <div className="container mx-auto max-w-5xl">
           {/* Trust bar arriba */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex items-center justify-center gap-3 mb-8"
+            className="flex items-center justify-center gap-3 mb-16"
           >
             {trainer.trainer_photo_url ? (
               <img
@@ -247,7 +247,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-[1.05] mb-6"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-[1.1] mb-10"
             >
               Entrenador personal online{" "}
               <span className="text-gradient">con seguimiento real</span>
@@ -257,7 +257,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto"
+              className="text-lg sm:text-xl text-muted-foreground mb-14 max-w-2xl mx-auto leading-relaxed"
             >
               Plan de entrenamiento y nutrición personalizado + acompañamiento diario por chat
               para ayudarte a crear hábitos duraderos y progresar sin improvisar.
@@ -267,7 +267,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-10 text-sm"
+              className="flex flex-wrap justify-center gap-x-6 gap-y-3 mb-16 text-sm"
             >
               {heroBullets.map((b) => (
                 <li key={b} className="flex items-center gap-1.5 text-foreground/85">
