@@ -458,6 +458,11 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete }: Props) => {
           )}
         </TabsContent>
 
+        {/* Tab: Goal */}
+        <TabsContent value="goal">
+          <UserGoalPanel userId={profile.user_id} email={profile.email} />
+        </TabsContent>
+
         {/* Tab: Progress */}
         <TabsContent value="progress">
           <UserProgressPanel userId={profile.user_id} travelModeUntil={profile.travel_mode_until} travelEquipment={profile.travel_equipment} />
