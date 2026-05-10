@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -12,57 +11,38 @@ import { ArrowLeft, ArrowRight, Sparkles, Calendar as CalendarIcon, Check, Loade
 import PricingTiers from "@/components/PricingTiers";
 
 const STEPS = [
-  "Datos Físicos",
-  "Sexo",
-  "Equipamiento",
-  "Enfoque Principal",
+  "Sobre ti",
+  "Tu enfoque",
   "Objetivo",
-  "Meta Específica",
   "Deportes",
   "Horarios",
-  "Intensidad",
-  "Tests de Nivel",
+  "Tu nivel",
   "Lesiones",
   "Nutrición",
-  "Google Calendar",
-  "Foto Objetivo",
   "Resumen",
 ];
 
-const EQUIPMENT_TYPES = [
-  { value: "Gimnasio", label: "Gimnasio", emoji: "🏋️", desc: "Máquinas, barras, mancuernas" },
-  { value: "Calistenia", label: "Calistenia", emoji: "🤸", desc: "Solo peso corporal" },
-  { value: "Mixto", label: "Mixto", emoji: "⚡", desc: "Combina ambos" },
+const PRIMARY_FOCUS_OPTIONS = [
+  { value: "gimnasio", label: "Gimnasio", emoji: "💪", desc: "Cargas, hipertrofia y fuerza." },
+  { value: "calistenia", label: "Calistenia", emoji: "🤸", desc: "Skills y peso corporal." },
+  { value: "mixto", label: "Mixto", emoji: "⚡", desc: "Lo mejor de los dos." },
 ];
 
-const PRIMARY_FOCUS_OPTIONS = [
-  {
-    value: "gimnasio",
-    label: "Foco gimnasio",
-    emoji: "💪",
-    desc: "Hipertrofia y fuerza con cargas. Banca, sentadilla, peso muerto.",
-  },
-  {
-    value: "calistenia",
-    label: "Foco calistenia",
-    emoji: "🤸",
-    desc: "Skills y control corporal. Pino, muscle up, planche, lever.",
-  },
-  {
-    value: "mixto",
-    label: "Mixto / híbrido",
-    emoji: "⚡",
-    desc: "Lo mejor de los dos mundos. Fuerza con cargas + skills.",
-  },
+const OCCUPATION_OPTIONS = [
+  { value: "oficina", label: "Trabajo de oficina (sentado)", emoji: "💻" },
+  { value: "fisico", label: "Trabajo físico (de pie / activo)", emoji: "🔧" },
+  { value: "estudiante", label: "Estudiante", emoji: "🎓" },
+  { value: "casa", label: "En casa / cuido de otros", emoji: "🏠" },
+  { value: "otro", label: "Otro", emoji: "✍️" },
 ];
 
 const GOALS = [
   { value: "lose_weight", label: "Perder grasa", emoji: "🔥" },
   { value: "gain_muscle", label: "Ganar músculo", emoji: "💪" },
   { value: "recomp", label: "Recomposición", emoji: "⚡" },
-  { value: "improve_endurance", label: "Mejorar resistencia", emoji: "🏃" },
+  { value: "improve_endurance", label: "Resistencia", emoji: "🏃" },
   { value: "general_health", label: "Salud general", emoji: "❤️" },
-  { value: "skill_based", label: "Lograr un skill concreto", emoji: "🎯" },
+  { value: "skill_based", label: "Skill concreto", emoji: "🎯" },
 ];
 
 const SPORTS = [
@@ -77,15 +57,13 @@ const SPORTS = [
 ];
 
 const SPECIFIC_GOAL_SUGGESTIONS: Record<string, string[]> = {
-  Calistenia: ["Handstand / Pino", "Muscle Up", "Planche", "Front Lever", "Back Lever", "Human Flag", "Pistol Squat"],
-  Gimnasio: ["Press banca 100kg", "Sentadilla 120kg", "Peso muerto 140kg", "Press militar 60kg", "Dominadas lastradas +20kg"],
-  Mixto: ["Handstand / Pino", "Muscle Up", "Press banca 100kg", "Front Lever", "Sentadilla 120kg"],
+  Calistenia: ["Handstand / Pino", "Muscle Up", "Planche", "Front Lever", "Pistol Squat"],
+  Gimnasio: ["Press banca 100kg", "Sentadilla 120kg", "Peso muerto 140kg", "Dominadas +20kg"],
+  Mixto: ["Handstand / Pino", "Muscle Up", "Press banca 100kg", "Front Lever"],
 };
 
 const DAYS_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-// Horario sugerido por defecto al seleccionar un deporte (el usuario puede cambiarlo).
-// Ahora trabajamos con hora de inicio y hora de fin (no duración).
 const SPORT_SCHEDULE_DEFAULTS: Record<string, { dow: number; start: string; end: string }> = {
   boxeo:    { dow: 2, start: "19:00", end: "20:00" },
   escalada: { dow: 4, start: "18:00", end: "19:30" },
@@ -93,21 +71,23 @@ const SPORT_SCHEDULE_DEFAULTS: Record<string, { dow: number; start: string; end:
   running:  { dow: 6, start: "09:00", end: "09:45" },
   natacion: { dow: 5, start: "19:00", end: "19:45" },
   ciclismo: { dow: 6, start: "10:00", end: "11:30" },
-  futbol:   { dow: 5, start: "20:00", end: "21:30" },
-  tenis:    { dow: 4, start: "19:00", end: "20:00" },
-  padel:    { dow: 4, start: "20:00", end: "21:00" },
-  danza:    { dow: 3, start: "19:00", end: "20:00" },
 };
 
 type Schedule = { dow: number; start: string; end: string };
 type CustomActivity = { id: string; title: string; dow: number; start: string; end: string };
 
 const TIME_OPTIONS = Array.from({ length: 36 }).map((_, i) => {
-  const totalMin = 6 * 60 + i * 30; // 06:00 → 23:30
+  const totalMin = 6 * 60 + i * 30;
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 });
+
+const focusToEquipment = (focus: string) => {
+  if (focus === "gimnasio") return "Gimnasio";
+  if (focus === "calistenia") return "Calistenia";
+  return "Mixto";
+};
 
 const Onboarding = () => {
   const { user } = useAuth();
@@ -123,14 +103,14 @@ const Onboarding = () => {
     height: "",
     weight: "",
     sex: "",
-    equipment_type: "",
+    occupation: "",
+    occupation_detail: "",
     primary_focus: "",
     goal: "",
     specific_goal: "",
     sports: [] as string[],
     sport_schedules: {} as Record<string, Schedule>,
     custom_activities: [] as CustomActivity[],
-    intensity_level: 5,
     initial_tests: { pullups: "", pushups: "", squat: "", plank: "" },
     injuries: "",
     nutrition_preferences: "",
@@ -140,17 +120,15 @@ const Onboarding = () => {
 
   const update = (field: string, value: any) => setData((d) => ({ ...d, [field]: value }));
 
-  // Detectar si volvemos del OAuth de Google Calendar y saltar al paso del calendario.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("gcal") === "connected") {
-      setStep(12);
+      setStep(STEPS.length - 1);
       setGcalConnected(true);
       window.history.replaceState({}, "", "/onboarding");
     }
   }, []);
 
-  // Comprobar estado de conexión a Google Calendar
   useEffect(() => {
     if (!user) return;
     supabase
@@ -199,7 +177,6 @@ const Onboarding = () => {
     }));
   };
 
-  // --- Custom activities (cosas no deportivas: salir con amigos, trabajo, etc.) ---
   const addCustomActivity = () => {
     setData((d) => ({
       ...d,
@@ -225,8 +202,6 @@ const Onboarding = () => {
     if (!user) return;
     setLoading(true);
 
-    // Auto-calcular días disponibles para entrenar = días sin actividad fija que ocupe la franja 17-22.
-    // Si una actividad fija ocupa la noche, ese día NO se considera disponible para gym/calistenia.
     const busyEveningDays = new Set<number>();
     Object.values(data.sport_schedules).forEach((s) => {
       const startH = parseInt((s.start || "00:00").split(":")[0]);
@@ -238,7 +213,11 @@ const Onboarding = () => {
     });
     const freeDays = [1, 2, 3, 4, 5, 6, 0].filter((d) => !busyEveningDays.has(d));
     const autoDays = Math.max(3, Math.min(5, freeDays.length));
-    const autoHours = 1.25; // duración estándar por sesión
+    const autoHours = 1.25;
+
+    const occupationFinal = data.occupation === "otro"
+      ? (data.occupation_detail || "otro")
+      : (OCCUPATION_OPTIONS.find((o) => o.value === data.occupation)?.label || data.occupation || null);
 
     const { error } = await supabase.from("onboarding").upsert(
       {
@@ -247,12 +226,13 @@ const Onboarding = () => {
         height: parseFloat(data.height) || null,
         weight: parseFloat(data.weight) || null,
         sex: data.sex || null,
-        equipment_type: data.equipment_type || "Mixto",
+        occupation: occupationFinal,
+        equipment_type: focusToEquipment(data.primary_focus),
         primary_focus: data.primary_focus || "mixto",
         goal: data.goal,
         specific_goal: data.specific_goal || null,
         sports: data.sports.join(", "),
-        intensity_level: data.intensity_level,
+        intensity_level: 7,
         initial_tests: data.initial_tests,
         injuries: data.injuries || null,
         availability: {
@@ -283,7 +263,6 @@ const Onboarding = () => {
         toast.success("¡Tu plan se está preparando! 🎉");
         navigate("/dashboard");
       } else {
-        // Fetch yearly price from settings to show in paywall
         const { data: settings } = await supabase
           .from("settings")
           .select("yearly_price_eur")
@@ -314,17 +293,18 @@ const Onboarding = () => {
   };
 
   const canNext = () => {
-    if (step === 0) return data.age && data.height && data.weight;
-    if (step === 1) return data.sex;
-    if (step === 2) return data.equipment_type;
-    if (step === 3) return data.primary_focus;
-    if (step === 4) return data.goal;
+    if (step === 0) {
+      if (!(data.age && data.height && data.weight && data.sex && data.occupation)) return false;
+      if (data.occupation === "otro" && !data.occupation_detail.trim()) return false;
+      return true;
+    }
+    if (step === 1) return !!data.primary_focus;
+    if (step === 2) return !!data.goal;
     return true;
   };
 
-  const suggestions = SPECIFIC_GOAL_SUGGESTIONS[data.equipment_type] || SPECIFIC_GOAL_SUGGESTIONS["Mixto"];
+  const suggestions = SPECIFIC_GOAL_SUGGESTIONS[focusToEquipment(data.primary_focus)] || SPECIFIC_GOAL_SUGGESTIONS["Mixto"];
 
-  // Paywall view (shown after completing onboarding if user is unpaid)
   if (showPaywall) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
@@ -352,11 +332,10 @@ const Onboarding = () => {
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <span className="font-display text-2xl font-bold text-gradient">Autopilot</span>
-          <h1 className="text-2xl font-bold font-display mt-6 mb-2">Cuéntanos Sobre Ti</h1>
+          <h1 className="text-2xl font-bold font-display mt-6 mb-2">Cuéntanos lo justo</h1>
           <p className="text-muted-foreground text-sm">Paso {step + 1} de {STEPS.length}: {STEPS[step]}</p>
         </div>
 
-        {/* Progress bar */}
         <div className="flex gap-1.5 mb-8">
           {STEPS.map((_, i) => (
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-secondary"}`} />
@@ -364,85 +343,79 @@ const Onboarding = () => {
         </div>
 
         <div className="bg-card rounded-2xl p-8 border border-border card-shadow">
-          {/* Step 0: Physical data */}
+          {/* Step 0: Sobre ti */}
           {step === 0 && (
             <div className="space-y-4">
-              <div>
-                <Label>Edad</Label>
-                <Input type="number" value={data.age} onChange={(e) => update("age", e.target.value)} placeholder="25" className="mt-1.5" />
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">Edad</Label>
+                  <Input type="number" value={data.age} onChange={(e) => update("age", e.target.value)} placeholder="25" className="mt-1.5" />
+                </div>
+                <div>
+                  <Label className="text-xs">Altura (cm)</Label>
+                  <Input type="number" value={data.height} onChange={(e) => update("height", e.target.value)} placeholder="175" className="mt-1.5" />
+                </div>
+                <div>
+                  <Label className="text-xs">Peso (kg)</Label>
+                  <Input type="number" value={data.weight} onChange={(e) => update("weight", e.target.value)} placeholder="70" className="mt-1.5" />
+                </div>
               </div>
+
               <div>
-                <Label>Altura (cm)</Label>
-                <Input type="number" value={data.height} onChange={(e) => update("height", e.target.value)} placeholder="175" className="mt-1.5" />
+                <Label className="mb-2 block text-xs">Sexo biológico</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "male", label: "Hombre", emoji: "♂️" },
+                    { value: "female", label: "Mujer", emoji: "♀️" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => update("sex", opt.value)}
+                      className={`p-3 rounded-xl border-2 text-center transition-all flex items-center justify-center gap-2 ${
+                        data.sex === opt.value ? "border-primary bg-primary/10" : "border-border hover:border-primary/30"
+                      }`}
+                    >
+                      <span className="text-xl">{opt.emoji}</span>
+                      <span className="font-medium text-sm">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
+
               <div>
-                <Label>Peso (kg)</Label>
-                <Input type="number" value={data.weight} onChange={(e) => update("weight", e.target.value)} placeholder="70" className="mt-1.5" />
+                <Label className="mb-2 block text-xs">¿A qué te dedicas?</Label>
+                <div className="grid grid-cols-1 gap-1.5">
+                  {OCCUPATION_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => update("occupation", opt.value)}
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-left transition-all text-sm ${
+                        data.occupation === opt.value ? "border-primary bg-primary/10" : "border-border hover:border-primary/30"
+                      }`}
+                    >
+                      <span className="text-lg">{opt.emoji}</span>
+                      <span className="font-medium">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {data.occupation === "otro" && (
+                  <Input
+                    value={data.occupation_detail}
+                    onChange={(e) => update("occupation_detail", e.target.value)}
+                    placeholder="Cuéntanos a qué te dedicas"
+                    className="mt-2"
+                  />
+                )}
               </div>
             </div>
           )}
 
-          {/* Step 1: Sex */}
+          {/* Step 1: Tu enfoque */}
           {step === 1 && (
             <div>
-              <Label className="mb-3 block">Sexo biológico</Label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { value: "male", label: "Hombre", emoji: "♂️" },
-                  { value: "female", label: "Mujer", emoji: "♀️" },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => update("sex", opt.value)}
-                    className={`p-5 rounded-xl border-2 text-center transition-all ${
-                      data.sex === opt.value
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/30"
-                    }`}
-                  >
-                    <div className="text-3xl mb-2">{opt.emoji}</div>
-                    <div className="font-medium text-sm">{opt.label}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Equipment type */}
-          {step === 2 && (
-            <div>
-              <Label className="mb-3 block">¿Cómo prefieres entrenar?</Label>
-              <div className="grid grid-cols-1 gap-2">
-                {EQUIPMENT_TYPES.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => update("equipment_type", opt.value)}
-                    className={`flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${
-                      data.equipment_type === opt.value
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/30"
-                    }`}
-                  >
-                    <span className="text-2xl">{opt.emoji}</span>
-                    <div>
-                      <span className="font-medium">{opt.label}</span>
-                      <p className="text-xs text-muted-foreground">{opt.desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Primary focus (gym vs calisthenics vs mixed) */}
-          {step === 3 && (
-            <div>
-              <Label className="mb-1.5 block">¿En qué quieres centrarte?</Label>
-              <p className="text-xs text-muted-foreground mb-4">
-                Esto define la lógica de tu plan: cargas progresivas, skills, o un híbrido.
-              </p>
+              <Label className="mb-3 block">¿En qué quieres centrarte?</Label>
               <div className="grid grid-cols-1 gap-2">
                 {PRIMARY_FOCUS_OPTIONS.map((opt) => (
                   <button
@@ -450,9 +423,7 @@ const Onboarding = () => {
                     type="button"
                     onClick={() => update("primary_focus", opt.value)}
                     className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
-                      data.primary_focus === opt.value
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/30"
+                      data.primary_focus === opt.value ? "border-primary bg-primary/10" : "border-border hover:border-primary/30"
                     }`}
                   >
                     <span className="text-2xl mt-0.5">{opt.emoji}</span>
@@ -466,52 +437,40 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 4: Goal */}
-          {step === 4 && (
-            <div>
-              <Label className="mb-3 block">¿Cuál es tu objetivo principal?</Label>
-              <div className="grid grid-cols-1 gap-2">
-                {GOALS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => update("goal", opt.value)}
-                    className={`flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${
-                      data.goal === opt.value
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/30"
-                    }`}
-                  >
-                    <span className="text-2xl">{opt.emoji}</span>
-                    <span className="font-medium">{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 5: Specific Goal */}
-          {step === 5 && (
-            <div>
-              <Label className="mb-1.5 block">¿Tienes alguna meta específica?</Label>
-              <p className="text-xs text-muted-foreground mb-4">
-                Cuéntanos qué quieres lograr y adaptaremos tu rutina para ello
-              </p>
-              <Textarea
-                value={data.specific_goal}
-                onChange={(e) => update("specific_goal", e.target.value)}
-                placeholder="Ej: Hacer handstand, muscle up, levantar 100kg en press banca..."
-                rows={3}
-                className="mb-4"
-              />
+          {/* Step 2: Objetivo + meta específica */}
+          {step === 2 && (
+            <div className="space-y-5">
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Sugerencias para {data.equipment_type || "tu tipo"}:</p>
-                <div className="flex flex-wrap gap-2">
+                <Label className="mb-3 block">Tu objetivo principal</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {GOALS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => update("goal", opt.value)}
+                      className={`flex items-center gap-2 p-3 rounded-xl border-2 text-left text-sm transition-all ${
+                        data.goal === opt.value ? "border-primary bg-primary/10" : "border-border hover:border-primary/30"
+                      }`}
+                    >
+                      <span className="text-lg">{opt.emoji}</span>
+                      <span className="font-medium">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-1.5 block text-xs">Meta concreta (opcional)</Label>
+                <Textarea
+                  value={data.specific_goal}
+                  onChange={(e) => update("specific_goal", e.target.value)}
+                  placeholder="Ej: handstand, press banca 100kg…"
+                  rows={2}
+                  className="mb-2"
+                />
+                <div className="flex flex-wrap gap-1.5">
                   {suggestions.map((s) => {
-                    const parts = data.specific_goal
-                      .split(",")
-                      .map((p) => p.trim())
-                      .filter(Boolean);
+                    const parts = data.specific_goal.split(",").map((p) => p.trim()).filter(Boolean);
                     const isSelected = parts.some((p) => p.toLowerCase() === s.toLowerCase());
                     const toggle = () => {
                       const next = isSelected
@@ -524,18 +483,11 @@ const Onboarding = () => {
                         key={s}
                         type="button"
                         onClick={toggle}
-                        className={`text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1.5 ${
-                          isSelected
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border hover:border-primary/30"
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                          isSelected ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/30"
                         }`}
                       >
-                        <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[10px] ${
-                          isSelected ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/40"
-                        }`}>
-                          {isSelected ? "✓" : ""}
-                        </span>
-                        {s}
+                        {isSelected ? "✓ " : "+ "}{s}
                       </button>
                     );
                   })}
@@ -544,11 +496,11 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 6: Sports */}
-          {step === 6 && (
+          {/* Step 3: Deportes */}
+          {step === 3 && (
             <div>
-              <Label className="mb-3 block">¿Qué deportes practicas o te interesan?</Label>
-              <p className="text-xs text-muted-foreground mb-4">Selecciona todos los que quieras</p>
+              <Label className="mb-3 block">¿Qué deportes practicas?</Label>
+              <p className="text-xs text-muted-foreground mb-4">Selecciona los que hagas con regularidad</p>
               <div className="grid grid-cols-2 gap-2">
                 {SPORTS.map((s) => (
                   <button
@@ -556,9 +508,7 @@ const Onboarding = () => {
                     type="button"
                     onClick={() => toggleSport(s.value)}
                     className={`flex items-center gap-2 p-3 rounded-xl border-2 text-left transition-all text-sm ${
-                      data.sports.includes(s.value)
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/30"
+                      data.sports.includes(s.value) ? "border-primary bg-primary/10" : "border-border hover:border-primary/30"
                     }`}
                   >
                     <span className="text-xl">{s.emoji}</span>
@@ -569,16 +519,15 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 7: Sport schedules */}
-          {step === 7 && (
+          {/* Step 4: Horarios */}
+          {step === 4 && (
             <div>
-              <Label className="mb-1.5 block">Tu agenda semanal fija</Label>
+              <Label className="mb-1.5 block">Tu agenda fija</Label>
               <p className="text-xs text-muted-foreground mb-4">
-                Indica a qué hora <span className="text-foreground font-medium">empieza y acaba</span> cada deporte y cualquier otra cosa fija (trabajo, salir con amigos, clases…). Tu plan de entrenos se ajustará a los huecos libres automáticamente.
+                Indica cuándo haces cada deporte y cualquier otra cosa fija (trabajo, clases…). Encajaremos los entrenos en los huecos libres.
               </p>
 
               <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1">
-                {/* Deportes secundarios */}
                 {(() => {
                   const secondary = data.sports.filter((s) => s !== "gimnasio" && s !== "calistenia");
                   if (secondary.length === 0) return null;
@@ -635,7 +584,6 @@ const Onboarding = () => {
                   );
                 })()}
 
-                {/* Actividades personalizadas */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Otras cosas fijas</p>
@@ -650,7 +598,7 @@ const Onboarding = () => {
 
                   {data.custom_activities.length === 0 && (
                     <div className="p-3 rounded-xl bg-muted/30 border border-dashed border-border text-center text-xs text-muted-foreground">
-                      Trabajo, clases, quedadas, recoger niños… cualquier cosa que ocupe horas fijas en tu semana.
+                      Trabajo, clases, quedadas, recoger niños…
                     </div>
                   )}
 
@@ -660,7 +608,7 @@ const Onboarding = () => {
                         <Input
                           value={act.title}
                           onChange={(e) => updateCustomActivity(act.id, { title: e.target.value })}
-                          placeholder="Ej: Salir con amigos, trabajo, clase de inglés…"
+                          placeholder="Ej: Trabajo, clase…"
                           className="h-8 text-sm flex-1"
                         />
                         <button
@@ -709,46 +657,20 @@ const Onboarding = () => {
                     </div>
                   ))}
                 </div>
-
-                <div className="p-3 rounded-xl bg-primary/5 border border-primary/15 text-xs text-muted-foreground">
-                  ✨ Calcularemos automáticamente los días y huecos libres que tienes para entrenar.
-                </div>
               </div>
             </div>
           )}
 
-          {/* Step 8: Intensity */}
-          {step === 8 && (
+          {/* Step 5: Tu nivel */}
+          {step === 5 && (
             <div>
-              <Label className="mb-3 block">¿Qué nivel de intensidad buscas?</Label>
-              <p className="text-xs text-muted-foreground mb-6">1 = suave y progresivo · 10 = máxima intensidad</p>
-              <div className="px-2">
-                <Slider
-                  value={[data.intensity_level]}
-                  onValueChange={([v]) => update("intensity_level", v)}
-                  min={1}
-                  max={10}
-                  step={1}
-                />
-                <div className="flex justify-between mt-3 text-xs text-muted-foreground">
-                  <span>Suave</span>
-                  <span className="text-2xl font-bold font-display text-primary">{data.intensity_level}</span>
-                  <span>Intenso</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 9: Initial level tests */}
-          {step === 9 && (
-            <div>
-              <Label className="mb-1.5 block">¿Cuál es tu nivel ahora mismo?</Label>
+              <Label className="mb-1.5 block">¿Cuál es tu nivel ahora?</Label>
               <p className="text-xs text-muted-foreground mb-5">
-                Aproxima sin obsesionarte. Lo usaré para calibrar tu plan inicial. Déjalo en blanco si no lo sabes.
+                Aproxima sin obsesionarte. Déjalo en blanco si no lo sabes.
               </p>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <Label className="text-sm">Dominadas máximas (reps)</Label>
+                  <Label className="text-sm">Dominadas máximas</Label>
                   <Input
                     type="number"
                     inputMode="numeric"
@@ -761,7 +683,7 @@ const Onboarding = () => {
                   />
                 </div>
                 <div>
-                  <Label className="text-sm">Flexiones máximas (reps)</Label>
+                  <Label className="text-sm">Flexiones máximas</Label>
                   <Input
                     type="number"
                     inputMode="numeric"
@@ -774,7 +696,7 @@ const Onboarding = () => {
                   />
                 </div>
                 <div>
-                  <Label className="text-sm">Sentadilla con tu peso (reps máximas)</Label>
+                  <Label className="text-sm">Sentadilla con tu peso (reps)</Label>
                   <Input
                     type="number"
                     inputMode="numeric"
@@ -803,29 +725,29 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 10: Injuries */}
-          {step === 10 && (
+          {/* Step 6: Lesiones */}
+          {step === 6 && (
             <div>
-              <Label className="mb-1.5 block">¿Tienes lesiones, molestias o condiciones físicas?</Label>
+              <Label className="mb-1.5 block">¿Lesiones o molestias?</Label>
               <p className="text-xs text-muted-foreground mb-3">Déjalo vacío si no tienes ninguna</p>
               <Textarea
                 value={data.injuries}
                 onChange={(e) => update("injuries", e.target.value)}
-                placeholder="Ej: Dolor lumbar, tendinitis hombro derecho, escoliosis..."
+                placeholder="Ej: Lumbar, tendinitis hombro derecho…"
                 rows={3}
               />
             </div>
           )}
 
-          {/* Step 11: Nutrition */}
-          {step === 11 && (
+          {/* Step 7: Nutrición */}
+          {step === 7 && (
             <div className="space-y-4">
               <div>
                 <Label>Preferencias nutricionales</Label>
                 <Textarea
                   value={data.nutrition_preferences}
                   onChange={(e) => update("nutrition_preferences", e.target.value)}
-                  placeholder="Vegetariano, alta en proteínas, mediterránea..."
+                  placeholder="Vegetariano, alta en proteínas, mediterránea…"
                   className="mt-1.5"
                   rows={2}
                 />
@@ -835,7 +757,7 @@ const Onboarding = () => {
                 <Textarea
                   value={data.allergies}
                   onChange={(e) => update("allergies", e.target.value)}
-                  placeholder="Lactosa, gluten, frutos secos..."
+                  placeholder="Lactosa, gluten, frutos secos…"
                   className="mt-1.5"
                   rows={2}
                 />
@@ -843,167 +765,37 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 12: Google Calendar (opcional) */}
-          {step === 12 && (
-            <div className="space-y-5">
-              <div className="text-center mb-2">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                  <CalendarIcon className="w-7 h-7 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold font-display">Conecta tu Google Calendar</h2>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Tus entrenos y comidas aparecerán automáticamente en tu calendario, a las horas que tú eliges.
-                  <br />
-                  <span className="text-xs">Es opcional — puedes hacerlo más tarde desde Ajustes.</span>
-                </p>
-              </div>
-
-              {gcalConnected ? (
-                <div className="bg-primary/10 border border-primary/30 rounded-xl p-5 text-center">
-                  <div className="flex items-center justify-center gap-2 text-primary font-semibold">
-                    <Check className="w-5 h-5" />
-                    Conectado correctamente
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Sincronizaremos tu plan en cuanto esté listo.
-                  </p>
-                </div>
-              ) : (
-                <Button
-                  onClick={handleConnectGoogle}
-                  disabled={gcalLoading}
-                  variant="hero"
-                  className="w-full"
-                  size="lg"
-                >
-                  {gcalLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Zap className="w-4 h-4 mr-2" />
-                  )}
-                  Conectar Google Calendar
-                </Button>
-              )}
-
-              <p className="text-[11px] text-center text-muted-foreground">
-                Solo permisos de calendario. Puedes desconectarlo cuando quieras desde Ajustes.
-              </p>
-            </div>
-          )}
-
-          {/* Step 13: Goal physique photo (optional) */}
-          {step === 13 && (
-            <div className="space-y-5">
-              <div className="text-center mb-2">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                  <ImageIcon className="w-7 h-7 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold font-display">Tu físico objetivo</h2>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Sube una foto del físico que quieres conseguir. Tu entrenador la usará como referencia para personalizar mejor tu plan.
-                  <br />
-                  <span className="text-xs">Es opcional — puedes saltar este paso.</span>
-                </p>
-              </div>
-
-              {data.goal_photo_url ? (
-                <div className="relative rounded-xl overflow-hidden border border-border">
-                  <img src={data.goal_photo_url} alt="Físico objetivo" className="w-full max-h-80 object-contain bg-secondary" />
-                  <button
-                    type="button"
-                    onClick={() => update("goal_photo_url", "")}
-                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 border border-border flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <label className="cursor-pointer block">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file || !user) return;
-                      if (file.size > 8 * 1024 * 1024) { toast.error("Máx 8MB"); return; }
-                      setLoading(true);
-                      try {
-                        const ext = file.name.split(".").pop() || "jpg";
-                        const path = `${user.id}/goal-${Date.now()}.${ext}`;
-                        const { error: upErr } = await supabase.storage.from("progress-photos").upload(path, file, { upsert: false });
-                        if (upErr) throw upErr;
-                        const { data: pub } = supabase.storage.from("progress-photos").getPublicUrl(path);
-                        update("goal_photo_url", pub.publicUrl);
-                        toast.success("Foto subida");
-                      } catch (err: any) {
-                        toast.error(err.message || "Error al subir");
-                      }
-                      setLoading(false);
-                    }}
-                  />
-                  <div className="border-2 border-dashed border-border rounded-xl p-10 text-center hover:border-primary/50 transition-colors">
-                    {loading ? (
-                      <Loader2 className="w-8 h-8 mx-auto text-primary animate-spin" />
-                    ) : (
-                      <>
-                        <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                        <p className="text-sm font-medium">Sube tu foto de referencia</p>
-                        <p className="text-xs text-muted-foreground mt-1">JPG, PNG · máx 8MB</p>
-                      </>
-                    )}
-                  </div>
-                </label>
-              )}
-
-              <p className="text-[11px] text-center text-muted-foreground">
-                Solo tu entrenador podrá verla. Nunca la compartiremos públicamente.
-              </p>
-            </div>
-          )}
-
-          {/* Step 14: Summary */}
-          {step === 14 && (
+          {/* Step 8: Resumen + extras opcionales */}
+          {step === 8 && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
                 <h2 className="text-xl font-bold font-display">Tu plan personalizado</h2>
-                <p className="text-sm text-muted-foreground mt-1">Esto es lo que recibirás en menos de 48h</p>
+                <p className="text-sm text-muted-foreground mt-1">Esto recibirás en menos de 48h</p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
                   <span className="text-xl">🏋️</span>
                   <div>
                     <p className="font-semibold text-sm">
-                      Rutina ajustada a tus huecos libres ·{" "}
-                      {PRIMARY_FOCUS_OPTIONS.find((p) => p.value === data.primary_focus)?.label || "Mixto"}
+                      Rutina ajustada a tus huecos · {PRIMARY_FOCUS_OPTIONS.find((p) => p.value === data.primary_focus)?.label || "Mixto"}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {data.sports.length > 0
                         ? SPORTS.filter((s) => data.sports.includes(s.value)).map((s) => s.label).join(", ")
-                        : "Adaptada a tus deportes"}
+                        : "Adaptada a ti"}
                     </p>
                   </div>
                 </div>
-
-                {data.specific_goal && (
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
-                    <span className="text-xl">🎯</span>
-                    <div>
-                      <p className="font-semibold text-sm">Meta: {data.specific_goal}</p>
-                      <p className="text-xs text-muted-foreground">Tu rutina se ajustará para lograrlo</p>
-                    </div>
-                  </div>
-                )}
 
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
                   <span className="text-xl">🍽️</span>
                   <div>
                     <p className="font-semibold text-sm">
-                      Plan nutricional de ~{data.weight ? Math.round(Number(data.weight) * 30) : "?"} kcal
+                      Plan nutricional ~{data.weight ? Math.round(Number(data.weight) * 30) : "?"} kcal
                     </p>
-                    <p className="text-xs text-muted-foreground">Macros personalizados para tu objetivo</p>
+                    <p className="text-xs text-muted-foreground">Macros para tu objetivo</p>
                   </div>
                 </div>
 
@@ -1011,24 +803,91 @@ const Onboarding = () => {
                   <span className="text-xl">💬</span>
                   <div>
                     <p className="font-semibold text-sm">Chat directo con tu entrenador</p>
-                    <p className="text-xs text-muted-foreground">Dudas, cambios y seguimiento incluido</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
-                  <span className="text-xl">🔄</span>
-                  <div>
-                    <p className="font-semibold text-sm">Renovación mensual automática</p>
-                    <p className="text-xs text-muted-foreground">Tu plan evoluciona contigo cada mes</p>
+                    <p className="text-xs text-muted-foreground">Dudas, cambios y seguimiento</p>
                   </div>
                 </div>
               </div>
 
-              <p className="text-xs text-center text-muted-foreground mt-4">
-                Objetivo: <span className="font-medium text-foreground">{GOALS.find((g) => g.value === data.goal)?.label || data.goal}</span>
-                {data.weight && <> · <span className="font-medium text-foreground">{data.weight}kg</span></>}
-                {data.intensity_level && <> · Intensidad <span className="font-medium text-foreground">{data.intensity_level}/10</span></>}
-              </p>
+              {/* Optional: Google Calendar */}
+              <div className="border-t border-border pt-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <CalendarIcon className="w-5 h-5 text-primary mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">Google Calendar (opcional)</p>
+                    <p className="text-xs text-muted-foreground">Verás tus entrenos y comidas en tu calendario.</p>
+                  </div>
+                </div>
+                {gcalConnected ? (
+                  <div className="flex items-center gap-2 text-primary text-sm font-medium">
+                    <Check className="w-4 h-4" /> Conectado
+                  </div>
+                ) : (
+                  <Button onClick={handleConnectGoogle} disabled={gcalLoading} variant="outline" size="sm" className="w-full">
+                    {gcalLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Zap className="w-4 h-4 mr-2" />}
+                    Conectar Google Calendar
+                  </Button>
+                )}
+              </div>
+
+              {/* Optional: Goal photo */}
+              <div className="border-t border-border pt-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <ImageIcon className="w-5 h-5 text-primary mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">Foto de físico objetivo (opcional)</p>
+                    <p className="text-xs text-muted-foreground">Para que tu entrenador la use de referencia.</p>
+                  </div>
+                </div>
+                {data.goal_photo_url ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border">
+                    <img src={data.goal_photo_url} alt="Físico objetivo" className="w-full max-h-60 object-contain bg-secondary" />
+                    <button
+                      type="button"
+                      onClick={() => update("goal_photo_url", "")}
+                      className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 border border-border flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer block">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !user) return;
+                        if (file.size > 8 * 1024 * 1024) { toast.error("Máx 8MB"); return; }
+                        setLoading(true);
+                        try {
+                          const ext = file.name.split(".").pop() || "jpg";
+                          const path = `${user.id}/goal-${Date.now()}.${ext}`;
+                          const { error: upErr } = await supabase.storage.from("progress-photos").upload(path, file, { upsert: false });
+                          if (upErr) throw upErr;
+                          const { data: pub } = supabase.storage.from("progress-photos").getPublicUrl(path);
+                          update("goal_photo_url", pub.publicUrl);
+                          toast.success("Foto subida");
+                        } catch (err: any) {
+                          toast.error(err.message || "Error al subir");
+                        }
+                        setLoading(false);
+                      }}
+                    />
+                    <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/50 transition-colors">
+                      {loading ? (
+                        <Loader2 className="w-6 h-6 mx-auto text-primary animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="w-6 h-6 mx-auto text-muted-foreground mb-1.5" />
+                          <p className="text-xs font-medium">Sube tu foto de referencia</p>
+                          <p className="text-[10px] text-muted-foreground">JPG, PNG · máx 8MB</p>
+                        </>
+                      )}
+                    </div>
+                  </label>
+                )}
+              </div>
             </div>
           )}
 

@@ -354,6 +354,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          occupation: string | null
           quiz_answers: Json
           source: string
         }
@@ -361,6 +362,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          occupation?: string | null
           quiz_answers?: Json
           source?: string
         }
@@ -368,6 +370,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          occupation?: string | null
           quiz_answers?: Json
           source?: string
         }
@@ -445,6 +448,7 @@ export type Database = {
           injuries: string | null
           intensity_level: number | null
           nutrition_preferences: string | null
+          occupation: string | null
           primary_focus: string | null
           sex: string | null
           specific_goal: string | null
@@ -466,6 +470,7 @@ export type Database = {
           injuries?: string | null
           intensity_level?: number | null
           nutrition_preferences?: string | null
+          occupation?: string | null
           primary_focus?: string | null
           sex?: string | null
           specific_goal?: string | null
@@ -487,6 +492,7 @@ export type Database = {
           injuries?: string | null
           intensity_level?: number | null
           nutrition_preferences?: string | null
+          occupation?: string | null
           primary_focus?: string | null
           sex?: string | null
           specific_goal?: string | null
