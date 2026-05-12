@@ -14,6 +14,7 @@ import {
   Target,
   Loader2,
   X,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -155,7 +156,19 @@ const Scan = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setScanProgress(100);
-      setTimeout(() => setResult(data as Result), 400);
+      const r = data as Result;
+      try {
+        sessionStorage.setItem(
+          "autopilot_scan",
+          JSON.stringify({
+            result: r,
+            currentImg,
+            objectiveImg,
+            createdAt: Date.now(),
+          })
+        );
+      } catch {}
+      setTimeout(() => setResult(r), 400);
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message ?? "Error analizando la imagen");
