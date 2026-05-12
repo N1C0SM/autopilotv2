@@ -508,6 +508,11 @@ const Onboarding = () => {
             <div className="space-y-5">
               <div>
                 <Label className="mb-3 block">Tu objetivo principal</Label>
+                {scanPrefill?.goal && (
+                  <div className="mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-[10px] uppercase tracking-wider text-primary">
+                    <Sparkles className="w-3 h-3" /> Detectado por IA · puedes cambiarlo
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   {GOALS.map((opt) => (
                     <button
