@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Result = {
   attractiveness: number;
@@ -143,11 +144,46 @@ const ScoreCard = ({ label, value, highlight }: { label: string; value: number; 
 
 const Scan = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isPaid, setIsPaid] = useState(false);
   const [currentImg, setCurrentImg] = useState<string | null>(null);
   const [objectiveImg, setObjectiveImg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
+  const [futureImg, setFutureImg] = useState<string | null>(null);
+  const [genLoading, setGenLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("payment_status")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => setIsPaid(data?.payment_status === "paid"));
+  }, [user]);
+
+  const generateFuture = async () => {
+    if (!currentImg || !result) return;
+    setGenLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-future-self", {
+        body: {
+          currentImage: currentImg,
+          months: result.months_with_plan ?? result.estimated_months,
+          goal: result.inferred_goal,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setFutureImg(data.imageUrl);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Error generando la simulación");
+    } finally {
+      setGenLoading(false);
+    }
+  };
 
   useEffect(() => {
     const prevTitle = document.title;
