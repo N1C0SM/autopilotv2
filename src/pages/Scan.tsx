@@ -407,6 +407,36 @@ const Scan = () => {
                       ))}
                     </ul>
                   </div>
+
+                  {result.locked_insights && result.locked_insights.length > 0 && (
+                    <div className="bg-card/60 backdrop-blur border border-primary/20 rounded-2xl p-4">
+                      <div className="text-[10px] uppercase tracking-widest text-primary mb-3 flex items-center gap-1.5">
+                        <Lock className="w-3 h-3" /> Bloqueado · Plan completo
+                      </div>
+                      <ul className="space-y-2">
+                        {result.locked_insights.map((li, i) => (
+                          <li
+                            key={i}
+                            className="flex items-center justify-between text-sm bg-background/40 rounded-lg px-3 py-2 border border-border"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Lock className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                              <div className="min-w-0">
+                                <div className="font-medium truncate">{li.label}</div>
+                                <div className="text-[11px] text-muted-foreground truncate">{li.teaser}</div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => navigate("/signup?from=scan")}
+                              className="text-[10px] uppercase tracking-wider text-primary hover:underline flex-shrink-0 ml-2"
+                            >
+                              Desbloquear →
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -432,14 +462,15 @@ const Scan = () => {
                       <span className="text-gradient">este físico</span>?
                     </h3>
                     <p className="text-muted-foreground max-w-xl mx-auto mb-8">
-                      El análisis es gratis. El plan que te lleva ahí no.
-                      Recibe tu plan de entrenamiento + nutrición personalizado para cerrar el gap detectado por la IA.
+                      Tu IA detectó {result.improvements.length} puntos de mejora.
+                      Sin un plan que los ataque, en 3 meses estarás igual.
+                      Empieza hoy con tu plan personalizado de entrenamiento + nutrición.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                       <Button
                         variant="hero"
                         size="xl"
-                        onClick={() => navigate("/signup")}
+                        onClick={() => navigate("/signup?from=scan")}
                         className="hover-scale group"
                       >
                         Empezar mi plan
