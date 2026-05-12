@@ -814,6 +814,72 @@ export type Database = {
         }
         Relationships: []
       }
+      trainer_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          trainer_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          trainer_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          trainer_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trainer_profiles: {
+        Row: {
+          bio: string
+          created_at: string
+          display_name: string
+          headline: string
+          id: string
+          photo_url: string
+          sort_order: number
+          specialty: string
+          updated_at: string
+          user_id: string
+          visible: boolean
+        }
+        Insert: {
+          bio?: string
+          created_at?: string
+          display_name?: string
+          headline?: string
+          id?: string
+          photo_url?: string
+          sort_order?: number
+          specialty?: string
+          updated_at?: string
+          user_id: string
+          visible?: boolean
+        }
+        Update: {
+          bio?: string
+          created_at?: string
+          display_name?: string
+          headline?: string
+          id?: string
+          photo_url?: string
+          sort_order?: number
+          specialty?: string
+          updated_at?: string
+          user_id?: string
+          visible?: boolean
+        }
+        Relationships: []
+      }
       training_plan: {
         Row: {
           created_at: string
@@ -1096,6 +1162,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_trainer_of: {
+        Args: { _trainer_id: string; _user_id: string }
         Returns: boolean
       }
       move_to_dlq: {
