@@ -567,6 +567,56 @@ const Scan = () => {
                 </div>
               </div>
 
+              {/* Estado de aplicación al plan */}
+              {planApplyState !== "idle" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-3xl mx-auto mb-6"
+                >
+                  <div
+                    className={`rounded-2xl px-5 py-4 flex items-center gap-3 border backdrop-blur ${
+                      planApplyState === "success"
+                        ? "bg-primary/10 border-primary/40"
+                        : planApplyState === "error"
+                        ? "bg-destructive/10 border-destructive/40"
+                        : "bg-card/60 border-border"
+                    }`}
+                  >
+                    {planApplyState === "applying" && (
+                      <>
+                        <Loader2 className="w-4 h-4 text-primary animate-spin flex-shrink-0" />
+                        <div className="text-sm">
+                          <div className="font-medium">Aplicando el scan a tu plan…</div>
+                          <div className="text-[11px] text-muted-foreground">Regenerando entrenamiento y nutrición con tus nuevas inferencias.</div>
+                        </div>
+                      </>
+                    )}
+                    {planApplyState === "success" && (
+                      <>
+                        <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                        <div className="text-sm flex-1">
+                          <div className="font-semibold text-primary">Plan actualizado correctamente ✓</div>
+                          <div className="text-[11px] text-muted-foreground">Tu nuevo entrenamiento y nutrición ya están en tu cuenta.</div>
+                        </div>
+                        <Button size="sm" variant="hero" onClick={() => navigate("/dashboard")}>
+                          Ver mi plan
+                        </Button>
+                      </>
+                    )}
+                    {planApplyState === "error" && (
+                      <>
+                        <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0" />
+                        <div className="text-sm">
+                          <div className="font-medium">No se pudo aplicar al plan automáticamente</div>
+                          <div className="text-[11px] text-muted-foreground">Inténtalo desde el dashboard o repite el scan.</div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
               {/* HERO STATS — datos imposibles de ChatGPT */}
               {(result.percentile || result.aesthetic_age || result.months_with_plan) && (
                 <div className="max-w-5xl mx-auto mb-8 grid sm:grid-cols-3 gap-3">
