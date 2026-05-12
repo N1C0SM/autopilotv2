@@ -158,6 +158,7 @@ const Scan = () => {
   const [genLoading, setGenLoading] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
+  const [planApplyState, setPlanApplyState] = useState<"idle" | "applying" | "success" | "error">("idle");
 
   useEffect(() => {
     if (!user) return;
@@ -355,6 +356,7 @@ const Scan = () => {
 
   const applyScanToPlan = async (r: Result) => {
     if (!user) return;
+    setPlanApplyState("applying");
     try {
       const { data: existing } = await supabase
         .from("onboarding")
@@ -364,6 +366,7 @@ const Scan = () => {
 
       if (!existing) {
         // Sin onboarding previo no podemos generar plan (faltan edad/peso/etc.)
+        setPlanApplyState("idle");
         return;
       }
 
@@ -380,7 +383,10 @@ const Scan = () => {
         updates.specific_goal = r.inferred_specific_goals.join(", ");
       }
 
-      if (Object.keys(updates).length === 0) return;
+      if (Object.keys(updates).length === 0) {
+        setPlanApplyState("idle");
+        return;
+      }
 
       const { error: updErr } = await (supabase as any)
         .from("onboarding")
@@ -390,10 +396,13 @@ const Scan = () => {
 
       await supabase.from("profiles").update({ plan_status: "plan_pending" }).eq("user_id", user.id);
 
-      supabase.functions.invoke("generate-plan", { body: { user_id: user.id } });
-      toast.success("Aplicando el scan a tu plan… se está regenerando 🎯");
+      const { error: genErr } = await supabase.functions.invoke("generate-plan", { body: { user_id: user.id } });
+      if (genErr) throw genErr;
+      setPlanApplyState("success");
+      toast.success("Plan actualizado con tu scan ✓");
     } catch (e: any) {
       console.error("applyScanToPlan", e);
+      setPlanApplyState("error");
       toast.error("No se pudo aplicar al plan automáticamente");
     }
   };
@@ -557,6 +566,56 @@ const Scan = () => {
                   </Button>
                 </div>
               </div>
+
+              {/* Estado de aplicación al plan */}
+              {planApplyState !== "idle" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-3xl mx-auto mb-6"
+                >
+                  <div
+                    className={`rounded-2xl px-5 py-4 flex items-center gap-3 border backdrop-blur ${
+                      planApplyState === "success"
+                        ? "bg-primary/10 border-primary/40"
+                        : planApplyState === "error"
+                        ? "bg-destructive/10 border-destructive/40"
+                        : "bg-card/60 border-border"
+                    }`}
+                  >
+                    {planApplyState === "applying" && (
+                      <>
+                        <Loader2 className="w-4 h-4 text-primary animate-spin flex-shrink-0" />
+                        <div className="text-sm">
+                          <div className="font-medium">Aplicando el scan a tu plan…</div>
+                          <div className="text-[11px] text-muted-foreground">Regenerando entrenamiento y nutrición con tus nuevas inferencias.</div>
+                        </div>
+                      </>
+                    )}
+                    {planApplyState === "success" && (
+                      <>
+                        <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                        <div className="text-sm flex-1">
+                          <div className="font-semibold text-primary">Plan actualizado correctamente ✓</div>
+                          <div className="text-[11px] text-muted-foreground">Tu nuevo entrenamiento y nutrición ya están en tu cuenta.</div>
+                        </div>
+                        <Button size="sm" variant="hero" onClick={() => navigate("/dashboard")}>
+                          Ver mi plan
+                        </Button>
+                      </>
+                    )}
+                    {planApplyState === "error" && (
+                      <>
+                        <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0" />
+                        <div className="text-sm">
+                          <div className="font-medium">No se pudo aplicar al plan automáticamente</div>
+                          <div className="text-[11px] text-muted-foreground">Inténtalo desde el dashboard o repite el scan.</div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
 
               {/* HERO STATS — datos imposibles de ChatGPT */}
               {(result.percentile || result.aesthetic_age || result.months_with_plan) && (
