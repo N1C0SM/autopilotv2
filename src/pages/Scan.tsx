@@ -403,8 +403,93 @@ const Scan = () => {
                 <h2 className="text-3xl sm:text-4xl font-bold font-display leading-tight mb-3">
                   Tu <span className="text-gradient">AI Physique Report</span>
                 </h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">{result.summary}</p>
+                {result.headline_diagnosis ? (
+                  <p className="text-lg sm:text-xl text-foreground max-w-2xl mx-auto font-medium leading-snug">
+                    "{result.headline_diagnosis}"
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground max-w-2xl mx-auto">{result.summary}</p>
+                )}
               </div>
+
+              {/* HERO STATS — datos imposibles de ChatGPT */}
+              {(result.percentile || result.aesthetic_age || result.months_with_plan) && (
+                <div className="max-w-5xl mx-auto mb-8 grid sm:grid-cols-3 gap-3">
+                  {result.percentile !== undefined && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="bg-card/60 backdrop-blur border border-primary/30 rounded-2xl p-5 text-center glow-shadow"
+                    >
+                      <Users className="w-4 h-4 text-primary mx-auto mb-2" />
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                        Tu percentil
+                      </div>
+                      <div className="text-4xl font-bold font-display text-gradient">
+                        Top {100 - result.percentile}%
+                      </div>
+                      <div className="text-[11px] text-muted-foreground mt-1">
+                        vs hombres de tu edad
+                      </div>
+                    </motion.div>
+                  )}
+                  {result.aesthetic_age !== undefined && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="bg-card/60 backdrop-blur border border-border rounded-2xl p-5 text-center"
+                    >
+                      <Eye className="w-4 h-4 text-primary mx-auto mb-2" />
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                        Edad estética
+                      </div>
+                      <div className="text-4xl font-bold font-display text-gradient">
+                        {result.aesthetic_age}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground mt-1">
+                        años percibidos
+                      </div>
+                    </motion.div>
+                  )}
+                  {result.months_with_plan !== undefined && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="bg-card/60 backdrop-blur border border-primary/30 rounded-2xl p-5 text-center glow-shadow"
+                    >
+                      <Clock className="w-4 h-4 text-primary mx-auto mb-2" />
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                        A tu objetivo
+                      </div>
+                      <div className="text-4xl font-bold font-display text-gradient">
+                        {result.months_with_plan}m
+                      </div>
+                      {result.months_without_plan !== undefined && (
+                        <div className="text-[11px] text-muted-foreground mt-1">
+                          vs <span className="line-through">{result.months_without_plan}m</span> sin plan
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </div>
+              )}
+
+              {result.bottleneck && (
+                <div className="max-w-3xl mx-auto mb-10">
+                  <div className="bg-card/40 backdrop-blur border border-border rounded-2xl px-5 py-4 flex items-start gap-3">
+                    <AlertTriangle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">
+                        Lo que más te frena
+                      </div>
+                      <div className="text-sm font-medium">{result.bottleneck}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
                 {/* Photos + similarity */}
@@ -496,6 +581,35 @@ const Scan = () => {
                         </motion.li>
                       ))}
                     </ul>
+                  </div>
+
+                  {/* Yo futuro bloqueado — gancho visceral */}
+                  <div className="bg-card/60 backdrop-blur border border-primary/30 rounded-2xl p-4 relative overflow-hidden">
+                    <div className="text-[10px] uppercase tracking-widest text-primary mb-3 flex items-center gap-1.5">
+                      <Lock className="w-3 h-3" /> Tu yo en {result.months_with_plan ?? result.estimated_months} meses
+                    </div>
+                    <div className="relative aspect-[3/2] rounded-xl overflow-hidden bg-secondary">
+                      {currentImg && (
+                        <img
+                          src={currentImg}
+                          alt="futuro"
+                          className="w-full h-full object-cover scale-110"
+                          style={{ filter: "blur(18px) brightness(1.1) contrast(1.1)" }}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
+                        <div className="w-12 h-12 rounded-full bg-primary/20 backdrop-blur border border-primary/40 flex items-center justify-center">
+                          <Lock className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="text-sm font-semibold">
+                          Visualiza tu transformación
+                        </div>
+                        <div className="text-[11px] text-muted-foreground max-w-xs">
+                          Simulación generada con IA al activar tu plan
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {result.locked_insights && result.locked_insights.length > 0 && (
