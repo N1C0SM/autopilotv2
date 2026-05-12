@@ -12,6 +12,7 @@ import ExerciseLibrary from "@/components/admin/ExerciseLibrary";
 import TrainingRulesEditor from "@/components/admin/TrainingRulesEditor";
 import PaymentReminders from "@/components/admin/PaymentReminders";
 import SiteContentEditor from "@/components/admin/SiteContentEditor";
+import TrainerManagement from "@/components/admin/TrainerManagement";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export interface Profile {
