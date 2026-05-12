@@ -382,7 +382,7 @@ const Scan = () => {
 
       if (Object.keys(updates).length === 0) return;
 
-      const { error: updErr } = await supabase
+      const { error: updErr } = await (supabase as any)
         .from("onboarding")
         .update(updates)
         .eq("user_id", user.id);
