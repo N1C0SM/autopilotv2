@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { toPng } from "html-to-image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -19,6 +20,8 @@ import {
   Clock,
   AlertTriangle,
   Eye,
+  Share2,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -153,6 +156,8 @@ const Scan = () => {
   const [result, setResult] = useState<Result | null>(null);
   const [futureImg, setFutureImg] = useState<string | null>(null);
   const [genLoading, setGenLoading] = useState(false);
+  const shareRef = useRef<HTMLDivElement>(null);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -163,6 +168,45 @@ const Scan = () => {
       .single()
       .then(({ data }) => setIsPaid(data?.payment_status === "paid"));
   }, [user]);
+
+  const handleShare = async () => {
+    if (!shareRef.current) return;
+    setSharing(true);
+    try {
+      const dataUrl = await toPng(shareRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: "#0a0a0a",
+      });
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], "autopilot-scan.png", { type: "image/png" });
+
+      const navAny = navigator as any;
+      if (navAny.canShare?.({ files: [file] })) {
+        try {
+          await navAny.share({
+            files: [file],
+            title: "Mi AI Physique Scan",
+            text: "Mi físico analizado por IA en autopilotplan.com/scan",
+          });
+          return;
+        } catch {
+          // fall through to download
+        }
+      }
+
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = "autopilot-scan.png";
+      link.click();
+      toast.success("Tarjeta descargada");
+    } catch (e: any) {
+      console.error(e);
+      toast.error("No se pudo generar la tarjeta");
+    } finally {
+      setSharing(false);
+    }
+  };
 
   const generateFuture = async () => {
     if (!currentImg || !result) return;
@@ -446,6 +490,22 @@ const Scan = () => {
                 ) : (
                   <p className="text-muted-foreground max-w-2xl mx-auto">{result.summary}</p>
                 )}
+                <div className="mt-5 flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleShare}
+                    disabled={sharing}
+                    className="hover-scale"
+                  >
+                    {sharing ? (
+                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    ) : (
+                      <Share2 className="w-4 h-4 mr-1" />
+                    )}
+                    Compartir mi resultado
+                  </Button>
+                </div>
               </div>
 
               {/* HERO STATS — datos imposibles de ChatGPT */}
@@ -786,6 +846,117 @@ const Scan = () => {
                   </Button>
                 </div>
               )}
+
+              {/* Tarjeta compartible (oculta off-screen) */}
+              <div
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: -9999,
+                  pointerEvents: "none",
+                }}
+                aria-hidden
+              >
+                <div
+                  ref={shareRef}
+                  style={{
+                    width: 1080,
+                    height: 1350,
+                    background:
+                      "radial-gradient(circle at 20% 10%, rgba(99,102,241,0.25), transparent 55%), radial-gradient(circle at 85% 90%, rgba(236,72,153,0.18), transparent 50%), #08080c",
+                    color: "#fff",
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    padding: 72,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                      <div
+                        style={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: 16,
+                          background: "rgba(99,102,241,0.18)",
+                          border: "1px solid rgba(99,102,241,0.45)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 28,
+                        }}
+                      >
+                        ⚡
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.5 }}>Autopilot</div>
+                        <div style={{ fontSize: 14, color: "#a1a1aa", textTransform: "uppercase", letterSpacing: 2 }}>
+                          AI Physique Scan
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#c4b5fd",
+                        textTransform: "uppercase",
+                        letterSpacing: 2,
+                        padding: "8px 14px",
+                        border: "1px solid rgba(196,181,253,0.4)",
+                        borderRadius: 999,
+                      }}
+                    >
+                      Análisis IA
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: 22, color: "#a1a1aa", marginBottom: 18, textTransform: "uppercase", letterSpacing: 3 }}>
+                      Diagnóstico
+                    </div>
+                    <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 1.1, letterSpacing: -1.5 }}>
+                      "{result.headline_diagnosis ?? result.summary?.slice(0, 140)}"
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+                    {result.percentile !== undefined && (
+                      <StatBox label="Percentil" value={`Top ${100 - result.percentile}%`} sub="vs población" />
+                    )}
+                    {result.aesthetic_age !== undefined && (
+                      <StatBox label="Edad estética" value={`${result.aesthetic_age}`} sub="años percibidos" />
+                    )}
+                    {result.months_with_plan !== undefined && (
+                      <StatBox
+                        label="A mi objetivo"
+                        value={`${result.months_with_plan}m`}
+                        sub={
+                          result.months_without_plan !== undefined
+                            ? `vs ${result.months_without_plan}m sin plan`
+                            : "con plan"
+                        }
+                      />
+                    )}
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingTop: 28,
+                      borderTop: "1px solid rgba(255,255,255,0.08)",
+                    }}
+                  >
+                    <div style={{ fontSize: 18, color: "#a1a1aa" }}>Haz tu scan gratis en</div>
+                    <div style={{ fontSize: 26, fontWeight: 700, color: "#c4b5fd" }}>
+                      autopilotplan.com/scan
+                    </div>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -793,5 +964,34 @@ const Scan = () => {
     </div>
   );
 };
+
+const StatBox = ({ label, value, sub }: { label: string; value: string; sub: string }) => (
+  <div
+    style={{
+      background: "rgba(255,255,255,0.04)",
+      border: "1px solid rgba(255,255,255,0.08)",
+      borderRadius: 24,
+      padding: 28,
+    }}
+  >
+    <div style={{ fontSize: 13, color: "#a1a1aa", textTransform: "uppercase", letterSpacing: 2, marginBottom: 10 }}>
+      {label}
+    </div>
+    <div
+      style={{
+        fontSize: 56,
+        fontWeight: 700,
+        letterSpacing: -1.5,
+        background: "linear-gradient(135deg,#a78bfa,#ec4899)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        lineHeight: 1,
+      }}
+    >
+      {value}
+    </div>
+    <div style={{ fontSize: 14, color: "#71717a", marginTop: 10 }}>{sub}</div>
+  </div>
+);
 
 export default Scan;
