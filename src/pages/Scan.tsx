@@ -29,6 +29,12 @@ type Result = {
   estimated_months: number;
   improvements: { label: string; priority: "Alta" | "Media" | "Baja" }[];
   summary: string;
+  percentile?: number;
+  aesthetic_age?: number;
+  months_without_plan?: number;
+  months_with_plan?: number;
+  headline_diagnosis?: string;
+  bottleneck?: string;
   inferred_goal?: string;
   inferred_focus?: string;
   inferred_intensity?: number;
