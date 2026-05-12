@@ -15,6 +15,12 @@ const AnalysisSchema = z.object({
     priority: z.string(),
   })).min(1).max(6),
   summary: z.string(),
+  percentile: z.number().min(1).max(99).optional(),
+  aesthetic_age: z.number().min(14).max(80).optional(),
+  months_without_plan: z.number().min(0).max(120).optional(),
+  months_with_plan: z.number().min(0).max(120).optional(),
+  headline_diagnosis: z.string().optional(),
+  bottleneck: z.string().optional(),
   inferred_goal: z.string().optional(),
   inferred_focus: z.string().optional(),
   inferred_intensity: z.number().min(1).max(10).optional(),
@@ -75,7 +81,7 @@ Deno.serve(async (req) => {
     const { text } = await generateText({
       model: gateway("google/gemini-2.5-pro"),
       system:
-        'Eres un coach experto en estética y composición corporal. Analizas fotos para dar feedback útil. Sé honesto pero respetuoso y motivador. Devuelve SOLO JSON válido, sin markdown ni texto extra, con esta forma exacta: {"attractiveness":0,"potential":0,"physique":0,"style":0,"similarity":0,"estimated_months":0,"improvements":[{"label":"","priority":"Alta"}],"summary":"","inferred_goal":"","inferred_focus":"","inferred_intensity":7,"inferred_specific_goals":[],"locked_insights":[{"label":"","teaser":""}]}. Todo el texto en español. attractiveness, potential, physique y style 0-10; similarity 0-100; estimated_months meses estimados; priority Alta/Media/Baja; summary 2-3 frases. inferred_goal debe ser uno de: "lose_weight", "gain_muscle", "recomp", "improve_endurance", "general_health". inferred_focus debe ser uno de: "gimnasio", "calistenia", "mixto" (elige según el físico observado y lo que más le conviene). inferred_intensity 1-10 según condición percibida. inferred_specific_goals: 2-3 metas concretas derivadas de las mejoras prioritarias (ej: "definir abdomen", "más volumen hombros"). locked_insights: 2 insights premium con label corto y teaser intrigante (ej: label "Tu déficit calórico exacto", teaser "Calculado para tu composición"). NO reveles los valores en locked_insights, solo describe qué desbloqueará.',
+        'Eres un coach experto en estética y composición corporal. Analizas fotos como si fueras un scanner profesional con base de datos de miles de físicos reales. Sé honesto, directo y motivador. Devuelve SOLO JSON válido, sin markdown ni texto extra, con esta forma: {"attractiveness":0,"potential":0,"physique":0,"style":0,"similarity":0,"estimated_months":0,"percentile":0,"aesthetic_age":0,"months_without_plan":0,"months_with_plan":0,"headline_diagnosis":"","bottleneck":"","improvements":[{"label":"","priority":"Alta"}],"summary":"","inferred_goal":"","inferred_focus":"","inferred_intensity":7,"inferred_specific_goals":[],"locked_insights":[{"label":"","teaser":""}]}. Todo en español. SCORES (todos honestos, no inflados): attractiveness/potential/physique/style 0-10. similarity 0-100. percentile: en qué percentil del 1-99 está su físico vs población general de su sexo/edad estimados (sé realista: 50 = media, 70 = mejor que la mayoría, 90+ = top). aesthetic_age: edad estética percibida en años (puede ser ±5 vs edad real). months_without_plan: cuántos meses tardará en llegar al objetivo SIN plan estructurado (entre 18 y 60, sé pesimista). months_with_plan: cuántos meses con plan personalizado + nutrición (entre 3 y 18, mucho más rápido). estimated_months = months_with_plan. headline_diagnosis: UNA frase contundente y específica que resuma el verdadero problema (ej: "Buen marco, falta volumen en espalda y hombros para verte más ancho"). bottleneck: el ÚNICO factor que más le frena (ej: "Déficit calórico mal calculado", "Falta de progresión en empuje", "Postura cifótica"). improvements: 3-5 puntos prioritarios con priority Alta/Media/Baja. summary: 2-3 frases honestas. inferred_goal: "lose_weight"|"gain_muscle"|"recomp"|"improve_endurance"|"general_health". inferred_focus: "gimnasio"|"calistenia"|"mixto". inferred_intensity 1-10. inferred_specific_goals: 2-3 metas concretas. locked_insights: 3 insights premium con label corto y teaser intrigante que SOLO se desbloquean con el plan (ej: label "Tu déficit calórico exacto", teaser "Calculado para tu masa magra y actividad"). NO reveles valores en locked_insights.',
       messages: [{ role: "user", content: userContent }],
     });
 
