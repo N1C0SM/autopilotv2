@@ -10,17 +10,26 @@ import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Sparkles, Calendar as CalendarIcon, Check, Loader2, Zap, Upload, Image as ImageIcon, X } from "lucide-react";
 import PricingTiers from "@/components/PricingTiers";
 
-const STEPS = [
-  "Sobre ti",
-  "Tu enfoque",
-  "Objetivo",
-  "Deportes",
-  "Horarios",
-  "Tu nivel",
-  "Lesiones",
-  "Nutrición",
-  "Resumen",
-];
+// Pasos dinámicos: la lista activa se calcula según los datos del usuario.
+// Claves posibles: about, focus_goal, specific_goal, sports_schedule, level, health, summary
+type StepKey =
+  | "about"
+  | "focus_goal"
+  | "specific_goal"
+  | "sports_schedule"
+  | "level"
+  | "health"
+  | "summary";
+
+const STEP_LABELS: Record<StepKey, string> = {
+  about: "Sobre ti",
+  focus_goal: "Enfoque y objetivo",
+  specific_goal: "Tu skill",
+  sports_schedule: "Tu agenda",
+  level: "Tu nivel",
+  health: "Salud y nutrición",
+  summary: "Resumen",
+};
 
 const PRIMARY_FOCUS_OPTIONS = [
   { value: "gimnasio", label: "Gimnasio", emoji: "💪", desc: "Cargas, hipertrofia y fuerza." },
@@ -123,8 +132,9 @@ const Onboarding = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("gcal") === "connected") {
-      setStep(STEPS.length - 1);
       setGcalConnected(true);
+      // Saltamos al último paso una vez se conozcan los pasos activos
+      setTimeout(() => setStep(99), 0);
       window.history.replaceState({}, "", "/onboarding");
     }
   }, []);
@@ -353,14 +363,28 @@ const Onboarding = () => {
     }
   };
 
+  // Pasos dinámicos según datos
+  const activeSteps: StepKey[] = (() => {
+    const arr: StepKey[] = ["about", "focus_goal"];
+    if (data.goal === "skill_based") arr.push("specific_goal");
+    arr.push("sports_schedule", "level", "health", "summary");
+    return arr;
+  })();
+
+  // Si el step actual se sale del rango (p.ej. tras cambio dinámico), lo recortamos
+  useEffect(() => {
+    if (step > activeSteps.length - 1) setStep(activeSteps.length - 1);
+  }, [activeSteps.length, step]);
+
+  const currentKey = activeSteps[Math.min(step, activeSteps.length - 1)];
+
   const canNext = () => {
-    if (step === 0) {
+    if (currentKey === "about") {
       if (!(data.age && data.height && data.weight && data.sex && data.occupation)) return false;
       if (data.occupation === "otro" && !data.occupation_detail.trim()) return false;
       return true;
     }
-    if (step === 1) return !!data.primary_focus;
-    if (step === 2) return !!data.goal;
+    if (currentKey === "focus_goal") return !!data.primary_focus && !!data.goal;
     return true;
   };
 
@@ -394,18 +418,18 @@ const Onboarding = () => {
         <div className="text-center mb-8">
           <span className="font-display text-2xl font-bold text-gradient">Autopilot</span>
           <h1 className="text-2xl font-bold font-display mt-6 mb-2">Cuéntanos lo justo</h1>
-          <p className="text-muted-foreground text-sm">Paso {step + 1} de {STEPS.length}: {STEPS[step]}</p>
+          <p className="text-muted-foreground text-sm">Paso {Math.min(step, activeSteps.length - 1) + 1} de {activeSteps.length}: {STEP_LABELS[currentKey]}</p>
         </div>
 
         <div className="flex gap-1.5 mb-8">
-          {STEPS.map((_, i) => (
+          {activeSteps.map((_, i) => (
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-secondary"}`} />
           ))}
         </div>
 
         <div className="bg-card rounded-2xl p-8 border border-border card-shadow">
           {/* Step 0: Sobre ti */}
-          {step === 0 && (
+          {currentKey === "about" && (
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-3">
                 <div>
@@ -473,44 +497,38 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 1: Tu enfoque */}
-          {step === 1 && (
-            <div>
-              <Label className="mb-3 block">¿En qué quieres centrarte?</Label>
-              {scanPrefill?.primary_focus && (
-                <div className="mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-[10px] uppercase tracking-wider text-primary">
-                  <Sparkles className="w-3 h-3" /> Detectado por IA · puedes cambiarlo
-                </div>
-              )}
-              <div className="grid grid-cols-1 gap-2">
-                {PRIMARY_FOCUS_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => update("primary_focus", opt.value)}
-                    className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
-                      data.primary_focus === opt.value ? "border-primary bg-primary/10" : "border-border hover:border-primary/30"
-                    }`}
-                  >
-                    <span className="text-2xl mt-0.5">{opt.emoji}</span>
-                    <div>
-                      <span className="font-medium block">{opt.label}</span>
-                      <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Objetivo + meta específica */}
-          {step === 2 && (
+          {/* Enfoque + Objetivo (combinados) */}
+          {currentKey === "focus_goal" && (
             <div className="space-y-5">
               <div>
-                <Label className="mb-3 block">Tu objetivo principal</Label>
+                <Label className="mb-2 block text-xs">¿En qué quieres centrarte?</Label>
+                {scanPrefill?.primary_focus && (
+                  <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-[10px] uppercase tracking-wider text-primary">
+                    <Sparkles className="w-3 h-3" /> Detectado por IA
+                  </div>
+                )}
+                <div className="grid grid-cols-3 gap-2">
+                  {PRIMARY_FOCUS_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => update("primary_focus", opt.value)}
+                      className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 text-center transition-all ${
+                        data.primary_focus === opt.value ? "border-primary bg-primary/10" : "border-border hover:border-primary/30"
+                      }`}
+                    >
+                      <span className="text-2xl">{opt.emoji}</span>
+                      <span className="font-medium text-xs">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2 block text-xs">Tu objetivo principal</Label>
                 {scanPrefill?.goal && (
-                  <div className="mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-[10px] uppercase tracking-wider text-primary">
-                    <Sparkles className="w-3 h-3" /> Detectado por IA · puedes cambiarlo
+                  <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-[10px] uppercase tracking-wider text-primary">
+                    <Sparkles className="w-3 h-3" /> Detectado por IA
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-2">
@@ -529,13 +547,18 @@ const Onboarding = () => {
                   ))}
                 </div>
               </div>
+            </div>
+          )}
 
-              <div>
-                <Label className="mb-1.5 block text-xs">Meta concreta (opcional)</Label>
+          {/* Skill concreto: solo si goal === skill_based */}
+          {currentKey === "specific_goal" && (
+            <div>
+              <Label className="mb-1.5 block">¿Qué skill quieres conseguir?</Label>
+              <p className="text-xs text-muted-foreground mb-3">Elige uno o varios, o escribe el tuyo</p>
                 <Textarea
                   value={data.specific_goal}
                   onChange={(e) => update("specific_goal", e.target.value)}
-                  placeholder="Ej: handstand, press banca 100kg…"
+                  placeholder="Ej: handstand, muscle up, press banca 100kg…"
                   rows={2}
                   className="mb-2"
                 />
@@ -563,40 +586,35 @@ const Onboarding = () => {
                     );
                   })}
                 </div>
-              </div>
             </div>
           )}
 
-          {/* Step 3: Deportes */}
-          {step === 3 && (
+          {/* Deportes + Horarios (combinados) */}
+          {currentKey === "sports_schedule" && (
             <div>
-              <Label className="mb-3 block">¿Qué deportes practicas?</Label>
-              <p className="text-xs text-muted-foreground mb-4">Selecciona los que hagas con regularidad</p>
-              <div className="grid grid-cols-2 gap-2">
-                {SPORTS.map((s) => (
-                  <button
-                    key={s.value}
-                    type="button"
-                    onClick={() => toggleSport(s.value)}
-                    className={`flex items-center gap-2 p-3 rounded-xl border-2 text-left transition-all text-sm ${
-                      data.sports.includes(s.value) ? "border-primary bg-primary/10" : "border-border hover:border-primary/30"
-                    }`}
-                  >
-                    <span className="text-xl">{s.emoji}</span>
-                    <span className="font-medium">{s.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Horarios */}
-          {step === 4 && (
-            <div>
-              <Label className="mb-1.5 block">Tu agenda fija</Label>
+              <Label className="mb-1.5 block">Deportes y agenda</Label>
               <p className="text-xs text-muted-foreground mb-4">
-                Indica cuándo haces cada deporte y cualquier otra cosa fija (trabajo, clases…). Encajaremos los entrenos en los huecos libres.
+                Marca los deportes que practicas y añade cosas fijas (trabajo, clases…). Encajaremos los entrenos en tus huecos libres.
               </p>
+
+              <div className="mb-4">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-2">Deportes</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {SPORTS.map((s) => (
+                    <button
+                      key={s.value}
+                      type="button"
+                      onClick={() => toggleSport(s.value)}
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-left transition-all text-sm ${
+                        data.sports.includes(s.value) ? "border-primary bg-primary/10" : "border-border hover:border-primary/30"
+                      }`}
+                    >
+                      <span className="text-lg">{s.emoji}</span>
+                      <span className="font-medium">{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1">
                 {(() => {
@@ -732,27 +750,29 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 5: Tu nivel */}
-          {step === 5 && (
+          {/* Tu nivel — campos según enfoque */}
+          {currentKey === "level" && (
             <div>
               <Label className="mb-1.5 block">¿Cuál es tu nivel ahora?</Label>
               <p className="text-xs text-muted-foreground mb-5">
-                Aproxima sin obsesionarte. Déjalo en blanco si no lo sabes.
+                Solo lo relevante para tu enfoque. Déjalo en blanco si no lo sabes.
               </p>
               <div className="space-y-3">
-                <div>
-                  <Label className="text-sm">Dominadas máximas</Label>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    value={data.initial_tests.pullups}
-                    onChange={(e) =>
-                      setData((d) => ({ ...d, initial_tests: { ...d.initial_tests, pullups: e.target.value } }))
-                    }
-                    placeholder="0 si no haces ninguna"
-                    className="mt-1.5"
-                  />
-                </div>
+                {(data.primary_focus === "calistenia" || data.primary_focus === "mixto" || !data.primary_focus) && (
+                  <div>
+                    <Label className="text-sm">Dominadas máximas</Label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      value={data.initial_tests.pullups}
+                      onChange={(e) =>
+                        setData((d) => ({ ...d, initial_tests: { ...d.initial_tests, pullups: e.target.value } }))
+                      }
+                      placeholder="0 si no haces ninguna"
+                      className="mt-1.5"
+                    />
+                  </div>
+                )}
                 <div>
                   <Label className="text-sm">Flexiones máximas</Label>
                   <Input
@@ -766,19 +786,21 @@ const Onboarding = () => {
                     className="mt-1.5"
                   />
                 </div>
-                <div>
-                  <Label className="text-sm">Sentadilla con tu peso (reps)</Label>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    value={data.initial_tests.squat}
-                    onChange={(e) =>
-                      setData((d) => ({ ...d, initial_tests: { ...d.initial_tests, squat: e.target.value } }))
-                    }
-                    placeholder="Ej: 30"
-                    className="mt-1.5"
-                  />
-                </div>
+                {(data.primary_focus === "gimnasio" || data.primary_focus === "mixto") && (
+                  <div>
+                    <Label className="text-sm">Sentadilla con tu peso (reps)</Label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      value={data.initial_tests.squat}
+                      onChange={(e) =>
+                        setData((d) => ({ ...d, initial_tests: { ...d.initial_tests, squat: e.target.value } }))
+                      }
+                      placeholder="Ej: 30"
+                      className="mt-1.5"
+                    />
+                  </div>
+                )}
                 <div>
                   <Label className="text-sm">Plancha frontal (segundos)</Label>
                   <Input
@@ -796,23 +818,19 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 6: Lesiones */}
-          {step === 6 && (
-            <div>
-              <Label className="mb-1.5 block">¿Lesiones o molestias?</Label>
-              <p className="text-xs text-muted-foreground mb-3">Déjalo vacío si no tienes ninguna</p>
-              <Textarea
-                value={data.injuries}
-                onChange={(e) => update("injuries", e.target.value)}
-                placeholder="Ej: Lumbar, tendinitis hombro derecho…"
-                rows={3}
-              />
-            </div>
-          )}
-
-          {/* Step 7: Nutrición */}
-          {step === 7 && (
+          {/* Salud + Nutrición (combinados) */}
+          {currentKey === "health" && (
             <div className="space-y-4">
+              <div>
+                <Label>¿Lesiones o molestias?</Label>
+                <Textarea
+                  value={data.injuries}
+                  onChange={(e) => update("injuries", e.target.value)}
+                  placeholder="Ej: Lumbar, tendinitis hombro derecho…"
+                  className="mt-1.5"
+                  rows={2}
+                />
+              </div>
               <div>
                 <Label>Preferencias nutricionales</Label>
                 <Textarea
@@ -836,8 +854,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 8: Resumen + extras opcionales */}
-          {step === 8 && (
+          {/* Resumen */}
+          {currentKey === "summary" && (
             <div className="space-y-5">
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎯</div>
@@ -966,7 +984,7 @@ const Onboarding = () => {
             <Button variant="ghost" onClick={() => setStep((s) => s - 1)} disabled={step === 0}>
               <ArrowLeft className="w-4 h-4 mr-1" /> Atrás
             </Button>
-            {step < STEPS.length - 1 ? (
+            {step < activeSteps.length - 1 ? (
               <Button variant="default" onClick={() => setStep((s) => s + 1)} disabled={!canNext()}>
                 Siguiente <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
