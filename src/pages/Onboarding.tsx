@@ -10,17 +10,26 @@ import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Sparkles, Calendar as CalendarIcon, Check, Loader2, Zap, Upload, Image as ImageIcon, X } from "lucide-react";
 import PricingTiers from "@/components/PricingTiers";
 
-const STEPS = [
-  "Sobre ti",
-  "Tu enfoque",
-  "Objetivo",
-  "Deportes",
-  "Horarios",
-  "Tu nivel",
-  "Lesiones",
-  "Nutrición",
-  "Resumen",
-];
+// Pasos dinámicos: la lista activa se calcula según los datos del usuario.
+// Claves posibles: about, focus_goal, specific_goal, sports_schedule, level, health, summary
+type StepKey =
+  | "about"
+  | "focus_goal"
+  | "specific_goal"
+  | "sports_schedule"
+  | "level"
+  | "health"
+  | "summary";
+
+const STEP_LABELS: Record<StepKey, string> = {
+  about: "Sobre ti",
+  focus_goal: "Enfoque y objetivo",
+  specific_goal: "Tu skill",
+  sports_schedule: "Tu agenda",
+  level: "Tu nivel",
+  health: "Salud y nutrición",
+  summary: "Resumen",
+};
 
 const PRIMARY_FOCUS_OPTIONS = [
   { value: "gimnasio", label: "Gimnasio", emoji: "💪", desc: "Cargas, hipertrofia y fuerza." },
