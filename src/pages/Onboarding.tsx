@@ -418,11 +418,11 @@ const Onboarding = () => {
         <div className="text-center mb-8">
           <span className="font-display text-2xl font-bold text-gradient">Autopilot</span>
           <h1 className="text-2xl font-bold font-display mt-6 mb-2">Cuéntanos lo justo</h1>
-          <p className="text-muted-foreground text-sm">Paso {step + 1} de {STEPS.length}: {STEPS[step]}</p>
+          <p className="text-muted-foreground text-sm">Paso {Math.min(step, activeSteps.length - 1) + 1} de {activeSteps.length}: {STEP_LABELS[currentKey]}</p>
         </div>
 
         <div className="flex gap-1.5 mb-8">
-          {STEPS.map((_, i) => (
+          {activeSteps.map((_, i) => (
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-secondary"}`} />
           ))}
         </div>
