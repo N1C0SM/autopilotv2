@@ -71,7 +71,7 @@ const Index = () => {
       const [{ data: t }, { data: s }, statsRes] = await Promise.all([
         supabase.from("site_testimonials").select("name, result, text, photo_url").eq("visible", true).order("sort_order"),
         supabase.from("settings").select("trainer_name, trainer_photo_url, trainer_bio").limit(1).maybeSingle(),
-        supabase.rpc("get_public_stats"),
+        (supabase.rpc as any)("get_public_stats"),
       ]);
       if (t && t.length > 0) setTestimonials(t as any);
       if (s) setTrainer({
