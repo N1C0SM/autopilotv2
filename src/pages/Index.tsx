@@ -225,12 +225,12 @@ const Index = () => {
               </div>
 
               {stats.paid > 0 && (
-                <div className="grid grid-cols-2 gap-6 sm:gap-12 max-w-sm w-full">
+                <div className={`grid ${stats.activePct && stats.activePct > 0 ? "grid-cols-2" : "grid-cols-1"} gap-6 sm:gap-12 max-w-sm w-full`}>
                   <div className="text-center">
                     <div className="text-xl sm:text-2xl font-bold font-display text-gradient">{stats.paid}</div>
                     <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">alumnos de pago</div>
                   </div>
-                  {stats.activePct !== null && (
+                  {stats.activePct !== null && stats.activePct > 0 && (
                     <div className="text-center">
                       <div className="text-xl sm:text-2xl font-bold font-display text-gradient">{stats.activePct}%</div>
                       <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">siguen activos</div>
