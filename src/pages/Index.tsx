@@ -68,11 +68,10 @@ const Index = () => {
 
   useEffect(() => {
     (async () => {
-      const [{ data: t }, { data: s }, paidRes, activeRes] = await Promise.all([
+      const [{ data: t }, { data: s }, statsRes] = await Promise.all([
         supabase.from("site_testimonials").select("name, result, text, photo_url").eq("visible", true).order("sort_order"),
         supabase.from("settings").select("trainer_name, trainer_photo_url, trainer_bio").limit(1).maybeSingle(),
-        supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("payment_status", "paid"),
-        supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("payment_status", "paid").eq("subscription_status", "active"),
+        supabase.rpc("get_public_stats"),
       ]);
       if (t && t.length > 0) setTestimonials(t as any);
       if (s) setTrainer({
@@ -80,8 +79,9 @@ const Index = () => {
         trainer_photo_url: s.trainer_photo_url || "",
         trainer_bio: s.trainer_bio || "",
       });
-      const paid = paidRes.count ?? 0;
-      const active = activeRes.count ?? 0;
+      const row = Array.isArray(statsRes.data) ? statsRes.data[0] : statsRes.data;
+      const paid = Number(row?.paid_count ?? 0);
+      const active = Number(row?.active_count ?? 0);
       setStats({
         paid,
         activePct: paid > 0 ? Math.round((active / paid) * 100) : null,
