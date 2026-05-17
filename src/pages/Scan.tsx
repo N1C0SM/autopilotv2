@@ -565,7 +565,7 @@ const Scan = () => {
 
       <main className="container mx-auto max-w-6xl px-4 pb-24">
         <AnimatePresence mode="wait">
-          {!result ? (
+          {!result && phase === "upload" ? (
             <motion.div
               key="upload"
               initial={{ opacity: 0, y: 12 }}
@@ -663,22 +663,13 @@ const Scan = () => {
                 <Button
                   variant="hero"
                   size="xl"
-                  onClick={handleAnalyze}
-                  disabled={loading || !currentImg || !backImg}
+                  onClick={() => setPhase("goal")}
+                  disabled={!currentImg || !backImg}
                   className="hover-scale group min-w-[280px]"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-1 animate-spin" />
-                      Analizando... {Math.round(scanProgress)}%
-                    </>
-                  ) : (
-                    <>
-                      <ScanLine className="w-5 h-5 mr-1" />
-                      Analizar mi físico
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </>
-                  )}
+                  <ScanLine className="w-5 h-5 mr-1" />
+                  Continuar
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </Button>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
@@ -695,21 +686,239 @@ const Scan = () => {
                   </div>
                 </div>
               </div>
+            </motion.div>
+          ) : !result && phase === "goal" ? (
+            <motion.div
+              key="goal"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.35 }}
+              className="max-w-3xl mx-auto"
+            >
+              <div className="text-center mb-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 mb-4">
+                  <Target className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-xs font-semibold uppercase tracking-widest text-primary">Paso 2 · Tu objetivo</span>
+                </div>
+                <h1 className="text-3xl sm:text-5xl font-bold font-display leading-[1.05] mb-3">
+                  ¿Cuál es tu <span className="text-gradient">objetivo principal</span>?
+                </h1>
+                <p className="text-muted-foreground">
+                  La IA prioriza tu diagnóstico en función de lo que más te importa.
+                </p>
+              </div>
 
-              {loading && (
-                <div className="max-w-md mx-auto mt-10">
-                  <div className="h-1 bg-secondary rounded-full overflow-hidden">
-                    <motion.div
-                      animate={{ width: `${scanProgress}%` }}
-                      className="h-full bg-gradient-to-r from-primary to-primary/60"
+              <div className="grid sm:grid-cols-2 gap-3">
+                {GOALS.map((g) => {
+                  const Icon = g.icon;
+                  const active = goal === g.id;
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => setGoal(g.id)}
+                      className={`text-left rounded-2xl border p-5 transition-all flex items-start gap-4 hover-scale ${
+                        active
+                          ? "border-primary bg-primary/10 glow-shadow"
+                          : "border-border bg-card/40 hover:border-primary/50"
+                      }`}
+                    >
+                      <div
+                        className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${
+                          active ? "bg-primary/20 border-primary/50" : "bg-primary/10 border-primary/30"
+                        }`}
+                      >
+                        <Icon className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold">{g.label}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{g.desc}</div>
+                      </div>
+                      {active && <CheckCircle2 className="w-5 h-5 text-primary ml-auto shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-10">
+                <Button variant="outline" size="xl" onClick={() => setPhase("upload")}>
+                  <ArrowLeft className="w-4 h-4 mr-1" /> Volver
+                </Button>
+                <Button
+                  variant="hero"
+                  size="xl"
+                  disabled={!goal}
+                  onClick={() => setPhase("analyzing")}
+                  className="hover-scale group min-w-[280px]"
+                >
+                  <ScanLine className="w-5 h-5 mr-1" />
+                  Analizar mi físico
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </div>
+            </motion.div>
+          ) : !result && phase === "analyzing" ? (
+            <motion.div
+              key="analyzing"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.35 }}
+              className="max-w-xl mx-auto text-center pt-12"
+            >
+              <div className="relative w-28 h-28 mx-auto mb-8">
+                <div className="absolute inset-0 rounded-full border border-primary/30 animate-ping" />
+                <div className="absolute inset-2 rounded-full border border-primary/40" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Brain className="w-10 h-10 text-primary animate-pulse" />
+                </div>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold font-display mb-3">
+                Analizando tu físico
+              </h2>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={loadingMsgIdx}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.4 }}
+                  className="text-primary font-medium flex items-center justify-center gap-2"
+                >
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {LOADING_MESSAGES[loadingMsgIdx]}
+                </motion.div>
+              </AnimatePresence>
+              <div className="max-w-sm mx-auto mt-8">
+                <div className="h-1 bg-secondary rounded-full overflow-hidden">
+                  <motion.div
+                    animate={{ width: `${scanProgress}%` }}
+                    className="h-full bg-gradient-to-r from-primary to-primary/60"
+                  />
+                </div>
+                <div className="text-[11px] text-muted-foreground mt-2">{Math.round(scanProgress)}%</div>
+              </div>
+            </motion.div>
+          ) : !result && phase === "lead" ? (
+            <motion.div
+              key="lead"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.35 }}
+              className="max-w-lg mx-auto"
+            >
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-success/30 bg-success/10 mb-4">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                  <span className="text-xs font-semibold uppercase tracking-widest text-success">
+                    Diagnóstico listo
+                  </span>
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-bold font-display leading-tight mb-3">
+                  Hemos detectado tus <span className="text-gradient">principales prioridades físicas</span>.
+                </h2>
+                <p className="text-muted-foreground">
+                  Para ver tu diagnóstico completo, dinos dónde enviártelo.
+                </p>
+              </div>
+
+              <div className="bg-card/60 backdrop-blur border border-border rounded-2xl p-6 space-y-4">
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    Nombre
+                  </label>
+                  <input
+                    type="text"
+                    value={leadName}
+                    onChange={(e) => setLeadName(e.target.value)}
+                    maxLength={100}
+                    placeholder="Tu nombre"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    WhatsApp
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="tel"
+                      value={leadWhatsapp}
+                      onChange={(e) => setLeadWhatsapp(e.target.value)}
+                      maxLength={20}
+                      placeholder="+34 600 000 000"
+                      className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-primary transition"
                     />
                   </div>
-                  <div className="text-center text-xs text-muted-foreground mt-2 flex items-center justify-center gap-2">
-                    <Brain className="w-3 h-3 text-primary animate-pulse" />
-                    La IA está analizando tu composición, postura y proporciones...
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    Email <span className="text-muted-foreground/60 normal-case tracking-normal">(opcional)</span>
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="email"
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      maxLength={255}
+                      placeholder="tu@email.com"
+                      className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-primary transition"
+                    />
                   </div>
                 </div>
-              )}
+
+                <label className="flex items-start gap-3 cursor-pointer select-none pt-1">
+                  <input
+                    type="checkbox"
+                    checked={leadConsent}
+                    onChange={(e) => setLeadConsent(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-primary cursor-pointer shrink-0"
+                  />
+                  <span className="text-xs text-muted-foreground leading-relaxed">
+                    Acepto que Autopilot use mi foto solo para generar mi diagnóstico físico y acepto la{" "}
+                    <Link to="/legal" className="text-primary hover:underline">
+                      política de privacidad
+                    </Link>
+                    .
+                  </span>
+                </label>
+
+                <Button
+                  variant="hero"
+                  size="xl"
+                  onClick={submitLead}
+                  disabled={submittingLead || !pendingResult}
+                  className="w-full hover-scale group"
+                >
+                  {submittingLead ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-1 animate-spin" />
+                      Enviando…
+                    </>
+                  ) : !pendingResult ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-1 animate-spin" />
+                      Generando tu diagnóstico…
+                    </>
+                  ) : (
+                    <>
+                      Ver mi diagnóstico completo
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </>
+                  )}
+                </Button>
+
+                <div className="flex items-start gap-2 pt-1">
+                  <Shield className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Tu foto no se publica ni se comparte. Puedes solicitar su eliminación cuando quieras.
+                  </p>
+                </div>
+              </div>
             </motion.div>
           ) : (
             <motion.div
