@@ -39,6 +39,43 @@ import { useAuth } from "@/contexts/AuthContext";
 
 type Phase = "upload" | "goal" | "analyzing" | "lead";
 
+const COUNTRIES: { code: string; dial: string; flag: string; name: string }[] = [
+  { code: "ES", dial: "+34", flag: "🇪🇸", name: "España" },
+  { code: "MX", dial: "+52", flag: "🇲🇽", name: "México" },
+  { code: "AR", dial: "+54", flag: "🇦🇷", name: "Argentina" },
+  { code: "CO", dial: "+57", flag: "🇨🇴", name: "Colombia" },
+  { code: "CL", dial: "+56", flag: "🇨🇱", name: "Chile" },
+  { code: "PE", dial: "+51", flag: "🇵🇪", name: "Perú" },
+  { code: "UY", dial: "+598", flag: "🇺🇾", name: "Uruguay" },
+  { code: "EC", dial: "+593", flag: "🇪🇨", name: "Ecuador" },
+  { code: "VE", dial: "+58", flag: "🇻🇪", name: "Venezuela" },
+  { code: "BO", dial: "+591", flag: "🇧🇴", name: "Bolivia" },
+  { code: "PY", dial: "+595", flag: "🇵🇾", name: "Paraguay" },
+  { code: "DO", dial: "+1", flag: "🇩🇴", name: "Rep. Dominicana" },
+  { code: "PR", dial: "+1", flag: "🇵🇷", name: "Puerto Rico" },
+  { code: "CR", dial: "+506", flag: "🇨🇷", name: "Costa Rica" },
+  { code: "PA", dial: "+507", flag: "🇵🇦", name: "Panamá" },
+  { code: "GT", dial: "+502", flag: "🇬🇹", name: "Guatemala" },
+  { code: "HN", dial: "+504", flag: "🇭🇳", name: "Honduras" },
+  { code: "SV", dial: "+503", flag: "🇸🇻", name: "El Salvador" },
+  { code: "NI", dial: "+505", flag: "🇳🇮", name: "Nicaragua" },
+  { code: "CU", dial: "+53", flag: "🇨🇺", name: "Cuba" },
+  { code: "US", dial: "+1", flag: "🇺🇸", name: "Estados Unidos" },
+  { code: "PT", dial: "+351", flag: "🇵🇹", name: "Portugal" },
+  { code: "FR", dial: "+33", flag: "🇫🇷", name: "Francia" },
+  { code: "IT", dial: "+39", flag: "🇮🇹", name: "Italia" },
+  { code: "DE", dial: "+49", flag: "🇩🇪", name: "Alemania" },
+  { code: "GB", dial: "+44", flag: "🇬🇧", name: "Reino Unido" },
+  { code: "IE", dial: "+353", flag: "🇮🇪", name: "Irlanda" },
+  { code: "NL", dial: "+31", flag: "🇳🇱", name: "Países Bajos" },
+  { code: "BE", dial: "+32", flag: "🇧🇪", name: "Bélgica" },
+  { code: "CH", dial: "+41", flag: "🇨🇭", name: "Suiza" },
+  { code: "AT", dial: "+43", flag: "🇦🇹", name: "Austria" },
+  { code: "BR", dial: "+55", flag: "🇧🇷", name: "Brasil" },
+  { code: "MA", dial: "+212", flag: "🇲🇦", name: "Marruecos" },
+  { code: "AD", dial: "+376", flag: "🇦🇩", name: "Andorra" },
+];
+
 const GOALS = [
   { id: "lose_fat", label: "Perder grasa", icon: Flame, desc: "Definirme y bajar % graso" },
   { id: "gain_muscle", label: "Ganar músculo", icon: Dumbbell, desc: "Más volumen y fuerza" },
