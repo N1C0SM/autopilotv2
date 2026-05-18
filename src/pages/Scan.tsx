@@ -469,11 +469,14 @@ const Scan = () => {
       toast.error("Introduce tu nombre");
       return;
     }
-    const cleanWa = leadWhatsapp.replace(/\s+/g, "");
-    if (!/^\+?[0-9]{6,16}$/.test(cleanWa)) {
+    const country = COUNTRIES.find((c) => c.code === leadCountry) ?? COUNTRIES[0];
+    const localDigits = leadWhatsapp.replace(/\D+/g, "");
+    if (!/^[0-9]{6,15}$/.test(localDigits)) {
       toast.error("Introduce un WhatsApp válido");
       return;
     }
+    const fullWa = `${country.dial}${localDigits}`;
+    const waDigits = fullWa.replace(/\D+/g, "");
     if (leadEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadEmail)) {
       toast.error("Email no válido");
       return;
@@ -487,7 +490,7 @@ const Scan = () => {
       const { error } = await (supabase as any).from("scan_leads").insert({
         user_id: user?.id ?? null,
         name: leadName.trim().slice(0, 100),
-        whatsapp: cleanWa.slice(0, 20),
+        whatsapp: fullWa.slice(0, 20),
         email: leadEmail.trim().slice(0, 255) || null,
         goal: goal ?? "unspecified",
         consent: leadConsent,
@@ -495,6 +498,27 @@ const Scan = () => {
       });
       if (error) throw error;
       if (pendingResult) setResult(pendingResult);
+      // Enviar diagnóstico por WhatsApp: abrimos wa.me con un resumen prerellenado
+      try {
+        const r = pendingResult;
+        if (r) {
+          const top = (r.improvements ?? [])
+            .slice(0, 3)
+            .map((i, idx) => `${idx + 1}. ${i.label} (${i.priority})`)
+            .join("\n");
+          const msg =
+            `Hola ${leadName.trim().split(" ")[0]}, este es tu diagnóstico de Autopilot:\n\n` +
+            `Físico actual: ${r.physique?.toFixed(1) ?? "-"}/10\n` +
+            `Potencial: ${r.potential?.toFixed(1) ?? "-"}/10\n` +
+            (r.headline_diagnosis ? `\n${r.headline_diagnosis}\n` : "") +
+            (top ? `\nPrioridades:\n${top}\n` : "") +
+            `\nVer informe completo: https://autopilotplan.com/scan`;
+          const url = `https://wa.me/${waDigits}?text=${encodeURIComponent(msg)}`;
+          window.open(url, "_blank", "noopener,noreferrer");
+        }
+      } catch (err) {
+        console.warn("wa.me open failed", err);
+      }
     } catch (e: any) {
       console.error("submitLead", e);
       toast.error("No se pudo enviar. Inténtalo de nuevo.");
