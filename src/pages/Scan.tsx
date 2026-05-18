@@ -232,6 +232,7 @@ const Scan = () => {
   const [pendingResult, setPendingResult] = useState<Result | null>(null);
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
   const [leadName, setLeadName] = useState("");
+  const [leadCountry, setLeadCountry] = useState("ES");
   const [leadWhatsapp, setLeadWhatsapp] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [leadConsent, setLeadConsent] = useState(false);
