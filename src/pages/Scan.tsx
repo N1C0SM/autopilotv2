@@ -39,6 +39,43 @@ import { useAuth } from "@/contexts/AuthContext";
 
 type Phase = "upload" | "goal" | "analyzing" | "lead";
 
+const COUNTRIES: { code: string; dial: string; flag: string; name: string }[] = [
+  { code: "ES", dial: "+34", flag: "🇪🇸", name: "España" },
+  { code: "MX", dial: "+52", flag: "🇲🇽", name: "México" },
+  { code: "AR", dial: "+54", flag: "🇦🇷", name: "Argentina" },
+  { code: "CO", dial: "+57", flag: "🇨🇴", name: "Colombia" },
+  { code: "CL", dial: "+56", flag: "🇨🇱", name: "Chile" },
+  { code: "PE", dial: "+51", flag: "🇵🇪", name: "Perú" },
+  { code: "UY", dial: "+598", flag: "🇺🇾", name: "Uruguay" },
+  { code: "EC", dial: "+593", flag: "🇪🇨", name: "Ecuador" },
+  { code: "VE", dial: "+58", flag: "🇻🇪", name: "Venezuela" },
+  { code: "BO", dial: "+591", flag: "🇧🇴", name: "Bolivia" },
+  { code: "PY", dial: "+595", flag: "🇵🇾", name: "Paraguay" },
+  { code: "DO", dial: "+1", flag: "🇩🇴", name: "Rep. Dominicana" },
+  { code: "PR", dial: "+1", flag: "🇵🇷", name: "Puerto Rico" },
+  { code: "CR", dial: "+506", flag: "🇨🇷", name: "Costa Rica" },
+  { code: "PA", dial: "+507", flag: "🇵🇦", name: "Panamá" },
+  { code: "GT", dial: "+502", flag: "🇬🇹", name: "Guatemala" },
+  { code: "HN", dial: "+504", flag: "🇭🇳", name: "Honduras" },
+  { code: "SV", dial: "+503", flag: "🇸🇻", name: "El Salvador" },
+  { code: "NI", dial: "+505", flag: "🇳🇮", name: "Nicaragua" },
+  { code: "CU", dial: "+53", flag: "🇨🇺", name: "Cuba" },
+  { code: "US", dial: "+1", flag: "🇺🇸", name: "Estados Unidos" },
+  { code: "PT", dial: "+351", flag: "🇵🇹", name: "Portugal" },
+  { code: "FR", dial: "+33", flag: "🇫🇷", name: "Francia" },
+  { code: "IT", dial: "+39", flag: "🇮🇹", name: "Italia" },
+  { code: "DE", dial: "+49", flag: "🇩🇪", name: "Alemania" },
+  { code: "GB", dial: "+44", flag: "🇬🇧", name: "Reino Unido" },
+  { code: "IE", dial: "+353", flag: "🇮🇪", name: "Irlanda" },
+  { code: "NL", dial: "+31", flag: "🇳🇱", name: "Países Bajos" },
+  { code: "BE", dial: "+32", flag: "🇧🇪", name: "Bélgica" },
+  { code: "CH", dial: "+41", flag: "🇨🇭", name: "Suiza" },
+  { code: "AT", dial: "+43", flag: "🇦🇹", name: "Austria" },
+  { code: "BR", dial: "+55", flag: "🇧🇷", name: "Brasil" },
+  { code: "MA", dial: "+212", flag: "🇲🇦", name: "Marruecos" },
+  { code: "AD", dial: "+376", flag: "🇦🇩", name: "Andorra" },
+];
+
 const GOALS = [
   { id: "lose_fat", label: "Perder grasa", icon: Flame, desc: "Definirme y bajar % graso" },
   { id: "gain_muscle", label: "Ganar músculo", icon: Dumbbell, desc: "Más volumen y fuerza" },
@@ -195,6 +232,7 @@ const Scan = () => {
   const [pendingResult, setPendingResult] = useState<Result | null>(null);
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
   const [leadName, setLeadName] = useState("");
+  const [leadCountry, setLeadCountry] = useState("ES");
   const [leadWhatsapp, setLeadWhatsapp] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [leadConsent, setLeadConsent] = useState(false);
@@ -431,11 +469,14 @@ const Scan = () => {
       toast.error("Introduce tu nombre");
       return;
     }
-    const cleanWa = leadWhatsapp.replace(/\s+/g, "");
-    if (!/^\+?[0-9]{6,16}$/.test(cleanWa)) {
+    const country = COUNTRIES.find((c) => c.code === leadCountry) ?? COUNTRIES[0];
+    const localDigits = leadWhatsapp.replace(/\D+/g, "");
+    if (!/^[0-9]{6,15}$/.test(localDigits)) {
       toast.error("Introduce un WhatsApp válido");
       return;
     }
+    const fullWa = `${country.dial}${localDigits}`;
+    const waDigits = fullWa.replace(/\D+/g, "");
     if (leadEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadEmail)) {
       toast.error("Email no válido");
       return;
@@ -449,7 +490,7 @@ const Scan = () => {
       const { error } = await (supabase as any).from("scan_leads").insert({
         user_id: user?.id ?? null,
         name: leadName.trim().slice(0, 100),
-        whatsapp: cleanWa.slice(0, 20),
+        whatsapp: fullWa.slice(0, 20),
         email: leadEmail.trim().slice(0, 255) || null,
         goal: goal ?? "unspecified",
         consent: leadConsent,
@@ -457,6 +498,27 @@ const Scan = () => {
       });
       if (error) throw error;
       if (pendingResult) setResult(pendingResult);
+      // Enviar diagnóstico por WhatsApp: abrimos wa.me con un resumen prerellenado
+      try {
+        const r = pendingResult;
+        if (r) {
+          const top = (r.improvements ?? [])
+            .slice(0, 3)
+            .map((i, idx) => `${idx + 1}. ${i.label} (${i.priority})`)
+            .join("\n");
+          const msg =
+            `Hola ${leadName.trim().split(" ")[0]}, este es tu diagnóstico de Autopilot:\n\n` +
+            `Físico actual: ${r.physique?.toFixed(1) ?? "-"}/10\n` +
+            `Potencial: ${r.potential?.toFixed(1) ?? "-"}/10\n` +
+            (r.headline_diagnosis ? `\n${r.headline_diagnosis}\n` : "") +
+            (top ? `\nPrioridades:\n${top}\n` : "") +
+            `\nVer informe completo: https://autopilotplan.com/scan`;
+          const url = `https://wa.me/${waDigits}?text=${encodeURIComponent(msg)}`;
+          window.open(url, "_blank", "noopener,noreferrer");
+        }
+      } catch (err) {
+        console.warn("wa.me open failed", err);
+      }
     } catch (e: any) {
       console.error("submitLead", e);
       toast.error("No se pudo enviar. Inténtalo de nuevo.");
@@ -842,17 +904,40 @@ const Scan = () => {
                   <label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
                     WhatsApp
                   </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="tel"
-                      value={leadWhatsapp}
-                      onChange={(e) => setLeadWhatsapp(e.target.value)}
-                      maxLength={20}
-                      placeholder="+34 600 000 000"
-                      className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-primary transition"
-                    />
+                  <div className="flex gap-2">
+                    <div className="relative shrink-0">
+                      <select
+                        value={leadCountry}
+                        onChange={(e) => setLeadCountry(e.target.value)}
+                        aria-label="País"
+                        className="appearance-none bg-background border border-border rounded-xl pl-3 pr-7 py-3 text-sm focus:outline-none focus:border-primary transition cursor-pointer"
+                      >
+                        {COUNTRIES.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.flag} {c.dial} {c.name}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                        ▾
+                      </span>
+                    </div>
+                    <div className="relative flex-1">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        value={leadWhatsapp}
+                        onChange={(e) => setLeadWhatsapp(e.target.value.replace(/[^\d\s]/g, ""))}
+                        maxLength={20}
+                        placeholder="600 000 000"
+                        className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-primary transition"
+                      />
+                    </div>
                   </div>
+                  <p className="text-[11px] text-muted-foreground mt-1.5">
+                    Te enviamos el diagnóstico por WhatsApp al pulsar el botón.
+                  </p>
                 </div>
                 <div>
                   <label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
