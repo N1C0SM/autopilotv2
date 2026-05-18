@@ -471,14 +471,13 @@ const Scan = () => {
     }
     const country = COUNTRIES.find((c) => c.code === leadCountry) ?? COUNTRIES[0];
     const localDigits = leadWhatsapp.replace(/\D+/g, "");
-    if (!/^[0-9]{6,15}$/.test(localDigits)) {
-      toast.error("Introduce un WhatsApp válido");
+    if (localDigits && !/^[0-9]{6,15}$/.test(localDigits)) {
+      toast.error("WhatsApp no válido (déjalo en blanco si no lo usas)");
       return;
     }
-    const fullWa = `${country.dial}${localDigits}`;
-    const waDigits = fullWa.replace(/\D+/g, "");
-    if (leadEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadEmail)) {
-      toast.error("Email no válido");
+    const fullWa = localDigits ? `${country.dial}${localDigits}` : "";
+    if (!leadEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadEmail.trim())) {
+      toast.error("Introduce un email válido");
       return;
     }
     if (!leadConsent) {
@@ -490,34 +489,39 @@ const Scan = () => {
       const { error } = await (supabase as any).from("scan_leads").insert({
         user_id: user?.id ?? null,
         name: leadName.trim().slice(0, 100),
-        whatsapp: fullWa.slice(0, 20),
-        email: leadEmail.trim().slice(0, 255) || null,
+        whatsapp: fullWa.slice(0, 20) || null,
+        email: leadEmail.trim().slice(0, 255),
         goal: goal ?? "unspecified",
         consent: leadConsent,
         result: pendingResult as any,
       });
       if (error) throw error;
       if (pendingResult) setResult(pendingResult);
-      // Enviar diagnóstico por WhatsApp: abrimos wa.me con un resumen prerellenado
+      // Enviar diagnóstico por email (la API de WhatsApp no está disponible)
       try {
         const r = pendingResult;
         if (r) {
-          const top = (r.improvements ?? [])
-            .slice(0, 3)
-            .map((i, idx) => `${idx + 1}. ${i.label} (${i.priority})`)
-            .join("\n");
-          const msg =
-            `Hola ${leadName.trim().split(" ")[0]}, este es tu diagnóstico de Autopilot:\n\n` +
-            `Físico actual: ${r.physique?.toFixed(1) ?? "-"}/10\n` +
-            `Potencial: ${r.potential?.toFixed(1) ?? "-"}/10\n` +
-            (r.headline_diagnosis ? `\n${r.headline_diagnosis}\n` : "") +
-            (top ? `\nPrioridades:\n${top}\n` : "") +
-            `\nVer informe completo: https://autopilotplan.com/scan`;
-          const url = `https://wa.me/${waDigits}?text=${encodeURIComponent(msg)}`;
-          window.open(url, "_blank", "noopener,noreferrer");
+          const recipient = leadEmail.trim();
+          await supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "scan-diagnosis",
+              recipientEmail: recipient,
+              idempotencyKey: `scan-diagnosis-${recipient}-${Date.now()}`,
+              templateData: {
+                name: leadName.trim().split(" ")[0],
+                physique: r.physique,
+                potential: r.potential,
+                headline: r.headline_diagnosis ?? undefined,
+                priorities: (r.improvements ?? []).slice(0, 5),
+                reportUrl: "https://autopilotplan.com/scan",
+              },
+            },
+          });
+          toast.success("Te hemos enviado el diagnóstico por email ✓");
         }
       } catch (err) {
-        console.warn("wa.me open failed", err);
+        console.warn("send diagnosis email failed", err);
+        toast.error("Diagnóstico listo, pero no pudimos enviarlo por email");
       }
     } catch (e: any) {
       console.error("submitLead", e);
