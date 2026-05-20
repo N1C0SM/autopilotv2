@@ -182,6 +182,22 @@ const Dashboard = () => {
   const hasPlan = paymentStatus === "paid" && planStatus === "plan_ready";
   const isTrainingOnly = subscriptionTier === "training";
   const isTransform = subscriptionTier === "transform";
+  const isFull = subscriptionTier === "full";
+  const canRequestVideoCall = isTransform || isFull;
+
+  const requestVideoCall = async () => {
+    if (!user) return;
+    const { error } = await supabase.from("chat_messages").insert({
+      conversation_user_id: user.id,
+      sender_id: user.id,
+      content: "Hola 👋 Me gustaría agendar una videollamada por Google Meet. ¿Qué horarios tienes disponibles esta semana?",
+    } as any);
+    if (error) {
+      toast.error("No se pudo enviar la solicitud");
+      return;
+    }
+    toast.success("Solicitud enviada. Tu entrenador te enviará un enlace de Google Meet por el chat.");
+  };
 
   const SECTION_LABELS: Record<UserSection, string> = {
     home: "Inicio",
