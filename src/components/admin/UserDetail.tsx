@@ -240,6 +240,8 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete, restricted = false }:
     general_health: "❤️ Salud general",
   };
 
+  const trainingOnly = (profile as any).subscription_tier === "training";
+
   return (
     <div>
       {/* Header */}
