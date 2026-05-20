@@ -26,7 +26,7 @@ export interface Profile {
   subscription_tier?: string | null;
 }
 
-export type AdminSection = "dashboard" | "users" | "trainers" | "reminders" | "exercises" | "rules" | "landing" | "payments";
+export type AdminSection = "dashboard" | "metrics" | "users" | "trainers" | "reminders" | "exercises" | "rules" | "landing" | "payments";
 
 const Admin = () => {
   const { user, signOut } = useAuth();
