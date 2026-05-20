@@ -425,18 +425,20 @@ const Dashboard = () => {
             {/* Chat section */}
             {hasPlan && section === "chat" && (
               <div className="max-w-3xl">
-                {isTransform && (
+                {canRequestVideoCall && (
                   <div className="mb-4 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-5 flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
                       <Video className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-display font-bold text-base mb-1">Videollamada con tu asesor</h3>
+                      <h3 className="font-display font-bold text-base mb-1">Videollamada por Google Meet</h3>
                       <p className="text-xs text-muted-foreground mb-3">
-                        Tu plan Transformación 12 semanas incluye llamada inicial y check-ins semanales. Coordina la próxima por aquí.
+                        {isTransform
+                          ? "Tu plan Transformación 12 semanas incluye llamada inicial y check-ins semanales."
+                          : "Tu plan Completo incluye videollamadas con tu entrenador. Solicita una y te enviará el enlace de Google Meet por aquí."}
                       </p>
-                      <Button size="sm" variant="hero" onClick={() => setSection("chat")}>
-                        Pedir videollamada
+                      <Button size="sm" variant="hero" onClick={requestVideoCall}>
+                        <Video className="w-3.5 h-3.5 mr-1.5" /> Pedir videollamada
                       </Button>
                     </div>
                   </div>
