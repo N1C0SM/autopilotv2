@@ -225,6 +225,11 @@ const Scan = () => {
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const [planApplyState, setPlanApplyState] = useState<"idle" | "applying" | "success" | "error">("idle");
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [autoSaved, setAutoSaved] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   // Funnel state
   const [phase, setPhase] = useState<Phase>("upload");
@@ -242,10 +247,14 @@ const Scan = () => {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("payment_status")
+      .select("payment_status, email, name")
       .eq("user_id", user.id)
       .single()
-      .then(({ data }) => setIsPaid(data?.payment_status === "paid"));
+      .then(({ data }) => {
+        setIsPaid(data?.payment_status === "paid");
+        setUserEmail(data?.email ?? user.email ?? null);
+        setUserName(data?.name ?? null);
+      });
   }, [user]);
 
   const handleShare = async () => {
