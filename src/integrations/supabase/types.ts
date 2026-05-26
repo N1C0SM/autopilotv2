@@ -688,6 +688,69 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_history: {
+        Row: {
+          aesthetic_age: number | null
+          attractiveness: number | null
+          back_photo_url: string | null
+          created_at: string
+          current_photo_url: string | null
+          emailed_to: string | null
+          id: string
+          months_with_plan: number | null
+          months_without_plan: number | null
+          objective_photo_url: string | null
+          percentile: number | null
+          physique: number | null
+          potential: number | null
+          result: Json
+          similarity: number | null
+          style: number | null
+          taken_at: string
+          user_id: string
+        }
+        Insert: {
+          aesthetic_age?: number | null
+          attractiveness?: number | null
+          back_photo_url?: string | null
+          created_at?: string
+          current_photo_url?: string | null
+          emailed_to?: string | null
+          id?: string
+          months_with_plan?: number | null
+          months_without_plan?: number | null
+          objective_photo_url?: string | null
+          percentile?: number | null
+          physique?: number | null
+          potential?: number | null
+          result: Json
+          similarity?: number | null
+          style?: number | null
+          taken_at?: string
+          user_id: string
+        }
+        Update: {
+          aesthetic_age?: number | null
+          attractiveness?: number | null
+          back_photo_url?: string | null
+          created_at?: string
+          current_photo_url?: string | null
+          emailed_to?: string | null
+          id?: string
+          months_with_plan?: number | null
+          months_without_plan?: number | null
+          objective_photo_url?: string | null
+          percentile?: number | null
+          physique?: number | null
+          potential?: number | null
+          result?: Json
+          similarity?: number | null
+          style?: number | null
+          taken_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scan_leads: {
         Row: {
           consent: boolean

@@ -225,6 +225,11 @@ const Scan = () => {
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const [planApplyState, setPlanApplyState] = useState<"idle" | "applying" | "success" | "error">("idle");
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [autoSaved, setAutoSaved] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   // Funnel state
   const [phase, setPhase] = useState<Phase>("upload");
@@ -242,10 +247,14 @@ const Scan = () => {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("payment_status")
+      .select("payment_status, email, name")
       .eq("user_id", user.id)
       .single()
-      .then(({ data }) => setIsPaid(data?.payment_status === "paid"));
+      .then(({ data }) => {
+        setIsPaid(data?.payment_status === "paid");
+        setUserEmail(data?.email ?? user.email ?? null);
+        setUserName(data?.name ?? null);
+      });
   }, [user]);
 
   const handleShare = async () => {
@@ -425,7 +434,11 @@ const Scan = () => {
           if (r.inferred_goal || r.inferred_focus || r.inferred_specific_goals?.length) {
             applyScanToPlan(r);
           }
+          saveAndEmailScan(r, { silent: false });
         }, 400);
+      } else if (user) {
+        // Logged-in but not paid: still save history + email (no plan apply)
+        saveAndEmailScan(r, { silent: true });
       }
       // En caso contrario, el efecto del paso "analyzing" hará la transición a "lead"
     } catch (e: any) {
@@ -591,6 +604,94 @@ const Scan = () => {
       setPlanApplyState("error");
       toast.error("No se pudo aplicar al plan automáticamente");
     }
+  };
+
+  // Upload a dataURL photo to the user's progress-photos folder and return public URL.
+  const uploadDataUrl = async (dataUrl: string, suffix: string): Promise<string | null> => {
+    if (!user) return null;
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
+      const path = `${user.id}/scan_${Date.now()}_${suffix}.${ext}`;
+      const { error } = await supabase.storage.from("progress-photos").upload(path, blob, { upsert: false, contentType: blob.type });
+      if (error) return null;
+      const { data } = supabase.storage.from("progress-photos").getPublicUrl(path);
+      return data.publicUrl;
+    } catch { return null; }
+  };
+
+  // For logged-in users: save scan to history + auto-email diagnosis to account email
+  const saveAndEmailScan = async (r: Result, opts: { silent?: boolean } = {}) => {
+    if (!user || !userEmail) return;
+    setAutoSaving(true);
+    try {
+      const [frontUrl, backUrl, objUrl] = await Promise.all([
+        currentImg ? uploadDataUrl(currentImg, "front") : Promise.resolve(null),
+        backImg ? uploadDataUrl(backImg, "back") : Promise.resolve(null),
+        objectiveImg ? uploadDataUrl(objectiveImg, "objective") : Promise.resolve(null),
+      ]);
+
+      const { error: insErr } = await (supabase as any).from("scan_history").insert({
+        user_id: user.id,
+        current_photo_url: frontUrl,
+        back_photo_url: backUrl,
+        objective_photo_url: objUrl,
+        result: r,
+        attractiveness: r.attractiveness,
+        potential: r.potential,
+        physique: r.physique,
+        style: r.style,
+        similarity: r.similarity,
+        percentile: r.percentile ?? null,
+        aesthetic_age: r.aesthetic_age ?? null,
+        months_with_plan: r.months_with_plan ?? r.estimated_months ?? null,
+        months_without_plan: r.months_without_plan ?? null,
+        emailed_to: userEmail,
+      });
+      if (insErr) console.warn("scan_history insert", insErr);
+
+      const firstName = (userName || user.email?.split("@")[0] || "atleta").split(" ")[0];
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "scan-diagnosis",
+          recipientEmail: userEmail,
+          idempotencyKey: `scan-diagnosis-${user.id}-${Date.now()}`,
+          templateData: {
+            name: firstName,
+            attractiveness: r.attractiveness,
+            physique: r.physique,
+            potential: r.potential,
+            style: r.style,
+            similarity: r.similarity,
+            percentile: r.percentile,
+            aestheticAge: r.aesthetic_age,
+            monthsWithPlan: r.months_with_plan ?? r.estimated_months,
+            monthsWithoutPlan: r.months_without_plan,
+            headline: r.headline_diagnosis ?? undefined,
+            bottleneck: r.bottleneck ?? undefined,
+            summary: r.summary ?? undefined,
+            priorities: (r.improvements ?? []).slice(0, 5),
+            lockedInsights: (r.locked_insights ?? []).slice(0, 3),
+            photoUrl: frontUrl ?? undefined,
+            reportUrl: "https://autopilotplan.com/dashboard",
+          },
+        },
+      });
+      setAutoSaved(true);
+      if (!opts.silent) toast.success(`Diagnóstico enviado a ${userEmail} ✓`);
+    } catch (e) {
+      console.warn("saveAndEmailScan failed", e);
+      if (!opts.silent) toast.error("No se pudo enviar el email");
+    } finally {
+      setAutoSaving(false);
+    }
+  };
+
+  const resendByEmail = async () => {
+    if (!result) return;
+    setEmailSending(true);
+    await saveAndEmailScan(result);
+    setEmailSending(false);
   };
 
   const reset = () => {
@@ -1046,6 +1147,18 @@ const Scan = () => {
                   <p className="text-muted-foreground max-w-2xl mx-auto">{result.summary}</p>
                 )}
                 <div className="mt-5 flex justify-center">
+                  {user && userEmail && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={resendByEmail}
+                      disabled={emailSending || autoSaving}
+                      className="hover-scale mr-2"
+                    >
+                      {emailSending || autoSaving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Mail className="w-4 h-4 mr-1" />}
+                      {autoSaved ? "Reenviar por email" : "Enviar por email"}
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
