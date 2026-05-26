@@ -1147,6 +1147,18 @@ const Scan = () => {
                   <p className="text-muted-foreground max-w-2xl mx-auto">{result.summary}</p>
                 )}
                 <div className="mt-5 flex justify-center">
+                  {user && userEmail && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={resendByEmail}
+                      disabled={emailSending || autoSaving}
+                      className="hover-scale mr-2"
+                    >
+                      {emailSending || autoSaving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Mail className="w-4 h-4 mr-1" />}
+                      {autoSaved ? "Reenviar por email" : "Enviar por email"}
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
