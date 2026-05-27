@@ -175,18 +175,16 @@ const AdminMetrics = () => {
   useEffect(() => { load(); }, []);
 
   const resetMetrics = async () => {
-    if (!confirm("¿Resetear métricas? Se borrarán TODOS los scans anónimos, leads de mini-plan y log de emails. Los usuarios registrados y sus datos NO se tocan. Esta acción es irreversible.")) return;
+    if (!confirm("¿Resetear TODAS las métricas a 0? Se borrarán: scans, leads, log de emails, completados, logs de entrenos, pesos, PRs, fotos de progreso, mensajes de chat, notificaciones y recordatorios. Las cuentas de usuario NO se borran. Esta acción es irreversible.")) return;
     setResetting(true);
     try {
-      await Promise.all([
-        supabase.from("scan_leads").delete().not("id", "is", null),
-        supabase.from("leads").delete().not("id", "is", null),
-        supabase.from("email_send_log").delete().not("id", "is", null),
-      ]);
-      toast.success("Métricas reseteadas");
+      const { data, error } = await supabase.functions.invoke("admin-reset-metrics");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Métricas reseteadas a 0");
       await load();
     } catch (e: any) {
-      toast.error("Error al resetear: " + e.message);
+      toast.error("Error al resetear: " + (e.message || e));
     } finally {
       setResetting(false);
     }
