@@ -244,6 +244,21 @@ const UserDetail = ({ profile, onBack, onUpdate, onDelete, restricted = false, i
 
   const trainingOnly = (profile as any).subscription_tier === "training";
 
+  // ─── Reduced view for trainers / admins ───
+  if (isTargetTrainer || isTargetAdmin) {
+    return (
+      <StaffDetail
+        profile={profile}
+        onBack={onBack}
+        onDelete={onDelete}
+        kind={isTargetAdmin ? "admin" : "trainer"}
+        restricted={restricted}
+        deleting={deleting}
+        setDeleting={setDeleting}
+      />
+    );
+  }
+
   return (
     <div>
       {/* Header */}
