@@ -593,14 +593,13 @@ function StaffDetail({ profile, onBack, onDelete, kind, restricted, deleting, se
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const tasks: Promise<any>[] = [];
+      let results: any[] = [];
       if (kind === "trainer") {
-        tasks.push(
-          supabase.from("trainer_profiles").select("*").eq("user_id", profile.user_id).maybeSingle(),
-          supabase.from("trainer_assignments").select("user_id").eq("trainer_id", profile.user_id),
-        );
+        results = await Promise.all([
+          supabase.from("trainer_profiles").select("*").eq("user_id", profile.user_id).maybeSingle() as any,
+          supabase.from("trainer_assignments").select("user_id").eq("trainer_id", profile.user_id) as any,
+        ]);
       }
-      const results = await Promise.all(tasks);
       if (kind === "trainer") {
         const tp = results[0]?.data;
         const assignments = results[1]?.data || [];
