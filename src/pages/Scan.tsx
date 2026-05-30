@@ -550,6 +550,7 @@ const Scan = () => {
         const r = pendingResult;
         if (r) {
           const recipient = leadEmail.trim();
+          const cardImageUrl = await uploadScanCard();
           await supabase.functions.invoke("send-transactional-email", {
             body: {
               templateName: "scan-diagnosis",
@@ -571,6 +572,7 @@ const Scan = () => {
                 summary: r.summary ?? undefined,
                 priorities: (r.improvements ?? []).slice(0, 5),
                 reportUrl: "https://autopilotplan.com/scan",
+                cardImageUrl: cardImageUrl ?? undefined,
               },
             },
           });
