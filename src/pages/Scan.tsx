@@ -688,6 +688,7 @@ const Scan = () => {
       if (insErr) console.warn("scan_history insert", insErr);
 
       const firstName = (userName || user.email?.split("@")[0] || "atleta").split(" ")[0];
+      const cardImageUrl = await uploadScanCard();
       await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "scan-diagnosis",
@@ -711,6 +712,7 @@ const Scan = () => {
             lockedInsights: (r.locked_insights ?? []).slice(0, 3),
             photoUrl: frontUrl ?? undefined,
             reportUrl: "https://autopilotplan.com/dashboard",
+            cardImageUrl: cardImageUrl ?? undefined,
           },
         },
       });
