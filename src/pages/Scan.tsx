@@ -129,12 +129,14 @@ const Dropzone = ({
   image,
   onFile,
   onClear,
+  placeholder,
 }: {
   label: string;
   hint: string;
   image: string | null;
   onFile: (f: File) => void;
   onClear: () => void;
+  placeholder?: string;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
@@ -168,12 +170,21 @@ const Dropzone = ({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="relative aspect-[3/4] w-full rounded-2xl border-2 border-dashed border-border hover:border-primary/60 hover:bg-card/40 transition-all flex flex-col items-center justify-center gap-3 p-6 group"
+          className="relative aspect-[3/4] w-full rounded-2xl border-2 border-dashed border-border hover:border-primary/60 hover:bg-card/40 transition-all flex flex-col items-center justify-center gap-3 p-6 group overflow-hidden"
         >
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:scale-110 transition">
+          {placeholder && (
+            <img
+              src={placeholder}
+              alt=""
+              aria-hidden
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-contain opacity-15 pointer-events-none select-none"
+            />
+          )}
+          <div className="relative w-14 h-14 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:scale-110 transition">
             <Upload className="w-6 h-6 text-primary" />
           </div>
-          <div className="text-center">
+          <div className="relative text-center">
             <div className="font-semibold text-sm">{label}</div>
             <div className="text-xs text-muted-foreground mt-1">{hint}</div>
           </div>
