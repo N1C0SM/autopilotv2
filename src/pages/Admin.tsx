@@ -14,6 +14,7 @@ import TrainingRulesEditor from "@/components/admin/TrainingRulesEditor";
 import PaymentReminders from "@/components/admin/PaymentReminders";
 import SiteContentEditor from "@/components/admin/SiteContentEditor";
 import TrainerManagement from "@/components/admin/TrainerManagement";
+import EmailTemplatesEditor from "@/components/admin/EmailTemplatesEditor";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export interface Profile {
@@ -27,7 +28,7 @@ export interface Profile {
   subscription_tier?: string | null;
 }
 
-export type AdminSection = "dashboard" | "metrics" | "users" | "trainers" | "reminders" | "exercises" | "rules" | "landing" | "payments";
+export type AdminSection = "dashboard" | "metrics" | "users" | "trainers" | "reminders" | "exercises" | "rules" | "landing" | "payments" | "emails";
 
 const Admin = () => {
   const { user, signOut } = useAuth();
@@ -251,6 +252,12 @@ const Admin = () => {
             {section === "payments" && (
               <div className="max-w-2xl space-y-6">
                 <PaymentModeToggle />
+              </div>
+            )}
+
+            {section === "emails" && (
+              <div className="max-w-4xl">
+                <EmailTemplatesEditor />
               </div>
             )}
 
