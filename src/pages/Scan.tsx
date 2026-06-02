@@ -556,13 +556,6 @@ const Scan = () => {
       toast.error("Introduce tu nombre");
       return;
     }
-    const country = COUNTRIES.find((c) => c.code === leadCountry) ?? COUNTRIES[0];
-    const localDigits = leadWhatsapp.replace(/\D+/g, "");
-    if (localDigits && !/^[0-9]{6,15}$/.test(localDigits)) {
-      toast.error("WhatsApp no válido (déjalo en blanco si no lo usas)");
-      return;
-    }
-    const fullWa = localDigits ? `${country.dial}${localDigits}` : "";
     if (!leadEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadEmail.trim())) {
       toast.error("Introduce un email válido");
       return;
@@ -576,7 +569,7 @@ const Scan = () => {
       const { error } = await (supabase as any).from("scan_leads").insert({
         user_id: user?.id ?? null,
         name: leadName.trim().slice(0, 100),
-        whatsapp: fullWa.slice(0, 20) || null,
+        whatsapp: null,
         email: leadEmail.trim().slice(0, 255),
         goal: goal ?? "unspecified",
         consent: leadConsent,
@@ -1093,45 +1086,6 @@ const Scan = () => {
                     placeholder="Tu nombre"
                     className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition"
                   />
-                </div>
-                <div>
-                  <label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                    WhatsApp <span className="text-muted-foreground/60 normal-case tracking-normal">(opcional)</span>
-                  </label>
-                  <div className="flex gap-2">
-                    <div className="relative shrink-0">
-                      <select
-                        value={leadCountry}
-                        onChange={(e) => setLeadCountry(e.target.value)}
-                        aria-label="País"
-                        className="appearance-none bg-background border border-border rounded-xl pl-3 pr-7 py-3 text-sm focus:outline-none focus:border-primary transition cursor-pointer"
-                      >
-                        {COUNTRIES.map((c) => (
-                          <option key={c.code} value={c.code}>
-                            {c.flag} {c.dial} {c.name}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
-                        ▾
-                      </span>
-                    </div>
-                    <div className="relative flex-1">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input
-                        type="tel"
-                        inputMode="numeric"
-                        value={leadWhatsapp}
-                        onChange={(e) => setLeadWhatsapp(e.target.value.replace(/[^\d\s]/g, ""))}
-                        maxLength={20}
-                        placeholder="600 000 000"
-                        className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-primary transition"
-                      />
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-1.5">
-                    Opcional. Si lo dejas, podremos contactarte por WhatsApp.
-                  </p>
                 </div>
                 <div>
                   <label className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5 block">
