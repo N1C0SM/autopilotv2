@@ -237,6 +237,7 @@ export default function EmailTemplatesEditor() {
       if (error) throw error;
       setHtml(data.html ?? "");
       setSubject(data.subject ?? "");
+      setVisualHtml(extractInner(data.html ?? ""));
       toast.success("HTML por defecto cargado");
     } catch (e: any) {
       toast.error("Error: " + (e?.message ?? ""));
