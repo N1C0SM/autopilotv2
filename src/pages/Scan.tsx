@@ -1313,11 +1313,11 @@ const Scan = () => {
                         A tu objetivo
                       </div>
                       <div className="text-4xl font-bold font-display text-gradient">
-                        {result.months_with_plan}m
+                        {Math.max(1, result.months_with_plan)}m
                       </div>
                       {result.months_without_plan !== undefined && (
                         <div className="text-[11px] text-muted-foreground mt-1">
-                          vs <span className="line-through">{result.months_without_plan}m</span> sin plan
+                          vs <span className="line-through">{Math.max(2, result.months_without_plan)}m</span> sin plan
                         </div>
                       )}
                     </motion.div>
