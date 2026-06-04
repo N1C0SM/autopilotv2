@@ -746,6 +746,7 @@ const Scan = () => {
             photoUrl: frontUrl ?? undefined,
             reportUrl: "https://autopilotplan.com/dashboard",
             cardImageUrl: cardImageUrl ?? undefined,
+            SCAN_IMAGE_URL: cardImageUrl ?? undefined,
           },
         },
       });
