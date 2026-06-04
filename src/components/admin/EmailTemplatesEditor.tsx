@@ -298,10 +298,19 @@ export default function EmailTemplatesEditor() {
     previewWinRef.current = window.open(url, `email-preview-${selected}`);
   };
 
+  // Interpolate {{vars}} with sample data so the in-page preview doesn't show
+  // raw placeholders. Same shape as the edge-function interpolator.
+  const interpolate = (str: string) =>
+    str.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key) => {
+      const val = key.split(".").reduce((acc: any, k: string) => acc?.[k], current.sampleData);
+      return val == null ? "" : String(val);
+    });
+
   // Live preview HTML for the side-by-side iframe (always reflects current edits).
-  const livePreviewHtml = mode === "visual"
+  const rawLive = mode === "visual"
     ? wrapVisualHtml(visualHtml || "<p style='color:#999'>Empieza a escribir…</p>", subject)
     : html;
+  const livePreviewHtml = interpolate(rawLive);
 
   const loadDefault = async () => {
     if (!confirm("¿Cargar el HTML por defecto en el editor? Se sobrescribirá lo que tengas escrito (no se guardará hasta que pulses Guardar).")) return;
