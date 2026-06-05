@@ -101,7 +101,7 @@ type Result = {
   physique: number;
   style: number;
   similarity: number;
-  estimated_months: number;
+  estimated_months?: number;
   improvements: { label: string; priority: "Alta" | "Media" | "Baja" }[];
   summary: string;
   percentile?: number;
@@ -115,6 +115,13 @@ type Result = {
   inferred_intensity?: number;
   inferred_specific_goals?: string[];
   locked_insights?: { label: string; teaser: string }[];
+};
+
+type GoalPhysique = {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
 };
 
 const fileToDataUrl = (file: File): Promise<string> =>
