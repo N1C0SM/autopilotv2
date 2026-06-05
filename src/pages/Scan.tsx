@@ -396,7 +396,7 @@ const Scan = () => {
       const { data, error } = await supabase.functions.invoke("generate-future-self", {
         body: {
           currentImage: currentImg,
-          months: result.months_with_plan ?? result.estimated_months,
+          months: result.months_with_plan ?? result.estimated_months ?? 6,
           goal: result.inferred_goal,
         },
       });
