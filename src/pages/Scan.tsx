@@ -1561,7 +1561,9 @@ const Scan = () => {
                   <div className="bg-card/60 backdrop-blur border border-primary/30 rounded-2xl p-4 relative overflow-hidden">
                     <div className="text-[10px] uppercase tracking-widest text-primary mb-3 flex items-center gap-1.5">
                       {isPaid ? <Sparkles className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                      Tu yo en {result.months_with_plan ?? result.estimated_months} meses
+                      {result.months_with_plan ?? result.estimated_months
+                        ? <>Tu yo en {result.months_with_plan ?? result.estimated_months} meses</>
+                        : <>Tu yo transformado</>}
                     </div>
                     <div className="relative aspect-[3/2] rounded-xl overflow-hidden bg-secondary">
                       {futureImg ? (
