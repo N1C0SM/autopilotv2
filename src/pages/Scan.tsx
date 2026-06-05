@@ -250,6 +250,8 @@ const Scan = () => {
   const [emailSending, setEmailSending] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [goalPresets, setGoalPresets] = useState<GoalPhysique[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
 
   // Funnel state
   const [phase, setPhase] = useState<Phase>("upload");
@@ -276,6 +278,16 @@ const Scan = () => {
         setUserName(data?.name ?? null);
       });
   }, [user]);
+
+  // Cargar físicos objetivo definidos por el admin
+  useEffect(() => {
+    supabase
+      .from("goal_physiques")
+      .select("id, name, description, image_url")
+      .eq("visible", true)
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => setGoalPresets((data as GoalPhysique[]) ?? []));
+  }, []);
 
   const handleShare = async () => {
     if (!shareRef.current) return;
