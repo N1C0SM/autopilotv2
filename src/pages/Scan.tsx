@@ -1507,7 +1507,7 @@ const Scan = () => {
                       <div className="mt-3 text-[11px] text-muted-foreground">
                         Tiempo estimado:{" "}
                         <span className="text-foreground font-semibold">
-                          ~{result.estimated_months} meses
+                          ~{result.estimated_months ?? result.months_with_plan ?? "—"} meses
                         </span>{" "}
                         con plan personalizado y constancia.
                       </div>
