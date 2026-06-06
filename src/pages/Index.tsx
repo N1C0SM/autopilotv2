@@ -25,6 +25,7 @@ import TrainersSection from "@/components/TrainersSection";
 import PostScanFlow from "@/components/PostScanFlow";
 import PremiumTransformation from "@/components/PremiumTransformation";
 import ComparisonTable from "@/components/ComparisonTable";
+import { Award, Dumbbell, Calendar, MessageSquare, Target } from "lucide-react";
 import type { PlanKey } from "@/config/tiers";
 import {
   Accordion,
@@ -178,8 +179,8 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-[2.4rem] sm:text-5xl lg:text-6xl font-bold font-display leading-[1.05] mb-6 tracking-tight"
             >
-              El cuerpo que quieres.{" "}
-              <span className="text-gradient">Sin seguir improvisando.</span>
+              De cero a un físico visible.{" "}
+              <span className="text-gradient">Sin perderte entre apps.</span>
             </motion.h1>
 
             <motion.p
@@ -188,7 +189,7 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-base sm:text-lg text-muted-foreground mb-10 max-w-xl mx-auto leading-relaxed"
             >
-              Empieza con un diagnóstico físico gratuito. La IA detecta tus prioridades y un entrenador real convierte ese diagnóstico en un plan de entrenamiento y nutrición adaptado a ti.
+              Para hombres de 25 a 40 años que quieren ganar músculo de verdad. Un entrenador real diseña tu entrenamiento y nutrición, y los ajusta cada semana contigo por chat.
             </motion.p>
 
             <motion.div
