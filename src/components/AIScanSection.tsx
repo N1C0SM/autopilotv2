@@ -72,13 +72,12 @@ const AIScanSection = () => {
           </motion.div>
 
           <h2 className="text-3xl sm:text-4xl font-bold font-display leading-[1.1] mb-4">
-            Antes de empezar,{" "}
-            <span className="text-gradient">te leemos el cuerpo</span>
+            Un diagnóstico guiado por tu entrenador,{" "}
+            <span className="text-gradient">no por una app suelta</span>
           </h2>
 
           <p className="text-base text-muted-foreground leading-relaxed">
-            Sube una foto. La IA detecta tus puntos débiles en 60s.
-            Después tu entrenador construye el plan que los corrige.
+            La IA hace una primera lectura en 60s para ahorrar tiempo. Después soy yo quien revisa el resultado contigo y diseña el plan. La herramienta no sustituye al entrenador, lo prepara.
           </p>
         </div>
 
@@ -199,9 +198,9 @@ const AIScanSection = () => {
                   1
                 </div>
                 <div>
-                  <div className="font-display font-semibold text-sm mb-1">La IA detecta qué falla</div>
+                  <div className="font-display font-semibold text-sm mb-1">Primera lectura con IA</div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Postura, simetría, prioridades visuales y composición corporal estimada.
+                    Solo para identificar prioridades visibles y ahorrarnos preguntas obvias. Es la antesala, no el plan.
                   </p>
                 </div>
               </div>
@@ -215,9 +214,9 @@ const AIScanSection = () => {
                   2
                 </div>
                 <div>
-                  <div className="font-display font-semibold text-sm mb-1">Tu entrenador lo convierte en plan</div>
+                  <div className="font-display font-semibold text-sm mb-1">Tu entrenador revisa y construye el plan</div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Yo leo tu diagnóstico, hablo contigo y construyo el entrenamiento + nutrición que cierra esa brecha.
+                    Yo leo tu diagnóstico, hablo contigo y diseño el entrenamiento y la nutrición. Aquí es donde empieza el trabajo real.
                   </p>
                 </div>
               </div>
