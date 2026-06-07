@@ -57,25 +57,25 @@
 
 @layer base {
   :root {
-    --background: 0 0% 4.3%;
+    --background: 0 0% 3.5%;
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 10.2%;
+    --card: 0 0% 7.5%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 10.2%;
+    --popover: 0 0% 8%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 48 100% 50%;
+    --primary: 42 58% 54%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 63.9%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 40 8% 65%;
 
-    --accent: 48 100% 50%;
+    --accent: 42 65% 68%;
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84.2% 60.2%;
@@ -84,28 +84,30 @@
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 48 100% 50%;
+    --border: 40 6% 16%;
+    --input: 40 6% 18%;
+    --ring: 42 58% 54%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 6%;
+    --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 48 100% 50%;
+    --sidebar-primary: 42 58% 54%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 48 100% 50%;
+    --sidebar-border: 40 6% 16%;
+    --sidebar-ring: 42 58% 54%;
 
-    --font-display: 'Space Grotesk', sans-serif;
+    --font-display: 'Instrument Serif', 'Space Grotesk', serif;
+    --font-sans: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
 
-    --gradient-hero: linear-gradient(135deg, hsl(48 100% 50%) 0%, hsl(40 100% 45%) 100%);
-    --shadow-glow: 0 0 30px hsl(48 100% 50% / 0.2);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
-    --shadow-premium: 0 20px 60px -20px hsl(48 100% 50% / 0.15), 0 0 0 1px hsl(0 0% 100% / 0.04);
+    --gradient-hero: linear-gradient(135deg, hsl(42 65% 68%) 0%, hsl(38 55% 48%) 100%);
+    --gradient-gold: linear-gradient(180deg, hsl(44 70% 72%) 0%, hsl(40 55% 50%) 100%);
+    --shadow-glow: 0 0 40px hsl(42 58% 54% / 0.18);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
+    --shadow-premium: 0 30px 80px -30px hsl(42 58% 54% / 0.25), 0 0 0 1px hsl(42 30% 70% / 0.06);
   }
 }
 
@@ -117,10 +119,15 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    font-weight: 400;
   }
 }
 
@@ -130,6 +137,7 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    font-style: italic;
   }
 
   .glow-shadow {
@@ -145,7 +153,24 @@
   }
 
   .grain {
-    background-image: radial-gradient(hsl(0 0% 100% / 0.02) 1px, transparent 1px);
-    background-size: 3px 3px;
+    background-image: radial-gradient(hsl(42 30% 70% / 0.025) 1px, transparent 1px);
+    background-size: 4px 4px;
+  }
+
+  .hairline {
+    border-color: hsl(42 30% 70% / 0.08);
+  }
+
+  .gold-text {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .serif-display {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
   }
 }
