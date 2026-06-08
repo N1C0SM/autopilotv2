@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { toPng } from "html-to-image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   Upload,
   ScanLine,
@@ -272,6 +272,18 @@ const ScoreCard = ({ label, value, highlight }: { label: string; value: number; 
 const Scan = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { userId: routeUserId } = useParams<{ userId?: string }>();
+  const location = useLocation();
+
+  // Redirige usuarios logueados desde /scan al espacio personal /scan/user/:id.
+  useEffect(() => {
+    if (!user) return;
+    if (!routeUserId && location.pathname === "/scan") {
+      navigate(`/scan/user/${user.id}`, { replace: true });
+    } else if (routeUserId && routeUserId !== user.id) {
+      navigate(`/scan/user/${user.id}`, { replace: true });
+    }
+  }, [user, routeUserId, location.pathname, navigate]);
   const [isPaid, setIsPaid] = useState(false);
   const [currentImg, setCurrentImg] = useState<string | null>(null);
   const [backImg, setBackImg] = useState<string | null>(null);
@@ -858,9 +870,13 @@ const Scan = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <Helmet>
-        <title>AI Body Scan · Autopilot</title>
+        <title>{routeUserId ? "Mi progreso · AI Scan" : "AI Body Scan · Autopilot"}</title>
         <meta name="description" content="Sube una foto y recibe un análisis IA de tu físico con recomendaciones personalizadas." />
-        <link rel="canonical" href="https://autopilotplan.com/scan" />
+        {routeUserId ? (
+          <meta name="robots" content="noindex,nofollow" />
+        ) : (
+          <link rel="canonical" href="https://autopilotplan.com/scan" />
+        )}
         <meta property="og:title" content="AI Body Scan · Autopilot" />
         <meta property="og:description" content="Análisis IA gratuito de tu físico con recomendaciones personalizadas." />
         <meta property="og:url" content="https://autopilotplan.com/scan" />

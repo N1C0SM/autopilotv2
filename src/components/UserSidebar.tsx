@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Home, Dumbbell, Apple, MessageCircle, Settings, LogOut, Sparkles, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type UserSection = "home" | "training" | "nutrition" | "chat" | "settings";
 
@@ -36,6 +37,7 @@ const UserSidebar = ({ section, onNavigate, onSignOut, profileName, profileAvata
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <Sidebar collapsible="icon">
@@ -83,11 +85,11 @@ const UserSidebar = ({ section, onNavigate, onSignOut, profileName, profileAvata
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigate("/scan")}
+                  onClick={() => navigate(user ? `/scan/user/${user.id}` : "/scan")}
                   className="cursor-pointer text-primary hover:bg-sidebar-accent/50"
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  {!collapsed && <span>AI Physique Scan</span>}
+                  {!collapsed && <span>Mi progreso · AI Scan</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
