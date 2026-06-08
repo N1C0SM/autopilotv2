@@ -277,13 +277,24 @@ const Scan = () => {
 
   // Redirige usuarios logueados desde /scan al espacio personal /scan/user/:id.
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      // Si intenta acceder al espacio personal sin sesión, mándalo a login.
+      if (routeUserId) {
+        navigate(`/login?next=${encodeURIComponent(location.pathname)}`, { replace: true });
+      }
+      return;
+    }
     if (!routeUserId && location.pathname === "/scan") {
       navigate(`/scan/user/${user.id}`, { replace: true });
     } else if (routeUserId && routeUserId !== user.id) {
+      // Autorización: solo puedes ver tu propio progreso.
       navigate(`/scan/user/${user.id}`, { replace: true });
     }
   }, [user, routeUserId, location.pathname, navigate]);
+
+  // Bloquea el render mientras se resuelve la autorización para evitar fugas de datos ajenos.
+  const isUnauthorized = routeUserId && user && routeUserId !== user.id;
+  const isAwaitingAuth = routeUserId && !user;
   const [isPaid, setIsPaid] = useState(false);
   const [currentImg, setCurrentImg] = useState<string | null>(null);
   const [backImg, setBackImg] = useState<string | null>(null);
@@ -866,6 +877,14 @@ const Scan = () => {
     setLeadEmail("");
     setLeadConsent(false);
   };
+
+  if (isUnauthorized || isAwaitingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground text-sm">
+        {isUnauthorized ? "Solo puedes ver tu propio progreso. Redirigiendo…" : "Verificando acceso…"}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
