@@ -606,8 +606,14 @@ const Scan = () => {
           }
           saveAndEmailScan(r, { silent: false });
         }, 400);
+      } else if (user && isPaid) {
+        // Logueado y pagado pero en /scan general: muestra resultado sin tocar el plan
+        setTimeout(() => {
+          setResult(r);
+          saveAndEmailScan(r, { silent: true });
+        }, 400);
       } else if (user) {
-        // Logged-in but not paid: still save history + email (no plan apply)
+        // Logueado pero no pagado: guarda histórico/email, no aplica plan
         saveAndEmailScan(r, { silent: true });
       }
       // En caso contrario, el efecto del paso "analyzing" hará la transición a "lead"
