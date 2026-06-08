@@ -1335,6 +1335,7 @@ const Scan = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
+              {user && <ScanHistoryStrip userId={user.id} />}
               <div className="text-center mb-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-success/30 bg-success/10 mb-4">
                   <CheckCircle2 className="w-3.5 h-3.5 text-success" />
@@ -2044,6 +2045,17 @@ const Scan = () => {
               </motion.div>
               ) : (
                 <div className="max-w-2xl mx-auto mt-12 flex flex-col sm:flex-row gap-3 justify-center">
+                  {user && planApplyState !== "success" && planApplyState !== "applying" && (
+                    <Button
+                      variant="hero"
+                      size="xl"
+                      onClick={() => applyScanToPlan(result)}
+                      disabled={planApplyState === "applying"}
+                    >
+                      Aplicar a mi plan
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button variant="hero" size="xl" onClick={() => navigate("/dashboard")}>
                     Volver al dashboard
                     <ArrowRight className="w-4 h-4" />
