@@ -947,9 +947,9 @@ const Scan = () => {
 
       {/* Header */}
       <header className="container mx-auto max-w-6xl px-4 py-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition">
+        <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition">
           <ArrowLeft className="w-4 h-4" />
-          Volver
+          {user ? "Volver al dashboard" : "Volver"}
         </Link>
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10">
           <Sparkles className="w-3.5 h-3.5 text-primary" />
