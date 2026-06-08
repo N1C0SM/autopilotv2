@@ -45,6 +45,49 @@ const AnalysisSchema = z.object({
     label: z.string(),
     teaser: z.string(),
   })).max(3).optional(),
+
+  // ===== Capa clínica nueva — diferencia clara vs ChatGPT =====
+  body_composition: z.object({
+    body_fat_pct: z.number().min(3).max(50).optional(),
+    lean_mass_kg: z.number().min(20).max(120).optional(),
+    weight_kg: z.number().min(35).max(180).optional(),
+    somatotype: z.string().optional(),      // ej. "ecto-mesomorfo"
+    frame_size: z.string().optional(),      // "pequeño" | "medio" | "grande"
+    fat_distribution: z.string().optional(),// "abdominal" | "uniforme" | "tren inferior"…
+  }).partial().optional(),
+
+  muscle_breakdown: z.array(z.object({
+    group: z.string(),                      // "Pecho", "Deltoides", "Espalda", …
+    score: z.number().min(0).max(10),
+    verdict: z.string(),                    // una frase específica
+  })).max(10).optional(),
+
+  posture: z.object({
+    issues: z.array(z.string()).max(5).optional(),
+    severity: z.string().optional(),        // "leve" | "moderada" | "severa"
+    note: z.string().optional(),
+  }).partial().optional(),
+
+  proportions: z.object({
+    shoulder_to_waist_ratio: z.number().min(1).max(2).optional(), // ~1.4–1.7 ideal
+    v_taper_score: z.number().min(0).max(10).optional(),
+    symmetry_score: z.number().min(0).max(10).optional(),
+    upper_lower_balance: z.string().optional(), // "tren superior dominante"…
+    weakest_link: z.string().optional(),
+  }).partial().optional(),
+
+  genetic_markers: z.array(z.string()).max(5).optional(),
+
+  protocol: z.object({
+    training_days_per_week: z.number().min(2).max(7).optional(),
+    weekly_sets_priority: z.number().min(8).max(30).optional(),
+    weekly_sets_maintenance: z.number().min(4).max(20).optional(),
+    calorie_adjustment_kcal: z.number().min(-1000).max(1000).optional(),
+    protein_g_per_kg: z.number().min(1).max(3).optional(),
+    cardio_minutes_per_week: z.number().min(0).max(600).optional(),
+    key_lifts: z.array(z.string()).max(6).optional(),
+    avoid: z.array(z.string()).max(4).optional(),
+  }).partial().optional(),
 });
 
 const createLovableAiGatewayProvider = (lovableApiKey: string) =>
