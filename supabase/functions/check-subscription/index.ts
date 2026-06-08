@@ -152,6 +152,18 @@ serve(async (req) => {
     });
   } catch (error) {
     logStep("ERROR", { message: error.message });
+    // Handle Stripe rate limit gracefully so the client doesn't crash
+    const msg = String(error?.message || "");
+    if (msg.includes("rate limit")) {
+      return new Response(JSON.stringify({
+        error: "STRIPE_RATE_LIMIT_EXCEEDED",
+        fallback: true,
+        subscribed: false,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
