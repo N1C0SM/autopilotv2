@@ -1,7 +1,6 @@
-import * as React from 'npm:react@18.3.1'
-import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
+import { renderTemplate } from '../_shared/transactional-email-templates/render.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,45 +30,20 @@ Deno.serve(async (req) => {
     const tpl = TEMPLATES[templateName]
     if (!tpl) return new Response(JSON.stringify({ error: 'template_not_found', available: Object.keys(TEMPLATES) }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-    const data = { ...(tpl.previewData ?? {}), ...templateData }
-    const interpolate = (str: string) =>
-      str.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key) => {
-        const val = key.split('.').reduce((acc: any, k: string) => acc?.[k], data)
-        return val == null ? '' : String(val)
-      })
+    // Fetch persisted override once (shared by both html and subject paths)
+    const { data: override } = await supabase
+      .from('email_template_overrides')
+      .select('subject, html, enabled')
+      .eq('template_name', templateName)
+      .maybeSingle()
 
-    let html: string
-    if (customHtml) {
-      html = interpolate(customHtml)
-    } else {
-      // Match send-transactional-email behavior: prefer the admin override
-      // (email_template_overrides) when enabled so the preview is literally
-      // what gets sent. Fall back to rendering the React component.
-      const { data: override } = await supabase
-        .from('email_template_overrides')
-        .select('subject, html, enabled')
-        .eq('template_name', templateName)
-        .maybeSingle()
-      if (override && override.enabled && override.html) {
-        html = interpolate(override.html)
-      } else {
-        html = await renderAsync(React.createElement(tpl.component, data))
-      }
-    }
-    // Subject: also prefer override when available
-    let subject: string
-    {
-      const { data: ov } = await supabase
-        .from('email_template_overrides')
-        .select('subject, enabled')
-        .eq('template_name', templateName)
-        .maybeSingle()
-      if (ov && ov.enabled && ov.subject && !customHtml) {
-        subject = interpolate(ov.subject)
-      } else {
-        subject = typeof tpl.subject === 'function' ? tpl.subject(data) : tpl.subject
-      }
-    }
+    const { html, subject } = await renderTemplate({
+      templateName,
+      templateData,
+      override,
+      customHtml,
+      mergePreviewData: true,
+    })
 
     return new Response(JSON.stringify({ html, subject, previewData: tpl.previewData ?? {}, displayName: tpl.displayName ?? templateName }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
