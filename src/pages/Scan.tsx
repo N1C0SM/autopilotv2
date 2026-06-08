@@ -342,7 +342,7 @@ const Scan = () => {
       });
     (supabase as any)
       .from("onboarding")
-      .select("goal_photo_url")
+      .select("goal_photo_url, goal, specific_goal")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }: any) => {
@@ -351,6 +351,8 @@ const Scan = () => {
           setSavedObjectiveUrl(url);
           setObjectiveImg((prev) => prev ?? url);
         }
+        const txt = (data?.specific_goal || data?.goal || "").toString().trim();
+        if (txt) setSavedGoalText(txt);
       });
   }, [user]);
 
