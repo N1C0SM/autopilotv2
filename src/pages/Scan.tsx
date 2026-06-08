@@ -47,6 +47,7 @@ import LockedInsightsGrid from "@/components/scan/LockedInsightsGrid";
 import StickyConversionBar from "@/components/scan/StickyConversionBar";
 import ExitIntentModal from "@/components/scan/ExitIntentModal";
 import SocialProofStrip from "@/components/scan/SocialProofStrip";
+import ScanHistoryStrip from "@/components/scan/ScanHistoryStrip";
 
 type Phase = "upload" | "goal" | "analyzing" | "lead";
 
@@ -849,6 +850,8 @@ const Scan = () => {
         <meta property="og:url" content="https://autopilotplan.com/scan" />
       </Helmet>
       {result && !isPaid && (
+        // Sólo embudo para visitantes anónimos: usuarios logueados ven modo cuenta.
+        !user &&
         <>
           <StickyConversionBar onCta={() => navigate(user ? "/dashboard" : "/signup?from=scan")} />
           <ExitIntentModal onCta={() => navigate(user ? "/dashboard" : "/signup?from=scan")} />
