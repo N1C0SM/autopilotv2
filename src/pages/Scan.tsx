@@ -598,7 +598,7 @@ const Scan = () => {
       } catch {}
       setPendingResult(r);
       // Si el usuario ya está pagado y logueado, saltamos el formulario de lead
-      if (user && isPaid) {
+      if (user && isPaid && routeUserId) {
         setTimeout(() => {
           setResult(r);
           if (r.inferred_goal || r.inferred_focus || r.inferred_specific_goals?.length) {
@@ -606,8 +606,14 @@ const Scan = () => {
           }
           saveAndEmailScan(r, { silent: false });
         }, 400);
+      } else if (user && isPaid) {
+        // Logueado y pagado pero en /scan general: muestra resultado sin tocar el plan
+        setTimeout(() => {
+          setResult(r);
+          saveAndEmailScan(r, { silent: true });
+        }, 400);
       } else if (user) {
-        // Logged-in but not paid: still save history + email (no plan apply)
+        // Logueado pero no pagado: guarda histórico/email, no aplica plan
         saveAndEmailScan(r, { silent: true });
       }
       // En caso contrario, el efecto del paso "analyzing" hará la transición a "lead"
@@ -1536,7 +1542,7 @@ const Scan = () => {
               </div>
 
               {/* Estado de aplicación al plan */}
-              {planApplyState !== "idle" && (
+              {routeUserId && planApplyState !== "idle" && (
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -2197,7 +2203,7 @@ const Scan = () => {
               </motion.div>
               ) : (
                 <div className="max-w-2xl mx-auto mt-12 flex flex-col sm:flex-row gap-3 justify-center">
-                  {user && (planApplyState === "idle" || planApplyState === "error") && (
+                  {routeUserId && user && (planApplyState === "idle" || planApplyState === "error") && (
                     <Button
                       variant="hero"
                       size="xl"
@@ -2207,10 +2213,24 @@ const Scan = () => {
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   )}
-                  <Button variant="hero" size="xl" onClick={() => navigate("/dashboard")}>
-                    Volver al dashboard
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  {routeUserId && (
+                    <Button variant="hero" size="xl" onClick={() => navigate("/dashboard")}>
+                      Ver mi plan
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {!routeUserId && user && (
+                    <Button variant="hero" size="xl" onClick={() => navigate(`/scan/user/${user.id}`)}>
+                      Ir a mi progreso
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {!routeUserId && !user && (
+                    <Button variant="hero" size="xl" onClick={() => navigate("/signup?from=scan")}>
+                      Empezar mi plan
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button variant="outline" size="xl" onClick={reset}>
                     Hacer otro scan
                   </Button>
