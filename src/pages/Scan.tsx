@@ -884,6 +884,31 @@ const Scan = () => {
     setLeadConsent(false);
   };
 
+  const [resettingProgress, setResettingProgress] = useState(false);
+  const resetProgress = async () => {
+    if (!user || !routeUserId) return;
+    const ok = window.confirm(
+      "¿Seguro que quieres resetear tu progreso? Se borrarán todos tus scans anteriores y empezarás de cero. Esta acción no se puede deshacer."
+    );
+    if (!ok) return;
+    setResettingProgress(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("scan_history")
+        .delete()
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setAutoSaved(false);
+      reset();
+      toast.success("Progreso reseteado. Sube una nueva foto para empezar.");
+    } catch (e) {
+      console.warn("reset progress failed", e);
+      toast.error("No se pudo resetear el progreso");
+    } finally {
+      setResettingProgress(false);
+    }
+  };
+
   if (isUnauthorized || isAwaitingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground text-sm">
