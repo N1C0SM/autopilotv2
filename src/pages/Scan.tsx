@@ -161,6 +161,7 @@ type GoalPhysique = {
   name: string;
   description: string;
   image_url: string;
+  user_id?: string | null;
 };
 
 const fileToDataUrl = (file: File): Promise<string> =>
@@ -356,15 +357,17 @@ const Scan = () => {
       });
   }, [user]);
 
-  // Cargar físicos objetivo definidos por el admin
-  useEffect(() => {
-    supabase
+  // Cargar físicos objetivo: los públicos del admin + los del propio usuario
+  const loadGoalPresets = async () => {
+    const { data } = await (supabase as any)
       .from("goal_physiques")
-      .select("id, name, description, image_url")
-      .eq("visible", true)
-      .order("sort_order", { ascending: true })
-      .then(({ data }) => setGoalPresets((data as GoalPhysique[]) ?? []));
-  }, []);
+      .select("id, name, description, image_url, user_id")
+      .order("sort_order", { ascending: true });
+    setGoalPresets(((data as GoalPhysique[]) ?? []));
+  };
+  useEffect(() => {
+    loadGoalPresets();
+  }, [user?.id]);
 
   const handleShare = async () => {
     if (!shareRef.current) return;
@@ -792,6 +795,53 @@ const Scan = () => {
     } catch { return null; }
   };
 
+  // Sube una foto subida por el usuario y la registra como objetivo personalizado
+  const [savingCustomGoal, setSavingCustomGoal] = useState(false);
+  const saveCustomGoalPreset = async (dataUrl: string) => {
+    if (!user) {
+      toast.error("Inicia sesión para guardar tus objetivos");
+      return;
+    }
+    const rawName = window.prompt(
+      "¿Cómo quieres llamar a este objetivo? (lo guardaremos en tus objetivos personalizados)",
+      ""
+    );
+    if (rawName === null) return; // cancelled
+    const name = rawName.trim().slice(0, 60);
+    if (!name) {
+      toast.error("Pon un nombre para guardarlo");
+      return;
+    }
+    setSavingCustomGoal(true);
+    try {
+      const publicUrl = await uploadDataUrl(dataUrl, "goal");
+      if (!publicUrl) throw new Error("upload failed");
+      const { data, error } = await (supabase as any)
+        .from("goal_physiques")
+        .insert({
+          user_id: user.id,
+          name,
+          description: "",
+          image_url: publicUrl,
+          visible: false,
+          sort_order: 999,
+        })
+        .select("id, name, description, image_url, user_id")
+        .single();
+      if (error) throw error;
+      const preset = data as GoalPhysique;
+      setGoalPresets((prev) => [...prev, preset]);
+      setObjectiveImg(preset.image_url);
+      setSelectedPresetId(preset.id);
+      toast.success(`"${preset.name}" guardado en tus objetivos`);
+    } catch (e) {
+      console.warn("save custom goal failed", e);
+      toast.error("No se pudo guardar tu objetivo");
+    } finally {
+      setSavingCustomGoal(false);
+    }
+  };
+
   // For logged-in users: save scan to history + auto-email diagnosis to account email
   const saveAndEmailScan = async (r: Result, opts: { silent?: boolean } = {}) => {
     if (!user || !userEmail) return;
@@ -1030,7 +1080,9 @@ const Scan = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <Target className="w-4 h-4 text-primary" />
-                      <h2 className="font-display font-bold text-base">Tu objetivo actual</h2>
+                      <h2 className="font-display font-bold text-base truncate">
+                        {goalPresets.find((p) => p.image_url === savedObjectiveUrl)?.name || savedGoalText || "Tu objetivo actual"}
+                      </h2>
                     </div>
                     <p className="text-[12px] text-muted-foreground">
                       La IA lo usará para estimar cuántos meses te faltan.
@@ -1184,8 +1236,10 @@ const Scan = () => {
                         onChange={async (e) => {
                           const f = e.target.files?.[0];
                           if (!f) return;
-                          setObjectiveImg(await fileToDataUrl(f));
+                          const dataUrl = await fileToDataUrl(f);
+                          setObjectiveImg(dataUrl);
                           setSelectedPresetId(null);
+                          if (user) await saveCustomGoalPreset(dataUrl);
                         }}
                       />
                       <div className={`cursor-pointer rounded-xl border-2 border-dashed p-4 text-center transition ${
