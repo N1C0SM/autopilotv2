@@ -11,6 +11,8 @@ import scanPreviewAsset from "@/assets/scan-preview.jpg.asset.json";
 import scanUserAsset from "@/assets/scan-example-user.jpg.asset.json";
 import prettier from "prettier/standalone";
 import prettierPluginHtml from "prettier/plugins/html";
+import prettierPluginPostcss from "prettier/plugins/postcss";
+import { extractInlineStyles, reinlineStyles } from "./email-style-utils";
 
 const SCAN_PREVIEW_URL = `${window.location.origin}${scanPreviewAsset.url}`;
 const SCAN_USER_PHOTO_URL = `${window.location.origin}${scanUserAsset.url}`;
@@ -76,6 +78,8 @@ export default function EmailTemplatesEditor() {
   const [selected, setSelected] = useState(TEMPLATES[0].name);
   const [subject, setSubject] = useState("");
   const [html, setHtml] = useState("");
+  const [css, setCss] = useState("");
+  const [activeTab, setActiveTab] = useState<"html" | "css">("html");
   const [enabled, setEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -83,6 +87,7 @@ export default function EmailTemplatesEditor() {
   const bcRef = useRef<BroadcastChannel | null>(null);
   const previewWinRef = useRef<Window | null>(null);
   const editorRef = useRef<any>(null);
+  const cssEditorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
 
   // Removes zero-width / invisible chars that React Email injects inside the
@@ -100,6 +105,68 @@ export default function EmailTemplatesEditor() {
     // Strip remaining zero-width and bidi-control chars
     s = s.replace(/[\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060\uFEFF]/g, "");
     return s;
+  };
+
+  // Prettier formatters for HTML / CSS. Brackets stay on the same line so
+  // the editor is compact and easy to scan.
+  const formatHtmlSrc = async (src: string): Promise<string> => {
+    if (!src.trim()) return src;
+    try {
+      return await prettier.format(src, {
+        parser: "html",
+        plugins: [prettierPluginHtml],
+        htmlWhitespaceSensitivity: "ignore",
+        printWidth: 120,
+        tabWidth: 2,
+        useTabs: false,
+        bracketSameLine: true,
+        singleAttributePerLine: false,
+      });
+    } catch {
+      return src;
+    }
+  };
+  const formatCssSrc = async (src: string): Promise<string> => {
+    if (!src.trim()) return src;
+    try {
+      return await prettier.format(src, {
+        parser: "css",
+        plugins: [prettierPluginPostcss],
+        printWidth: 100,
+        tabWidth: 2,
+      });
+    } catch {
+      return src;
+    }
+  };
+
+  const foldAll = (ed: any) => {
+    try { ed?.getAction?.("editor.foldAll")?.run?.(); } catch {}
+  };
+
+  const editorOptions = {
+    fontSize: 13,
+    fontFamily: "JetBrains Mono, Menlo, Monaco, monospace",
+    minimap: { enabled: false },
+    wordWrap: "on" as const,
+    tabSize: 2,
+    insertSpaces: true,
+    formatOnPaste: true,
+    formatOnType: true,
+    autoClosingBrackets: "always" as const,
+    autoClosingQuotes: "always" as const,
+    autoClosingOvertype: "always" as const,
+    autoIndent: "full" as const,
+    bracketPairColorization: { enabled: true },
+    guides: { bracketPairs: true, indentation: true },
+    suggestOnTriggerCharacters: true,
+    quickSuggestions: { other: true, comments: false, strings: true },
+    scrollBeyondLastLine: false,
+    renderWhitespace: "selection" as const,
+    smoothScrolling: true,
+    padding: { top: 12, bottom: 12 },
+    folding: true,
+    showFoldingControls: "always" as const,
   };
 
   const current = TEMPLATES.find(t => t.name === selected)!;
@@ -152,13 +219,21 @@ export default function EmailTemplatesEditor() {
       },
     });
     monaco.editor.setTheme("shades-of-purple");
+    // Fold everything once the model is ready so the user sees a clean tree.
+    setTimeout(() => foldAll(editor), 60);
+  };
+
+  const handleCssEditorMount: OnMount = (editor) => {
+    cssEditorRef.current = editor;
+    setTimeout(() => foldAll(editor), 60);
   };
 
   const insertVariable = (placeholder: string) => {
-    const editor = editorRef.current;
+    const editor = activeTab === "html" ? editorRef.current : cssEditorRef.current;
     const text = `{{${placeholder}}}`;
     if (!editor) {
-      setHtml(prev => prev + text);
+      if (activeTab === "html") setHtml(prev => prev + text);
+      else setCss(prev => prev + text);
       return;
     }
     const selection = editor.getSelection();
@@ -169,22 +244,11 @@ export default function EmailTemplatesEditor() {
   };
 
   const formatDocument = async () => {
-    try {
-      const formatted = await prettier.format(html, {
-        parser: "html",
-        plugins: [prettierPluginHtml],
-        htmlWhitespaceSensitivity: "ignore", // each tag on its own line
-        printWidth: 100,
-        tabWidth: 2,
-        useTabs: false,
-        bracketSameLine: false,
-        singleAttributePerLine: false,
-      });
-      setHtml(sanitizeEditableHtml(formatted));
-      toast.success("HTML formateado con Prettier");
-    } catch (e: any) {
-      toast.error("Prettier falló: " + (e?.message ?? "error"));
-    }
+    const [h, c] = await Promise.all([formatHtmlSrc(html), formatCssSrc(css)]);
+    setHtml(sanitizeEditableHtml(h));
+    setCss(c);
+    setTimeout(() => { foldAll(editorRef.current); foldAll(cssEditorRef.current); }, 30);
+    toast.success("Formato aplicado");
   };
 
   // Maintain a BroadcastChannel tied to the current template so the open
@@ -207,7 +271,10 @@ export default function EmailTemplatesEditor() {
   }, [selected]);
 
   const pushLive = () => {
-    const payload = { customHtml: html, subject, templateData: current.sampleData };
+    // Re-inline before sending to preview so what the admin sees matches what
+    // the user will receive.
+    const inlined = reinlineStyles(html, css);
+    const payload = { customHtml: inlined, subject, templateData: current.sampleData };
     try { bcRef.current?.postMessage({ type: "update", payload }); } catch {}
     try { localStorage.setItem(`email-preview-${selected}`, JSON.stringify(payload)); } catch {}
   };
@@ -217,7 +284,20 @@ export default function EmailTemplatesEditor() {
     const t = setTimeout(() => { pushLive(); }, 200);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [html, subject, selected]);
+  }, [html, css, subject, selected]);
+
+  // Load raw HTML (with inline styles) → split → format → set state and fold.
+  const applyRawHtml = async (rawHtml: string) => {
+    const cleaned = sanitizeEditableHtml(rawHtml ?? "");
+    const { html: splitHtml, css: splitCss } = extractInlineStyles(cleaned);
+    const [fmtHtml, fmtCss] = await Promise.all([
+      formatHtmlSrc(splitHtml),
+      formatCssSrc(splitCss),
+    ]);
+    setHtml(fmtHtml);
+    setCss(fmtCss);
+    setTimeout(() => { foldAll(editorRef.current); foldAll(cssEditorRef.current); }, 80);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -231,7 +311,7 @@ export default function EmailTemplatesEditor() {
 
       if (override) {
         setSubject((override as any).subject);
-        setHtml(sanitizeEditableHtml((override as any).html));
+        await applyRawHtml((override as any).html);
         setEnabled((override as any).enabled);
         setHasOverride(true);
       } else {
@@ -241,7 +321,7 @@ export default function EmailTemplatesEditor() {
         });
         if (error) throw error;
         setSubject(data.subject ?? "");
-        setHtml(sanitizeEditableHtml(data.html ?? ""));
+        await applyRawHtml(data.html ?? "");
         setEnabled(true);
         setHasOverride(false);
       }
@@ -261,7 +341,8 @@ export default function EmailTemplatesEditor() {
     }
     setSaving(true);
     try {
-      const cleanHtml = sanitizeEditableHtml(html);
+      // Re-inline CSS back into the HTML for Gmail/Outlook compatibility.
+      const cleanHtml = sanitizeEditableHtml(reinlineStyles(html, css));
       const { error } = await supabase.from("email_template_overrides" as any).upsert({
         template_name: selected,
         subject: subject.trim(),
@@ -269,7 +350,6 @@ export default function EmailTemplatesEditor() {
         enabled,
       }, { onConflict: "template_name" });
       if (error) throw error;
-      if (cleanHtml !== html) setHtml(cleanHtml);
       toast.success("Plantilla guardada");
       setHasOverride(true);
     } catch (e: any) {
@@ -309,7 +389,7 @@ export default function EmailTemplatesEditor() {
         body: { templateName: selected },
       });
       if (error) throw error;
-      setHtml(sanitizeEditableHtml(data.html ?? ""));
+      await applyRawHtml(data.html ?? "");
       setSubject(data.subject ?? "");
       toast.success("HTML por defecto cargado");
     } catch (e: any) {
@@ -380,7 +460,18 @@ export default function EmailTemplatesEditor() {
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">HTML del email</Label>
+                <div className="flex items-center gap-1 bg-muted/40 rounded-lg p-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("html")}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${activeTab === "html" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >HTML</button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("css")}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${activeTab === "css" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >CSS</button>
+                </div>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm" onClick={formatDocument} className="h-7 text-xs gap-1">
                     <Wand2 className="w-3 h-3" /> Formatear
@@ -391,40 +482,32 @@ export default function EmailTemplatesEditor() {
                 </div>
               </div>
               <div className="rounded-lg overflow-hidden border border-border bg-[#1E1E3F]">
-                <Editor
-                  height="520px"
-                  defaultLanguage="html"
-                  language="html"
-                  value={html}
-                  onChange={(value) => setHtml(value ?? "")}
-                  onMount={handleEditorMount}
-                  theme="shades-of-purple"
-                  options={{
-                    fontSize: 13,
-                    fontFamily: "JetBrains Mono, Menlo, Monaco, monospace",
-                    minimap: { enabled: false },
-                    wordWrap: "on",
-                    tabSize: 2,
-                    insertSpaces: true,
-                    formatOnPaste: true,
-                    formatOnType: true,
-                    autoClosingBrackets: "always",
-                    autoClosingQuotes: "always",
-                    autoClosingOvertype: "always",
-                    autoIndent: "full",
-                    bracketPairColorization: { enabled: true },
-                    guides: { bracketPairs: true, indentation: true },
-                    suggestOnTriggerCharacters: true,
-                    quickSuggestions: { other: true, comments: false, strings: true },
-                    scrollBeyondLastLine: false,
-                    renderWhitespace: "selection",
-                    smoothScrolling: true,
-                    padding: { top: 12, bottom: 12 },
-                  }}
-                />
+                {activeTab === "html" ? (
+                  <Editor
+                    height="520px"
+                    defaultLanguage="html"
+                    language="html"
+                    value={html}
+                    onChange={(value) => setHtml(value ?? "")}
+                    onMount={handleEditorMount}
+                    theme="shades-of-purple"
+                    options={editorOptions}
+                  />
+                ) : (
+                  <Editor
+                    height="520px"
+                    defaultLanguage="css"
+                    language="css"
+                    value={css}
+                    onChange={(value) => setCss(value ?? "")}
+                    onMount={handleCssEditorMount}
+                    theme="shades-of-purple"
+                    options={editorOptions}
+                  />
+                )}
               </div>
               <p className="text-[11px] text-muted-foreground mt-1.5">
-                Editor estilo VSCode: autocompletado de etiquetas, cierre automático y formato. Pulsa <span className="text-foreground font-medium">Previsualizar</span> para abrir el render en vivo.
+                Editor estilo VSCode. El CSS se reinyecta como <code>style="..."</code> al guardar para máxima compatibilidad (Gmail, Outlook). Al cargar se formatea y se colapsa todo automáticamente.
               </p>
             </div>
 
