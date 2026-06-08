@@ -1943,6 +1943,19 @@ const Scan = () => {
                 </div>
               )}
 
+              {/* Proyección + prueba social — antes del CTA final */}
+              {!isPaid && (
+                <ProjectionTimeline
+                  currentScore={result.physique}
+                  monthsWithPlan={result.months_with_plan ?? result.estimated_months}
+                  monthsWithoutPlan={result.months_without_plan}
+                  priorities={(result.improvements || []).slice(0, 3).map((i) => i.label)}
+                  bottleneck={result.bottleneck}
+                  onCta={() => navigate(user ? "/dashboard" : "/signup?from=scan")}
+                />
+              )}
+              {!isPaid && <SocialProofStrip />}
+
               {/* FUNNEL CTA */}
               {!isPaid ? (
               <motion.div
@@ -1984,6 +1997,11 @@ const Scan = () => {
                       Te montamos el plan de entrenamiento + nutrición que los ataca, ajustado a ti. Sin él, dentro de 6 meses
                       estarás haciéndote el mismo scan con el mismo resultado.
                     </p>
+                    <div className="flex items-baseline justify-center gap-3 mb-5">
+                      <span className="text-sm text-muted-foreground line-through">Coach 1:1 desde 200€/mes</span>
+                      <span className="text-3xl font-bold font-display text-gradient">19€/mes</span>
+                      <span className="text-xs uppercase tracking-wider text-primary font-semibold px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30">7 días gratis</span>
+                    </div>
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                       <Button
                         variant="hero"
@@ -1991,7 +2009,7 @@ const Scan = () => {
                         onClick={() => navigate(user ? "/dashboard" : "/signup?from=scan")}
                         className="hover-scale group"
                       >
-                        {user ? "Volver a mi cuenta" : "Empezar mi plan"}
+                        {user ? "Volver a mi cuenta" : "Empezar mi plan por 0€ hoy"}
                         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                       </Button>
                       <Button variant="outline" size="xl" onClick={reset}>
@@ -2001,11 +2019,11 @@ const Scan = () => {
                     <div className="flex items-center gap-4 mt-6 justify-center text-xs text-muted-foreground flex-wrap">
                       <div className="flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                        7 días gratis
+                        Cancela en 1 clic
                       </div>
                       <div className="flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                        Cancelas cuando quieras
+                        Sin permanencia
                       </div>
                       <div className="flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
