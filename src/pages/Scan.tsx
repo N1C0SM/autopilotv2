@@ -2203,7 +2203,7 @@ const Scan = () => {
               </motion.div>
               ) : (
                 <div className="max-w-2xl mx-auto mt-12 flex flex-col sm:flex-row gap-3 justify-center">
-                  {user && (planApplyState === "idle" || planApplyState === "error") && (
+                  {routeUserId && user && (planApplyState === "idle" || planApplyState === "error") && (
                     <Button
                       variant="hero"
                       size="xl"
@@ -2213,10 +2213,24 @@ const Scan = () => {
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   )}
-                  <Button variant="hero" size="xl" onClick={() => navigate("/dashboard")}>
-                    Volver al dashboard
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  {routeUserId && (
+                    <Button variant="hero" size="xl" onClick={() => navigate("/dashboard")}>
+                      Ver mi plan
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {!routeUserId && user && (
+                    <Button variant="hero" size="xl" onClick={() => navigate(`/scan/user/${user.id}`)}>
+                      Ir a mi progreso
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {!routeUserId && !user && (
+                    <Button variant="hero" size="xl" onClick={() => navigate("/signup?from=scan")}>
+                      Empezar mi plan
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button variant="outline" size="xl" onClick={reset}>
                     Hacer otro scan
                   </Button>
