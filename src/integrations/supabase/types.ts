@@ -1347,7 +1347,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      google_calendar_connections: {
+        Row: {
+          calendar_id: string | null
+          created_at: string | null
+          expiry_at: string | null
+          id: string | null
+          last_sync_at: string | null
+          scope: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          calendar_id?: string | null
+          created_at?: string | null
+          expiry_at?: string | null
+          id?: string | null
+          last_sync_at?: string | null
+          scope?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          calendar_id?: string | null
+          created_at?: string | null
+          expiry_at?: string | null
+          id?: string | null
+          last_sync_at?: string | null
+          scope?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_email: {
