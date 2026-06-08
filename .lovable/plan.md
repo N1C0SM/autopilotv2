@@ -1,73 +1,28 @@
 ## Objetivo
 
-El Scan es gratis y genera el "aha moment", pero la conversión a plan de pago (19€/mes) depende de un solo CTA al final. Voy a meter **5 palancas de conversión psicológica** dentro de `/scan` para multiplicar el % de upgrade, sin tocar el motor de análisis ni el modelo de negocio.
+Para usuarios logueados que ya tienen un físico objetivo guardado (`onboarding.goal_photo_url`), no mostrar la galería + uploader en `/scan`. Mostrar tarjeta compacta con el objetivo actual y un botón **"Cambiar objetivo"** que reabre el selector si quieren modificarlo.
 
----
+## Cambios en `src/pages/Scan.tsx`
 
-## Palancas a implementar
+1. **Cargar objetivo guardado**: en el efecto que ya lee `userEmail`/`userName`, añadir lectura de `onboarding.goal_photo_url`. Estado nuevo `savedObjectiveUrl: string | null`.
 
-### 1. Proyección visual "Tú con plan vs. sin plan" (anchor emocional)
-Justo después del bloque de Diagnóstico Clínico, una tarjeta gráfica con dos timelines paralelos:
-- **Sin plan (6 meses):** Score actual repetido → barra plana, color apagado, texto "Mismo físico, misma frustración"
-- **Con plan (X meses):** Score proyectado (actual + delta IA) → barra creciente con gradient primary, hitos mensuales ("Mes 1: pérdida grasa visible", "Mes 3: V-taper definido", etc.)
+2. **Auto-precargar**: si `savedObjectiveUrl` existe y `objectiveImg` está vacío → `setObjectiveImg(savedObjectiveUrl)`. Así el análisis ya lo incluye sin tocar nada.
 
-Los hitos se generan dinámicamente desde `result.priorities` + `result.body_composition`. Hace el coste de oportunidad **palpable**.
+3. **Estado UI**: `editingObjective: boolean` (default `false`).
 
-### 2. Bloque de insights bloqueados expandido (curiosity gap)
-Hoy `locked_insights` se muestra como lista corta. Voy a:
-- Pedir al edge function `analyze-physique` que devuelva **6-8 locked insights** específicos (en vez de los actuales 2-3), con título + 1 frase teaser desenfocada (blur CSS sobre el detalle).
-- Mostrarlos en grid 2x3/2x4 con candado encima de cada uno, hover muestra "Desbloquea con tu plan".
-- Categorías: ratio calórico exacto, ventana anabólica, descansos óptimos por grupo, orden de ejercicios, frecuencia semanal por músculo débil, % grasa objetivo realista, semanas hasta primer hito visible, predicción de plateau.
+4. **Render condicional** del bloque "Físico objetivo" (líneas 919–1029):
+   - Si `user && savedObjectiveUrl && !editingObjective` → tarjeta compacta:
+     - Thumbnail del objetivo (80×100)
+     - Texto: "Tu objetivo actual · la IA lo usará para estimar meses"
+     - Botón `Cambiar objetivo` → `editingObjective = true`
+     - Botón secundario `Quitar para este scan` → limpia `objectiveImg` y abre selector
+   - Resto de casos (anónimo, usuario sin objetivo, o `editingObjective === true`) → selector completo actual sin cambios.
 
-### 3. CTA sticky inteligente + exit-intent
-- **Sticky bar** en mobile/desktop que aparece cuando el usuario hace scroll más allá del 40% de los resultados: "Tu plan personalizado · 7 días gratis · 19€/mes" + botón "Empezar".
-- **Exit-intent modal** (solo desktop, primera vez): cuando el cursor sale por arriba, muestra "Espera — guardamos tu análisis. Empieza tu plan en 60s" con CTA directo.
-- Ambos se ocultan si `isPaid`.
+## Fix paralelo (silencioso) en `supabase/functions/analyze-physique/index.ts`
 
-### 4. Prueba social contextual
-Hoy no hay testimonios en `/scan`. Voy a leer 2-3 `site_testimonials` (random, los que tengan foto + resultado numérico) y mostrarlos en una tira horizontal **justo antes del CTA final**, con formato: foto + "−8kg en 4 meses" + frase corta. Anclaje: "Otros con tu mismo perfil ya lo hicieron".
+El edge function está fallando con 500 porque el modelo devuelve `null` en `body_composition.lean_mass_kg` y `weight_kg`. Ajustar el schema: envolver cada campo numérico de `body_composition` con `z.preprocess((v) => (v == null ? undefined : Number(v)), z.number()...optional())` para que `null` se trate como ausente en vez de error.
 
-### 5. CTA principal con pricing visible + reducción de fricción
-El CTA actual dice "Empezar mi plan" sin precio. Voy a:
-- Mostrar precio con anchor: ~~Coach 1:1 200€/mes~~ → **19€/mes · 7 días gratis**
-- Cambiar copy: "Empezar mi plan por 0€ hoy" (anclar gratis primero, no el precio)
-- Añadir microcopy: "Cancela en 1 clic · Sin permanencia · Garantía 30 días"
-- En `/signup?from=scan`, prerellenar el flow para que llegue al checkout **en 2 clics** (ya existe el flow, solo verifico que `from=scan` salta pasos opcionales del onboarding y va directo a paywall).
+## Fuera de alcance
 
----
-
-## Cambios técnicos
-
-```text
-src/pages/Scan.tsx
-├── + <ProjectionTimeline />        (palanca 1, después del Diagnóstico Clínico)
-├── ~ <LockedInsightsGrid />        (palanca 2, expandido con blur + grid)
-├── + <StickyConversionBar />       (palanca 3, scroll > 40%)
-├── + <ExitIntentModal />           (palanca 3, solo desktop)
-├── + <SocialProofStrip />          (palanca 4, antes del FUNNEL CTA)
-└── ~ FUNNEL CTA                    (palanca 5, copy + pricing + microcopy)
-
-supabase/functions/analyze-physique/index.ts
-└── ~ schema.locked_insights        (mínimo 6 items, con teaser + categoría)
-
-src/components/scan/                (carpeta nueva, componentes aislados)
-├── ProjectionTimeline.tsx
-├── LockedInsightsGrid.tsx
-├── StickyConversionBar.tsx
-├── ExitIntentModal.tsx
-└── SocialProofStrip.tsx
-```
-
-Sin migraciones de BD. Sin cambios en pricing/Stripe. Sin nuevas dependencias.
-
----
-
-## Métrica de éxito
-
-Conversion rate `scan completado → checkout iniciado`. Se puede medir mirando `scan_leads` insertados (denominador) vs eventos de click en CTA — opcionalmente añado un `analytics.track("scan_cta_clicked", { variant })` para A/B futuro.
-
----
-
-## Confirmación
-
-¿Sigo con las **5 palancas** o prefieres que arranque solo con **1-2** (las de mayor impacto: proyección visual + locked insights expandido) y dejamos las otras para iteración?
+- No se persiste el nuevo objetivo elegido en `onboarding.goal_photo_url` (sigue siendo flujo de onboarding/settings).
+- No se toca el modo visitante anónimo.
