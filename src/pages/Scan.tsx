@@ -31,6 +31,10 @@ import {
   RefreshCw,
   Activity,
   Sprout,
+  Ruler,
+  Dna,
+  ClipboardList,
+  Gauge,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -115,6 +119,34 @@ type Result = {
   inferred_intensity?: number;
   inferred_specific_goals?: string[];
   locked_insights?: { label: string; teaser: string }[];
+  body_composition?: {
+    body_fat_pct?: number;
+    lean_mass_kg?: number;
+    weight_kg?: number;
+    somatotype?: string;
+    frame_size?: string;
+    fat_distribution?: string;
+  };
+  muscle_breakdown?: { group: string; score: number; verdict: string }[];
+  posture?: { issues?: string[]; severity?: string; note?: string };
+  proportions?: {
+    shoulder_to_waist_ratio?: number;
+    v_taper_score?: number;
+    symmetry_score?: number;
+    upper_lower_balance?: string;
+    weakest_link?: string;
+  };
+  genetic_markers?: string[];
+  protocol?: {
+    training_days_per_week?: number;
+    weekly_sets_priority?: number;
+    weekly_sets_maintenance?: number;
+    calorie_adjustment_kcal?: number;
+    protein_g_per_kg?: number;
+    cardio_minutes_per_week?: number;
+    key_lifts?: string[];
+    avoid?: string[];
+  };
 };
 
 type GoalPhysique = {
