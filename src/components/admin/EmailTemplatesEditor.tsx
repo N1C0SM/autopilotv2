@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Save, RotateCcw, FileCode, Eye, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import scanPreviewAsset from "@/assets/scan-preview.jpg.asset.json";
+import scanUserAsset from "@/assets/scan-example-user.jpg.asset.json";
 import prettier from "prettier/standalone";
 import prettierPluginHtml from "prettier/plugins/html";
 
 const SCAN_PREVIEW_URL = `${window.location.origin}${scanPreviewAsset.url}`;
+const SCAN_USER_PHOTO_URL = `${window.location.origin}${scanUserAsset.url}`;
 
 type TemplateDef = {
   name: string;
@@ -29,13 +31,21 @@ const TEMPLATES: TemplateDef[] = [
     placeholders: ["name", "headline", "summary", "monthsWithPlan", "monthsWithoutPlan", "SCAN_IMAGE_URL", "cardImageUrl", "photoUrl", "reportUrl"],
     sampleData: {
       name: "Nico",
-      headline: "Tu mayor margen está en espalda y hombros.",
-      summary: "Buen pecho frontal pero cadena posterior infradesarrollada. Postura ligeramente cifótica.",
-      monthsWithPlan: 6,
+      headline: "Físico lean (~12% BF) con clara asimetría entre tren superior y tren inferior.",
+      summary:
+        "Composición: aprox. 12-13% de grasa corporal, ~70-72 kg estimados, somatotipo ecto-mesomorfo. " +
+        "Puntos fuertes: definición abdominal visible (oblicuos y recto abdominal marcados), pecho con buena inserción y serrato presente. " +
+        "Puntos débiles claros: 1) hombros (deltoides medio y posterior) muy poco desarrollados — la silueta cae recta desde el cuello, falta de anchura clavicular relativa al torso; " +
+        "2) tren inferior infradesarrollado respecto al superior (cuádriceps planos, gemelo pequeño); " +
+        "3) brazos (bíceps/tríceps) por debajo del potencial del torso. " +
+        "Postura: ligera anteposición de hombros y cabeza adelantada (cifosis leve), típico de exceso de horas sentado. " +
+        "Recomendación AI: priorizar volumen en deltoides lateral, espalda alta (rear delts + trapecio medio) y pierna 2x/semana durante 12 semanas. " +
+        "Mantener déficit ligero (-200 kcal) con 1.8 g/kg de proteína para ganar masa magra sin perder definición.",
+      monthsWithPlan: 4,
       monthsWithoutPlan: 18,
-      SCAN_IMAGE_URL: SCAN_PREVIEW_URL,
-      cardImageUrl: SCAN_PREVIEW_URL,
-      photoUrl: SCAN_PREVIEW_URL,
+      SCAN_IMAGE_URL: SCAN_USER_PHOTO_URL,
+      cardImageUrl: SCAN_USER_PHOTO_URL,
+      photoUrl: SCAN_USER_PHOTO_URL,
       reportUrl: "https://autopilotplan.com/scan",
     },
   },
