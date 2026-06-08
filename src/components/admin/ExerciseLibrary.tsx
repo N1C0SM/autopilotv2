@@ -221,6 +221,42 @@ const ExerciseFormDialog = ({
             </div>
           </div>
 
+          {/* Hard criteria */}
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Criterios obligatorios</p>
+            <p className="text-[10px] text-muted-foreground -mt-1">Si alguno está desactivado, el ejercicio NO se incluirá en planes generados.</p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { key: "is_stable" as const, label: "Estable", hint: "Permite ejecución sin que el equilibrio limite la carga" },
+                { key: "is_progressable" as const, label: "Progresable", hint: "Se puede aumentar carga/reps sesión a sesión" },
+                { key: "high_tension" as const, label: "Alta tensión", hint: "Genera mucha tensión en el músculo objetivo" },
+              ].map(({ key, label, hint }) => {
+                const checked = (form as any)[key] ?? true;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => set(key as any, !checked)}
+                    title={hint}
+                    className={`rounded-lg border p-2 text-left transition-colors ${
+                      checked
+                        ? "border-primary/50 bg-primary/10"
+                        : "border-border bg-secondary/40 opacity-60"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium">{label}</span>
+                      <span className={`text-[10px] font-bold ${checked ? "text-primary" : "text-muted-foreground"}`}>
+                        {checked ? "SÍ" : "NO"}
+                      </span>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{hint}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Skill Progression */}
           <div className="space-y-3">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Progresión de Skill</p>
