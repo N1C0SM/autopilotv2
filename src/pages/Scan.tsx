@@ -314,6 +314,7 @@ const Scan = () => {
   const [savedObjectiveUrl, setSavedObjectiveUrl] = useState<string | null>(null);
   const [editingObjective, setEditingObjective] = useState(false);
   const [hasObjectiveChoice, setHasObjectiveChoice] = useState<"unset" | "yes" | "no">("unset");
+  const [savedGoalText, setSavedGoalText] = useState<string | null>(null);
 
   // Funnel state
   const [phase, setPhase] = useState<Phase>("upload");
