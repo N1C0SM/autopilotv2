@@ -91,6 +91,25 @@ const PaymentSuccess = () => {
     );
   }
 
+  if (!paid) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          </div>
+          <h1 className="text-2xl font-bold font-display mb-3">Pago en proceso</h1>
+          <p className="text-muted-foreground mb-6 text-sm">
+            Estamos confirmando tu pago con Stripe. Esto suele tardar unos segundos. Si en 1 minuto sigues viendo esto, refresca esta página.
+          </p>
+          <Button variant="hero" size="lg" onClick={() => window.location.reload()}>
+            Comprobar de nuevo
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="text-center max-w-md">
