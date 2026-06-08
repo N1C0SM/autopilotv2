@@ -4,11 +4,11 @@ import { createOpenAICompatible } from "npm:@ai-sdk/openai-compatible";
 import { z } from "npm:zod";
 
 const AnalysisSchema = z.object({
-  attractiveness: z.number().min(0).max(10),
-  potential: z.number().min(0).max(10),
-  physique: z.number().min(0).max(10),
-  style: z.number().min(0).max(10),
-  similarity: z.number().min(0).max(100),
+  attractiveness: z.preprocess((v) => (v == null ? 5 : Number(v)), z.number().min(0).max(10)),
+  potential: z.preprocess((v) => (v == null ? 7 : Number(v)), z.number().min(0).max(10)),
+  physique: z.preprocess((v) => (v == null ? 5 : Number(v)), z.number().min(0).max(10)),
+  style: z.preprocess((v) => (v == null ? 5 : Number(v)), z.number().min(0).max(10)),
+  similarity: z.preprocess((v) => (v == null ? 0 : Number(v)), z.number().min(0).max(100)),
   estimated_months: z.number().min(0).max(120).optional(),
   improvements: z.preprocess(
     (val) => {
@@ -57,11 +57,30 @@ const AnalysisSchema = z.object({
     fat_distribution: z.string().optional(),// "abdominal" | "uniforme" | "tren inferior"…
   }).partial().optional(),
 
-  muscle_breakdown: z.array(z.object({
-    group: z.string(),                      // "Pecho", "Deltoides", "Espalda", …
-    score: z.number().min(0).max(10),
-    verdict: z.string(),                    // una frase específica
-  })).max(10).optional(),
+  muscle_breakdown: z.preprocess(
+    (val) => {
+      if (val == null) return undefined;
+      if (Array.isArray(val)) return val;
+      if (typeof val === "object") {
+        return Object.entries(val as Record<string, any>).map(([group, v]) => {
+          if (v && typeof v === "object") {
+            return {
+              group: (v as any).group ?? group,
+              score: Number((v as any).score ?? 5),
+              verdict: String((v as any).verdict ?? (v as any).note ?? ""),
+            };
+          }
+          return { group, score: Number(v) || 5, verdict: "" };
+        });
+      }
+      return val;
+    },
+    z.array(z.object({
+      group: z.string(),
+      score: z.number().min(0).max(10),
+      verdict: z.string(),
+    })).max(12).optional(),
+  ),
 
   posture: z.object({
     issues: z.array(z.string()).max(5).optional(),
