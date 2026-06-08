@@ -1617,8 +1617,22 @@ const Scan = () => {
               )}
 
               {/* HERO STATS — datos imposibles de ChatGPT */}
-              {(result.percentile || result.aesthetic_age || result.months_with_plan) && (
-                <div className="max-w-5xl mx-auto mb-8 grid sm:grid-cols-3 gap-3">
+              {(() => {
+                const hasObjective = !!objectiveImg || !!savedObjectiveUrl;
+                const showMonths = hasObjective && result.months_with_plan !== undefined;
+                const visibleCount =
+                  (result.percentile !== undefined ? 1 : 0) +
+                  (result.aesthetic_age !== undefined ? 1 : 0) +
+                  (showMonths ? 1 : 0);
+                if (visibleCount === 0) return null;
+                const colsClass =
+                  visibleCount >= 3
+                    ? "sm:grid-cols-3"
+                    : visibleCount === 2
+                    ? "sm:grid-cols-2 max-w-3xl"
+                    : "sm:grid-cols-1 max-w-sm";
+                return (
+                <div className={`mx-auto mb-8 grid ${colsClass} gap-3 max-w-5xl`}>
                   {result.percentile !== undefined && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -1657,7 +1671,7 @@ const Scan = () => {
                       </div>
                     </motion.div>
                   )}
-                  {result.months_with_plan !== undefined && (
+                  {showMonths && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -1679,7 +1693,8 @@ const Scan = () => {
                     </motion.div>
                   )}
                 </div>
-              )}
+                );
+              })()}
 
               {result.bottleneck && (
                 <div className="max-w-3xl mx-auto mb-10">
