@@ -1006,6 +1006,21 @@ const Scan = () => {
                     </button>
                   </div>
                 </div>
+              ) : user && routeUserId && !savedObjectiveUrl && !editingObjective ? (
+                <div className="max-w-4xl mx-auto mb-8 rounded-2xl border border-primary/20 bg-card/40 backdrop-blur p-4 sm:p-5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Target className="w-4 h-4 text-primary flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Tu objetivo</div>
+                      <div className="font-display font-bold text-sm truncate">
+                        {savedGoalText || "Sin objetivo definido"}
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setEditingObjective(true)}>
+                    Cambiar objetivo
+                  </Button>
+                </div>
               ) : user && !savedObjectiveUrl && !editingObjective && hasObjectiveChoice === "unset" ? (
                 <div className="max-w-4xl mx-auto mb-8 rounded-2xl border border-primary/20 bg-card/40 backdrop-blur p-5 sm:p-6">
                   <div className="flex items-center gap-2 mb-2">
