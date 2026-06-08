@@ -12,12 +12,14 @@ import {
   Wrench,
   Repeat,
 } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ScrollReveal from "@/components/ScrollReveal";
 import PricingTiers from "@/components/PricingTiers";
 import AIScanSection from "@/components/AIScanSection";
