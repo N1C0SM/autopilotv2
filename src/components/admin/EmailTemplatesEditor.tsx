@@ -144,6 +144,31 @@ export default function EmailTemplatesEditor() {
     try { ed?.getAction?.("editor.foldAll")?.run?.(); } catch {}
   };
 
+  const editorOptions = {
+    fontSize: 13,
+    fontFamily: "JetBrains Mono, Menlo, Monaco, monospace",
+    minimap: { enabled: false },
+    wordWrap: "on" as const,
+    tabSize: 2,
+    insertSpaces: true,
+    formatOnPaste: true,
+    formatOnType: true,
+    autoClosingBrackets: "always" as const,
+    autoClosingQuotes: "always" as const,
+    autoClosingOvertype: "always" as const,
+    autoIndent: "full" as const,
+    bracketPairColorization: { enabled: true },
+    guides: { bracketPairs: true, indentation: true },
+    suggestOnTriggerCharacters: true,
+    quickSuggestions: { other: true, comments: false, strings: true },
+    scrollBeyondLastLine: false,
+    renderWhitespace: "selection" as const,
+    smoothScrolling: true,
+    padding: { top: 12, bottom: 12 },
+    folding: true,
+    showFoldingControls: "always" as const,
+  };
+
   const current = TEMPLATES.find(t => t.name === selected)!;
 
   const handleEditorMount: OnMount = (editor, monaco) => {
