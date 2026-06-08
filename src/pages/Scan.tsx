@@ -1458,8 +1458,8 @@ const Scan = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              {user && <ScanProgressPanel userId={user.id} compact />}
-              {user && (
+              {user && routeUserId && <ScanProgressPanel userId={user.id} compact />}
+              {user && routeUserId && (
                 <BeforeAfterCompare
                   userId={user.id}
                   currentPhoto={currentImg}
