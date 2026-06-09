@@ -237,6 +237,12 @@ const Signup = () => {
             ¿Ya tienes cuenta? <Link to="/login" className="text-primary hover:underline">Inicia sesión</Link>
           </p>
         </form>
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          Al crear una cuenta aceptas nuestros{" "}
+          <Link to="/legal/terminos" className="hover:text-foreground underline">Términos</Link>
+          {" y "}
+          <Link to="/legal/privacidad" className="hover:text-foreground underline">Política de privacidad</Link>.
+        </p>
       </div>
     </div>
   );
