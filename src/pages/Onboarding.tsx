@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Sparkles, Calendar as CalendarIcon, Check, Loader2, Zap, Upload, Image as ImageIcon, X } from "lucide-react";
 import PricingTiers from "@/components/PricingTiers";
+import PlanPreview from "@/components/PlanPreview";
+import { track } from "@/lib/analytics";
 
 // Pasos dinámicos: la lista activa se calcula según los datos del usuario.
 // Claves posibles: about, focus_goal, specific_goal, sports_schedule, level, health, summary
@@ -332,12 +334,17 @@ const Onboarding = () => {
       if (profile?.payment_status === "paid") {
         supabase.functions.invoke("generate-plan", { body: { user_id: user.id } });
         toast.success("¡Tu plan se está preparando! 🎉");
+        track("onboarding_complete", { paid: true });
+        track("plan_ready", { });
         navigate("/dashboard");
       } else {
         const { data: settingsData } = await (supabase.rpc as any)("get_public_settings");
         const settings = Array.isArray(settingsData) ? settingsData[0] : settingsData;
         if (settings?.yearly_price_eur) setYearlyPrice(settings.yearly_price_eur);
         toast.success("¡Cuestionario completado! Elige tu plan.");
+        track("onboarding_complete", { paid: false });
+        track("plan_preview_view", { focus: data.primary_focus, goal: data.goal });
+        track("paywall_view", { focus: data.primary_focus, goal: data.goal });
         setShowPaywall(true);
       }
     } else {
@@ -348,6 +355,8 @@ const Onboarding = () => {
 
   const goToCheckout = async (plan: "training" | "full") => {
     setLoading(true);
+    track("plan_select", { plan });
+    track("checkout_start", { plan });
     const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
       "create-checkout",
       { body: { referral_code: "", plan } }
@@ -398,6 +407,13 @@ const Onboarding = () => {
               Empieza con 7 días gratis · Cancela cuando quieras
             </p>
           </div>
+          <PlanPreview
+            focus={data.primary_focus}
+            goal={data.goal}
+            weight={parseFloat(data.weight) || undefined}
+            sex={data.sex}
+            days={parseInt(String((data as any).availability?.days || "4")) || 4}
+          />
           <PricingTiers onSelect={goToCheckout} recommended="full" />
           {loading && (
             <p className="text-center text-sm text-muted-foreground mt-6">
