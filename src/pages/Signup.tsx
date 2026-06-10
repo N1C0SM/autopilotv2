@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, Zap } from "lucide-react";
+import { track } from "@/lib/analytics";
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
@@ -104,6 +105,7 @@ const Signup = () => {
     }
 
     // Email verification required — show confirmation screen
+    track("register", { from: fromQuiz ? "quiz" : fromScan ? "scan" : "direct", plan: selectedPlan || undefined });
     setEmailSent(true);
     setLoading(false);
   };

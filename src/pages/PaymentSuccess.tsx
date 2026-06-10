@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { track } from "@/lib/analytics";
 
 const PaymentSuccess = () => {
   const { user, loading } = useAuth();
@@ -41,6 +42,7 @@ const PaymentSuccess = () => {
       if (profile?.payment_status === "paid") {
         setPaid(true);
         setChecking(false);
+        track("checkout_success", {});
         return;
       }
 
