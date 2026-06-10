@@ -1,16 +1,15 @@
 import { Settings as SettingsIcon } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
-import { useNavigate } from "react-router-dom";
 
 interface Props {
   title: string;
   profileName?: string;
   profileAvatar?: string;
   userId?: string;
+  onSettings?: () => void;
 }
 
-const MobileHeader = ({ title, profileName, profileAvatar, userId }: Props) => {
-  const navigate = useNavigate();
+const MobileHeader = ({ title, profileName, profileAvatar, userId, onSettings }: Props) => {
   return (
     <header
       className="fixed top-0 left-0 right-0 z-40 md:hidden bg-card/95 backdrop-blur-xl border-b border-border"
@@ -19,7 +18,7 @@ const MobileHeader = ({ title, profileName, profileAvatar, userId }: Props) => {
       <div className="h-14 px-3 flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate("/settings")}
+          onClick={onSettings}
           className="flex items-center gap-2 min-w-0 active:opacity-70"
           aria-label="Ajustes"
         >
@@ -40,7 +39,7 @@ const MobileHeader = ({ title, profileName, profileAvatar, userId }: Props) => {
           {userId && <NotificationsBell userId={userId} />}
           <button
             type="button"
-            onClick={() => navigate("/settings")}
+            onClick={onSettings}
             className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground active:bg-secondary"
             aria-label="Ajustes"
           >

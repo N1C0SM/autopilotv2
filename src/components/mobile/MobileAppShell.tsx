@@ -11,6 +11,7 @@ interface Props {
   profileAvatar?: string;
   userId?: string;
   lockedTabs?: MobileTab[];
+  onSettings?: () => void;
   children: ReactNode;
 }
 
@@ -22,6 +23,7 @@ const MobileAppShell = ({
   profileAvatar,
   userId,
   lockedTabs,
+  onSettings,
   children,
 }: Props) => {
   return (
@@ -31,6 +33,7 @@ const MobileAppShell = ({
         profileName={profileName}
         profileAvatar={profileAvatar}
         userId={userId}
+        onSettings={onSettings}
       />
 
       <main

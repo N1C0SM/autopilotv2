@@ -349,6 +349,7 @@ const Dashboard = () => {
         profileAvatar={profileAvatar}
         userId={user?.id}
         lockedTabs={isTrainingOnly ? ["nutrition"] : []}
+        onSettings={() => setSection("settings")}
       >
         {pageContent}
       </MobileAppShell>
