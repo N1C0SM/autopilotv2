@@ -217,8 +217,8 @@ const Dashboard = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <UserSidebar
-          section={section}
-          onNavigate={setSection}
+          section={(section === "progress" ? "home" : section) as UserSection}
+          onNavigate={(s) => setSection(s as MobileTab)}
           onSignOut={handleSignOut}
           profileName={profileName}
           profileAvatar={profileAvatar}
